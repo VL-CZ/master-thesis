@@ -1,6 +1,5 @@
 \chapter{Analysis}
 This chapter contains further analysis of the topic.
-
 Firstly, it's important to mention that .NET is a managed environment, so the documentation generators can be classified into 2 categories depending on what their input is:
 
 \begin{itemize}
@@ -11,7 +10,8 @@ Firstly, it's important to mention that .NET is a managed environment, so the do
 The generators that use source code as an input, for instance, Doxygen, may seem straightforward; however, they typically have the following disadvantages:
 \begin{enumerate}
     \item Language coupling -- The generator is coupled to the given language. 
-    Adding support for a new language requires the creation of a new parser for it, which is a complex task.
+    Adding support for a new language requires the creation of a new parser for it, which is a complex task. 
+    (TODO: zminit, ze to porusuje G5?)
     \item Complexity -- In general, these generators are quite hard to develop because an actual parsing of the language is needed in order to obtain the type and member definitions.
 \end{enumerate}
 

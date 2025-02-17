@@ -13,9 +13,9 @@ The goals will be discussed in more detail in the following chapters.
 
 \section{Context}
 
-Before proceeding to the goals of the thesis, it's important to describe the use cases of reference documentation and the broader context.
+Before proceeding to the goals of the thesis, it's important to describe the use cases of reference documentation and its broader context.
 
-The reference documentation is primarily used by two groups of people.
+The reference documentation is primarily used by these two types of users:
 \begin{itemize}
     \item \textbf{Developers using the library} access the reference documentation to view the library's documented API. 
     Typically, only publicly visible types and members are included. 
@@ -35,16 +35,15 @@ There is also a menu with the search bar at the top of the page \textit{(C)}.
 The same observations apply to the vast majority of reference documentation pages, regardless of the generator.
 
 Reference documentation is often accompanied by user documentation, which typically consists of text and code snippets.
-The user documentation can be written in HTML; however, there's a much easier way to do it -- using a static site generator (SSG).
-SSGs, such as Jekyll or MkDocs, are programs 
-that use text written in a markup language (often Markdown) to create static web pages.
+The user documentation can be written in HTML; however, there's an easier way to do it -- by using a static site generator (SSG).
+SSGs, such as Jekyll or MkDocs, are programs that use text written in a markup language (often Markdown) to create static web pages.
 % SSGs enable us to focus only on the textual content of the documentation, and no HTML or CSS knowledge is required, which is a great advantage.
-When building the documentation, we typically just select one of the provided HTML templates to create the webpage.
+When building the documentation, we typically choose one of the provided HTML templates to create the webpage.
 
 Many reference documentation generators, for instance, DocFX have at least some of the capabilities of SSGs. 
-On the other hand, it is also possible to use 
+Alternatively, it is also possible to use 
 the reference documentation generator solely for the reference docs and
-create the user documentation using SSG.
+create the user documentation using an SSG.
 
 \begin{figure}
 \centering
@@ -55,60 +54,68 @@ create the user documentation using SSG.
 
 \section{Goals}
 
-Now, we have a basic knowledge of the context and we'll continue with the goals of our program.
+We've gained a basic understanding of the context, and in this chapter, we'll present the main goals of our application.
 
 First of all, many generators, including Doxygen and DocFX, require a non-trivial setup.
-While the extensive configuration may seem like a benefit, a non-trivial amount of time is required to become familiar with the tools.
-In many cases, especially in the case of smaller libraries, this leads to the harsh reality that the creator  
-decides not to generate the reference documentation because he doesn't have the time (or will) to study the configuration. 
-So, our documentation generator should be easy to use.
-In other words, simply running the generator from the command line and specifying the input should be enough.
-Note that there should definitely be support for a configuration file, so we don't have to repeat the same configuration over and over.
-However, the default options should be reasonable and applicable to most cases.
-Thus, we can formulate our first goal:
+While the extensive amount of options may seem like an advantage, a nontrivial amount of time is required to become familiar with these tools.
+Often, especially in the case of small libraries, the consequence is that the creator
+decides not to generate the reference documentation, simply because he does not have the time or motivation to study the configuration. 
+
+This leads us to our first goal -- the documentation generator should be easy to use.
+In other words, simply running the generator from the command line and specifying the input should be sufficient, as in the case of \texttt{Javadoc}.
+On the other hand, there should be support for using a configuration file, so the users don't need to repeat the same configuration next time.
+However, the default options should be reasonable and applicable in most cases.
+Thus, we can finally formulate the first goal:
 
 \begin{itemize}
-    \item \label{G1} G1: Zero configuration build
+    \item \label{G1} G1: Zero-configuration build
 \end{itemize}
 
-Another observation is that the user may not want to use any of the built-in templates, instead they prefer to use the one provided by the community or even create a custom one.
-The reason may be a different design or color palette that better corresponds to the project.
-This also allows the users to create and share their templates.
-
+Another observation is that users may not want to use the default UI. Instead, they could prefer a custom HTML template or the one provided by the community.
+The reason may be a different design or color palette that better suits the project.
+So, the second goal is:
 \begin{itemize}
     \item G2: Support for custom templates
 \end{itemize}
 
-As mentioned before, it's often beneficial to have user documentation along the reference one. 
-Our program should definitely not have all the features of an SSG, nevertheless, there should be at least basic support for static content (such as custom HTML pages), which gives us another goal.
+As mentioned before, it is often preferred to have user documentation alongside the reference one. 
+We'd typically use an SSG for user docs; however, this is sometimes an unnecessarily complex solution, especially if we only need to add a few pages.
+A good example is creating a custom \textit{index} or \textit{FAQ} page.
+Our generator should by no means offer all of the features provided by SSGs; nevertheless, there should be at least basic support for custom HTML pages, which is our next goal.
 
 \begin{itemize}
-    \item G3: Support for custom static content 
+    \item G3: Support for custom static pages
 \end{itemize}
 
-The API typically evolves over time, however not all users use the most recent version of the program.
-As a consequence, we typically want to maintain multiple versions of the documentation (each corresponding to the versions of our library) at once.
+The project's API typically evolves; however, not all developers use the most recent version.
+As a result, we often need to maintain multiple versions of the documentation (each corresponding to a specific version of our library) at one time.
+Documentation versioning can be achieved e.g. by using \textit{Read the Docs} hosting platform for documentation, as described in its official documentation~\cite{read_the_docs}.
+Then, the documentation typically contains a dropdown menu that allows users to select a specific version.
+However, the big disadvantage is the coupling to the specific platform.
+Support for documentation versioning is one of our goals as well; also note that this is something that neither \texttt{DocFX}, \texttt{Doxygen}, or \texttt{SHFB} supports.
 
 \begin{itemize}
     \item G4: Support for documentation versioning
 \end{itemize}
 
-We also should keep in mind that the program may be written in any .NET language. 
-Even though C\# is the most commonly used, other .NET languages, such as F\# are also used in some cases.
-We don't want to exclude those libraries, so that leads us to another goal.
+We should also consider that the program may be written in any .NET language. 
+Although C\# is the most popular, other .NET languages, such as F\# are also used in specific cases.
+We don't want to exclude libraries written in those languages, so our app should be capable of handling programs written in any popular .NET language, which is our next goal.
 
+(TODO, ma to zde byt?)
 \begin{itemize}
-    \item G2: Support for multiple .NET languages
+    \item G5: Support for multiple .NET languages
 \end{itemize}
 
 
 Last but not least, we also want to follow the recent trends and provide a modern visually appealing user interface.
-As we've seen in Figure~\ref{fig:ref-doc-example}, the default UI of Doxygen is quite obsolete,
-so this requirement is not something that could be assumed automatically.
-So, our last goal is
+As we've seen in Figure~\ref{fig:ref-doc-example}, the default UI of Doxygen is quite outdated,
+so this requirement cannot be assumed by default.
+Thus, our last goal is:
 
 \begin{itemize}
     \item G6: Modern UI
 \end{itemize}
 
-In the following chapters, we will analyze the problem more in detail.
+We've outlined the main goals of the application.
+In the following chapters, we will analyze the problem in more detail.
