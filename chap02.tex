@@ -1,7 +1,7 @@
 \chapter{Analysis}
+This chapter contains further analysis of the topic.
 
-
-Since .NET is a managed environment, the documentation generators can be classified into 2 categories depending on what their input is:
+Firstly, it's important to mention that .NET is a managed environment, so the documentation generators can be classified into 2 categories depending on what their input is:
 
 \begin{itemize}
     \item Source code
@@ -27,7 +27,7 @@ documentation generator for .NET that uses intermediate code as its input.
 
 \section{Compilation process in .NET}
 
-Since our generator will use the assembly, we'll describe the compilation process in .NET a little bit more in detail.
+Since our generator will use the assembly, we'll describe the compilation process in .NET in a little bit more detail.
 
 As stated in the .NET documentation~\cite{dotnet_execution_model} and illustrated in Figure~\ref{fig:net_compilation}, 
 the compilation translates the source code of the program into the common intermediate language (CIL), which is a CPU-independent set of instructions that can be efficiently converted to native code. 
