@@ -1,33 +1,34 @@
 \chapter{Analysis}
-This chapter contains further analysis of the topic.
-Firstly, it's important to mention that .NET is a managed environment, so the documentation generators can be classified into 2 categories depending on what their input is:
+In the previous chapter, we described the key goals of this thesis, focusing on developing a reference documentation generator. 
+To fulfill the goals, we must first address the fundamental challenges related to generating documentation for .NET applications.
+
+One of the most important aspects to consider is that .NET is a managed environment, so the documentation  generators can be classified into 2 categories depending on what their input is:
 
 \begin{itemize}
     \item Source code
     \item Intermediate language
 \end{itemize}
 
-The generators that use source code as an input, for instance, Doxygen, may seem straightforward; however, they typically have the following disadvantages:
+A generator using source code as an input, for instance, Doxygen, may seem straightforward; however, it typically has the following disadvantages:
 \begin{enumerate}
-    \item Language coupling -- The generator is coupled to the given language. 
-    Adding support for a new language requires the creation of a new parser for it, which is a complex task. 
-    (TODO: zminit, ze to porusuje G5?)
+    \item Language coupling -- The generator is coupled to the given language.
+    Adding support for a new language requires the creation of a new parser for it, which is a complex task. Note that this fact interferes with R5. (TODO: pridat odkaz)
     \item Complexity -- In general, these generators are quite hard to develop because an actual parsing of the language is needed in order to obtain the type and member definitions.
 \end{enumerate}
 
-Generators that use intermediate code as their input, such as SHFB, are typically easier to develop and also don't suffer from the issues mentioned earlier.
-These generators aren't limited to a single language; in the case of .NET, a single generator can handle e.g. C\#, F\#, and Visual Basic programs. 
+On the other hand, a generator that uses intermediate code as its input, such as SHFB, is typically easier to develop and doesn't suffer from the issues mentioned earlier either.
+Such generators aren't limited to a single language; in the case of .NET, a single generator can handle e.g. C\#, F\#, and Visual Basic programs. 
 One downside is the need for program compilation, so the project must be built before the documentation is generated.
 However, this is not a limiting factor for us.
 
-(TODO: mozna nejak vice rozepsat, ale zadne dalsi vylozene minus me nenapada)
-
-Using this information, we can refine our primary goal -- to develop a reference
+Using this information, we can refine our primary objective -- to develop a reference
 documentation generator for .NET that uses intermediate code as its input.
+
+TODO: pridat tohle jako requirement?
 
 \section{Compilation process in .NET}
 
-Since our generator will use the assembly, we'll describe the compilation process in .NET in a little bit more detail.
+Since our generator will use the assembly, we will describe the compilation process in .NET in a little bit more detail.
 
 As stated in the .NET documentation~\cite{dotnet_execution_model} and illustrated in Figure~\ref{fig:net_compilation}, 
 the compilation translates the source code of the program into the common intermediate language (CIL), which is a CPU-independent set of instructions that can be efficiently converted to native code. 
@@ -59,7 +60,7 @@ There is a JIT compiler for each computer architecture that .NET supports and th
 Now, we know what the assembly is and how it is created, yet we still haven't mentioned how to extract the type and member information from it.
 This is done using reflection, which in general refers to the ability of a program to inspect or modify other code (or itself).
 
-First of all, it's necessary to load the assembly that is going to be documented, which is done using the \texttt{Assembly.Load} method.
+First of all, it is necessary to load the assembly that is going to be documented, which is done using the \texttt{Assembly.Load} method.
 Then, we can obtain all the declared types, represented as \texttt{System.Type} instances, by calling the \texttt{GetTypes} method of the loaded assembly.
 
 The \texttt{System.Type} class represents any type: class, interface, array type, value type, enumeration, delegate, or type parameter.
@@ -104,7 +105,7 @@ foreach (MethodInfo method in personType.GetMethods())
 Note that extraction of the documentation comments wasn't mentioned in the previous chapter.
 That's because the comments aren't present in the assembly, and therefore we can't use reflection in any way to access them.
 
-Firstly, it's worth noting that the vast majority of .NET languages use structured XML comments, well known from C\#, to document types and their members.
+Firstly, it is worth noting that the vast majority of .NET languages use structured XML comments, well known from C\#, to document types and their members.
 Example~\ref{lst:ex-xml-doc-method} shows a method with XML documentation; 
 notice that both parameters and the return value are documented as well (using the \texttt{param} and \texttt{returns} tag, respectively).
 
