@@ -38,10 +38,10 @@ Reference documentation is often accompanied by user documentation, which typica
 The user documentation can be written in HTML; however, as it grows, using 
 a static site generator (SSG) is often beneficial.
 SSGs, such as Jekyll or MkDocs, are programs that use text written in a markup language (often Markdown) to create static web pages.
-When using SSG, we typically focus only on the textual content of the documentation, and no HTML or CSS knowledge is required, which particularly simplifies the process.
+When using an SSG, users typically focus only on the textual content of the documentation, and no knowledge of HTML or CSS is required, which simplifies the process.
 Other key features of SSGs include automatic menu generation, search functionality, and a selection of various design themes.
 
-Many reference documentation generators, for instance, DocFX have at least some of the capabilities of SSGs, allowing us to use them for the user documentation as well. 
+Many reference documentation generators, for instance, DocFX have at least some of the capabilities of SSGs, allowing the developers to use them for the user documentation as well. 
 Alternatively, it is also possible to use 
 the reference documentation generator solely for the reference documentation and
 create the user documentation using an SSG.
@@ -61,63 +61,68 @@ As previously stated, the primary goal of this thesis is to develop a reference 
 In the previous chapter, we explored the broader context of reference documentation and presented an example of a reference documentation page.
 Based on these insights, we will now identify several challenges that users face when using a documentation generator, which will help us define several high-level requirements for our application.
 
-First of all, many generators, including Doxygen and DocFX, require a non-trivial setup, which typically involves initialization and setting various options in a configuration file.
+First and foremost, it is important to note that most documentation generators are executed from the command line.
+Many of them, including Doxygen and DocFX, require a nontrivial setup, typically involving initialization and the configuration of various options in a configuration file.
 While having numerous options available may seem beneficial, a nontrivial amount of time is required to become familiar with these tools.
 Often, especially in the case of small libraries, the consequence is that the creator
-decides not to generate the reference documentation, simply because he does not have the time or motivation to study the configuration. 
+decides not to generate the reference documentation, simply because he/she does not have the time or motivation to study the configuration. 
 
 This leads us to our first objective -- the documentation generator should be easy to use.
 In other words, simply running it from the command line and specifying the input should be sufficient. 
 This is the case, for example, with \texttt{Javadoc}, which can be invoked with just 2 parameters: 
 the project directory and a list of files or packages (the Java equivalent of namespaces) to include.
-On the other hand, the generator should support using a configuration file, so the users don't need to repeat the same configuration next time.
+On the other hand, the generator should support using a configuration file, so the users do not need to repeat the same configuration next time.
 However, the default options should be reasonable and applicable in most cases.
-Thus, we can finally formulate the first requirement.
+Thus, we can finally formulate the first requirement:
 
 \begin{itemize}
-    \item R1: Zero-configuration build
+    \item R1: Zero-configuration build of the documentation.
 \end{itemize}
 
-Another observation is that the users may not want to use the default UI. 
+Another observation is that the users may not want to use the default UI of the documentation. 
 This could be due to a different page structure, design, or color palette that better suits the project.
 The documentation generators typically address this problem by allowing users to create and use custom HTML templates or styles.
 The template is usually a file written in HTML-like template language, which gets populated with data while the documentation is generated.
 We aim to give users the option to create (and possibly share) their own templates, so the second requirement is:
+
 \begin{itemize}
-    \item R2: Support for custom templates
+    \item R2: Support for custom templates.
 \end{itemize}
 
 In the previous chapter, we discussed that it is often preferred to have user documentation alongside the reference one. 
 We would typically use an SSG for user docs; however, as explained before, this is sometimes an unnecessarily complex solution, especially if we only need to add a few pages.
 A good example is creating a custom \textit{index} or \textit{FAQ} page.
-Our generator should by no means offer all of the features provided by SSGs; nevertheless, there should be at least basic support for adding custom HTML pages, which is our next requirement.
+Therefore, the generator should provide at least basic support for adding custom HTML pages, which is our next requirement:
 
 \begin{itemize}
-    \item R3: Support for custom static pages
+    \item R3: Support for custom static pages.
 \end{itemize}
 
-The project's API typically evolves; however, not all developers use the most recent version.
-As a result, we often need to maintain multiple versions of the documentation (each corresponding to a specific version of our library) at one time.
-Documentation versioning can be achieved e.g. by using \textit{Read the Docs} hosting platform for documentation, as described in its official documentation~\cite{read_the_docs}.
-Then, the documentation typically contains a dropdown menu that allows users to select a specific version.
-However, the big disadvantage is the coupling to the specific platform.
-Support for documentation versioning is one of our goals as well; also note that this is something that neither \texttt{DocFX}, \texttt{Doxygen}, or \texttt{SHFB} supports.
+When developing a library, we may observe that its API naturally evolves, usually as a result of adding new functionality.
+However, another important consideration is that not all developers use the most recent version.
+Therefore, we often need to maintain multiple versions of the documentation (each corresponding to a specific version of our library) at one time.
+As a result, the documentation typically includes a dropdown menu that enables users to select and view a specific version.
+Notably, this functionality is not supported by \texttt{DocFX}, \texttt{Doxygen}, or \texttt{SHFB}.
+Instead, the documentation versioning can be achieved e.g. by using \textit{Read the Docs}~\cite{read_the_docs} hosting platform, which allows users to host multiple versions of the documentation. 
+When a new version is published, all version selection menus are updated to include it.
+However, a major disadvantage of using \textit{Read the Docs} or a similar platform is that our library becomes coupled with it.
+Based on these insights, we introduce another requirement:
 
 \begin{itemize}
-    \item R4: Support for documentation versioning
+    \item R4: Support for documentation versioning.
 \end{itemize}
 
 We should also consider that the program to be documented may be written in any .NET language. 
 Although C\# is the most popular, other .NET languages, such as F\# are also used in specific cases.
-We don't want to exclude libraries written in those languages, so our app should be capable of handling programs written in any popular .NET language.
-This doesn't mean we aim to thoroughly test e.g. all F\# features; instead, the generator should be in principle not tied to a specific language, such as C\#.
+We do not want to exclude libraries written in those languages, so our app should be capable of handling programs written in any popular .NET language.
+This does not mean we aim to thoroughly test e.g. all F\# features; instead, the generator should be in principle not tied to a specific language, such as C\#.
 It is also important to mention that this applies only to the input of the documentation generator.
 The resulting reference documentation is expected to use C\# syntax; however, the generator should be designed to be extensible. 
 Thus, adding support for additional language syntax should be manageable.
-In conclusion, we can now define our next requirement.
+In conclusion, we can now define our next requirement:
 
 \begin{itemize}
-    \item R5: Language independence 
+    \item R5: Language independence.
 \end{itemize}
 
 We also aim to follow recent trends and provide a modern visually appealing user interface.
@@ -126,22 +131,23 @@ so this requirement cannot be assumed by default.
 This brings us to the sixth requirement:
 
 \begin{itemize}
-    \item R6: Modern UI
+    \item R6: Modern UI.
 \end{itemize}
 
-Last but not least, our generator should not be coupled to any specific operating system, for instance, Windows, which gives us the final requirement.
+Last but not least, our generator should not be coupled to any specific operating system; instead, 
+it should work on any platform and computer architecture supported by .NET. 
+This gives us the final requirement:
 
 \begin{itemize}
-    \item R7: OS independence
+    \item R7: Platform independence.
 \end{itemize}
 
-\hfill
+\section{Goals}
+In this chapter, we will summarize the goals of this thesis.
 
-\section*{Goals}
-The primary goal of this thesis is to develop a reference documentation generator that satisfies the requirements above.
-However, this is not the only goal of this thesis; we also aim to test our application. 
-The testing will be performed on the project itself -- i.e. we will create reference documentation of our application, 
-which should ensure that the generator produces a reasonable output for a non-trivial codebase.
-Furthermore, we also plan to select a well-documented NuGet package and generate its reference documentation.
-This should demonstrate that our application works as expected on a third-party project.
-Further analysis of the requirements, presented in the next chapter, can also be seen as one of the goals.
+\begin{itemize}
+    \item G1: Further analysis of the requirements. The requirements outlined above are quite high-level, so we need to examine them in greater detail.
+    \item G2: Develop a reference documentation generator satisfying requirements R1 -- R7.
+    \item G3: Test the generator on itself (i.e. create reference documentation of our app).
+    \item G4: Test the generator on a selected well-documented NuGet package (i.e. generate its reference documentation). This should demonstrate that our app works as expected on a third-party project.
+\end{itemize}
