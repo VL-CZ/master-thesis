@@ -1,121 +1,20 @@
 \chapter{Analysis}
-In the previous chapter, we described the key goals of this thesis, focusing on developing a reference documentation generator. 
-To fulfill the goals, we must first address the fundamental challenges related to generating documentation for .NET applications.
-
-One of the most important aspects to consider is that .NET is a managed environment, so the documentation  generators can be classified into 2 categories depending on what their input is:
-
-\begin{itemize}
-    \item Source code
-    \item Intermediate language
-\end{itemize}
-
-A generator using source code as an input, for instance, Doxygen, may seem straightforward; however, it typically has the following disadvantages:
-\begin{enumerate}
-    \item Language coupling -- The generator is coupled to the given language.
-    Adding support for a new language requires the creation of a new parser for it, which is a complex task. Note that this fact interferes with R5. (TODO: pridat odkaz)
-    \item Complexity -- In general, these generators are quite hard to develop because an actual parsing of the language is needed in order to obtain the type and member definitions.
-\end{enumerate}
-
-On the other hand, a generator that uses intermediate code as its input, such as SHFB, is typically easier to develop and doesn't suffer from the issues mentioned earlier either.
-Such generators aren't limited to a single language; in the case of .NET, a single generator can handle e.g. C\#, F\#, and Visual Basic programs. 
-One downside is the need for program compilation, so the project must be built before the documentation is generated.
-However, this is not a limiting factor for us.
-
-Using this information, we can refine our primary objective -- to develop a reference
-documentation generator for .NET that uses intermediate code as its input.
-
-TODO: pridat tohle jako requirement?
-
-\section{Compilation process in .NET}
-
-Since our generator will use the assembly, we will describe the compilation process in .NET in a little bit more detail.
-
-As stated in the .NET documentation~\cite{dotnet_execution_model} and illustrated in Figure~\ref{fig:net_compilation}, 
-the compilation translates the source code of the program into the common intermediate language (CIL), which is a CPU-independent set of instructions that can be efficiently converted to native code. 
-CIL includes instructions for loading, storing, initializing, and calling methods on objects, as well as instructions for arithmetic and logical operations, control flow, and other operations.
-
-Along CIL, the compiler also produces metadata, which describes the types in the code, including the definition of each type, the signatures of its members, and other data that the runtime uses at execution time, according to~\cite{dotnet_execution_model}.
-The CIL and metadata are contained in a .NET assembly, which is typically a dynamic link library (\texttt{.dll}) or executable (\texttt{.exe}) file.
-
-Note that the only part we need as developers of the documentation generator is the metadata.
-We don't need to use the CIL, because we won't execute any code of the program.
-
-\hfill
-
-(asi vyhodit, protoze to nepotrebujeme + upravit obrazek)
-
-At runtime, CIL is converted to CPU-specific code on demand, by a just-in-time (JIT) compiler. 
-There is a JIT compiler for each computer architecture that .NET supports and therefore, the same CIL can be JIT-compiled and run on any supported architecture.
-
-\begin{figure}
-\centering
-\includegraphics[width=1\linewidth]{img/compilation.png}
-\caption{Execution of a .NET program}
-\label{fig:net_compilation}
-\end{figure}
-
-\section{Reflection}
-(TODO: mozna prejmenovat kapitolu na "Extracting the data from assembly" ?)
-
-Now, we know what the assembly is and how it is created, yet we still haven't mentioned how to extract the type and member information from it.
-This is done using reflection, which in general refers to the ability of a program to inspect or modify other code (or itself).
-
-First of all, it is necessary to load the assembly that is going to be documented, which is done using the \texttt{Assembly.Load} method.
-Then, we can obtain all the declared types, represented as \texttt{System.Type} instances, by calling the \texttt{GetTypes} method of the loaded assembly.
-
-The \texttt{System.Type} class represents any type: class, interface, array type, value type, enumeration, delegate, or type parameter.
-Using its members, we can discover any data concerning the type (such as whether it is abstract, sealed, etc.), as described in .NET documentation~\cite{dotnet_reflection}.
-
-Methods of a type can be obtained by calling the \texttt{GetMethods} method (there are analogous methods for the other members).
-The type members are represented by the following classes (each representing
-the corresponding member and providing descriptive information about it, as stated in~\cite{dotnet_reflection}): (TODO: ma zde byt citace?)
-
-\begin{itemize}
-    \item \texttt{ConstructorInfo}
-    \item \texttt{FieldInfo}
-    \item \texttt{EventInfo}
-    \item \texttt{MethodInfo}
-    \item \texttt{PropertyInfo}
-\end{itemize}
-
-There is also the \texttt{ParameterInfo} class, which provides information about a method (or constructor) parameter. 
-
-Example~\ref{lst:ex-reflection} shows a code snippet that prints the return type and name of all methods contained in the type \texttt{Person}.
-Notice that something similar, obviously much more complex, will be performed by the documentation generator.
-The snippet may thus serve as a good starting point for the type and member data extraction.
-
-\begin{listing}
-\begin{lstlisting}
-Type personType = typeof(Person);
-
-foreach (MethodInfo method in personType.GetMethods())
-{
-    Console.WriteLine(
-        $"{method.ReturnType.Name} {method.Name}");
-}
-\end{lstlisting}
-\caption{Code that inspects type methods using reflection}
-\label{lst:ex-reflection}
-\end{listing}
+In the previous chapter, we outlined the key goals of this thesis, focusing on developing a reference documentation generator. 
+To fulfill the goals, we must first address the fundamental challenges associated with generating documentation for .NET applications.
 
 \section{XML documentation comments}
 
-(TODO: mozna prejmenovat kapitolu na "Extracting documentation comments" ?)
+Firstly, it is worth noting that all major .NET languages use structured XML comments, well known from C\#, to document types and type members.
+Interestingly, the set of XML documentation tags is not explicitly defined.
+Instead, the official documentation provides a set of recommended tags.
+As a result, any XML tag is valid and can be used in the documentation comments
+(although in this case, it may not be correctly interpreted).
 
-Note that extraction of the documentation comments wasn't mentioned in the previous chapter.
-That's because the comments aren't present in the assembly, and therefore we can't use reflection in any way to access them.
-
-Firstly, it is worth noting that the vast majority of .NET languages use structured XML comments, well known from C\#, to document types and their members.
-Example~\ref{lst:ex-xml-doc-method} shows a method with XML documentation; 
-notice that both parameters and the return value are documented as well (using the \texttt{param} and \texttt{returns} tag, respectively).
-
-Previously, we mentioned that the documentation comments aren't part of the assembly.
-Instead, when compiling to CIL, the compiler can optionally create an XML file containing the documentation of the declared types and their members.
-This is typically done by setting the \texttt{GenerateDocumentationFile} or \texttt{DocumentationFile} 
-option, as mentioned in the MSBuild documentation~\cite{msbuild_docs}.
-
-Example~\ref{lst:ex-xml-output} shows the resulting XML file containing the method documentation shown in Example~\ref{lst:ex-xml-doc-method}.
-As we can see, the comments are stored inside the \texttt{member} element that contains a \texttt{name} attribute, which uniquely identifies the corresponding type or member.
+An example of a C\# method with XML documentation is shown in Program~\ref{lst:ex-cs-xml}; 
+notice that both parameters and the return value are documented as well (using the \texttt{param} and \texttt{returns} tags, respectively).
+Program~\ref{lst:ex-vb-xml} displays an analogous method in VB .NET.
+We can see that Visual Basic uses a different symbol for denoting documentation comments: triple single-quote mark.
+However, the format of the comments remains the same, which is crucial.
 
 \begin{listing}
 \begin{lstlisting}
@@ -132,12 +31,74 @@ public static double CalculateRectangleArea(
     return width * height;
 }
 \end{lstlisting}
-\caption{Example of an XML-documented method}
-\label{lst:ex-xml-doc-method}
+\caption{Example of a C\# method with documentation}
+\label{lst:ex-cs-xml}
 \end{listing}
 
 \begin{listing}
-\begin{lstlisting}
+\begin{lstlisting}[language={[Visual]Basic}]
+''' <summary>
+''' Calculates the area of a rectangle given its width and height.
+''' </summary>
+''' <param name="width">Width of the rectangle.</param>
+''' <param name="height">Height of the rectangle.</param>
+''' <returns>The area of the rectangle</returns>
+Public Shared Function CalculateRectangleArea(width As Double, 
+                                  height As Double) As Double
+    Return width * height
+End Function
+\end{lstlisting}
+\caption{Example of a VB.NET method with documentation}
+\label{lst:ex-vb-xml}
+\end{listing}
+
+\hfill
+
+We can conclude that the documentation comments alone are insufficient for the reference docs. 
+This is because they lack context, such as the corresponding member signature, which should be displayed in the documentation.
+For instance, note that the \texttt{param} element does not include any information about the parameter type.
+
+Therefore, we need to obtain the definitions of types, members, and other code-related information. 
+A straightforward approach applicable to any programming language is to parse the source code and extract the relevant information.
+One way to achieve this is by creating and using a custom parser, which is the approach used by e.g. \texttt{Doxygen}. 
+However, there is a major disadvantage -- complexity, since creating a language parser is a very complex task.
+Another, much easier, option is to use an existing parser, for instance \texttt{Roslyn}, which is what \texttt{DocFX} does internally. 
+Roslyn allows us to inspect the syntax tree and thus obtain the member signatures as well as to perform semantic analysis using the Semantic model.
+This way, we can easily obtain all members of a type and any data concerning it.
+
+The disadvantage of \texttt{Roslyn} is that it is limited only to 2 languages: C\# and Visual Basic .NET.
+There's an analogous library for \texttt{F\#}: \texttt{FSharp.Compiler.Service}, however, it has a different API, so integrating those 2 parsers would further complicate the process. 
+
+Since .NET is a managed environment, there is another way to develop a reference documentation generator, completely independent of the programming language: by extracting the data from an assembly. 
+Before we dive into further details, we need to explain the compilation process in more depth.
+
+\section{Compilation process in .NET}
+
+As stated in the .NET documentation~\cite{dotnet_execution_model} and illustrated in Figure~\ref{fig:net_compilation}, the compilation translates the source code of the program 
+into the common intermediate language (CIL), which is a CPU-independent set of instructions that can be efficiently converted to native code. 
+CIL includes instructions for loading, storing, initializing, and calling methods on objects, as well as instructions for arithmetic and logical operations, control flow, and other operations.
+During program execution, CIL is converted to CPU-specific code, typically by a just-in-time (JIT) compiler.
+
+In addition to CIL, the compiler also produces metadata, which describes the types in the code, including the definition of each type, the signatures of its members, and other data that the runtime uses at execution time, according to~\cite{dotnet_execution_model}.
+The CIL and metadata are contained in a .NET assembly, which is typically stored as a dynamic link library (\texttt{.dll}).
+
+One important observation is that the documentation comments are not part of the assembly.
+Instead, the compiler can optionally create an XML file containing the documentation of the declared types and their members, 
+which is typically done by setting the \texttt{GenerateDocumentationFile} or \texttt{DocumentationFile} 
+option, as mentioned in the MSBuild documentation~\cite{msbuild_docs}.
+Program~\ref{lst:ex-xml-output} shows the resulting XML file containing the documentation of the method shown in Program~\ref{lst:ex-cs-xml}.
+As we can see, the comments are stored inside a \texttt{member} element, which has a \texttt{name} attribute that uniquely identifies the corresponding type or type member.
+The value of the \texttt{name} attribute is prefixed with an \textit{M} and a colon, which indicates that the documentation belongs to a method.
+
+\begin{figure}
+\centering
+\includegraphics[width=1\linewidth]{img/compilation.png}
+\caption{Execution of a .NET program}
+\label{fig:net_compilation}
+\end{figure}
+
+\begin{listing}
+\begin{lstlisting}[language=XML]
 <?xml version="1.0"?>
 <doc>
     <assembly>
@@ -156,7 +117,7 @@ public static double CalculateRectangleArea(
             <param name="height">
                 Height of the rectangle.
             </param>
-            <returns>
+            <returns> 
                 The area of the rectangle.
             </returns>
         </member>
@@ -168,15 +129,39 @@ public static double CalculateRectangleArea(
 \label{lst:ex-xml-output}
 \end{listing}
 
-The extraction of the documentation comments will be another task performed by our generator, along with the reflection usage.
-To outline the process, we first need to parse the XML file. Then we can assign individual comments to the corresponding types or type members, identified by the \texttt{name} attribute.
+\hfill
+
+Using this knowledge, developing a generator that uses assembly as its input is quite straightforward; we just need to extract the relevant data from the assembly metadata and XML documentation file and combine it.
+A nice property of such generators, like \texttt{SHFB}, is that they automatically satisfy R5.
+On the other hand, the downside of this approach is the need for program compilation, i.e. the project must be built before the documentation is generated.
+However, this is not a limiting factor for us.
+Based on this, we can refine our objective -- to develop a reference
+documentation generator for .NET that uses assembly as its input.
+
+Since we have not explained it yet, we will briefly describe how to extract the type and member information from the assembly metadata.
+This is done using reflection, which in general refers to the ability of a program to inspect or modify other code or itself.
+Reflection allows us to load assemblies, obtain the declared types and type members and inspect their data.
+An example usage of reflection is shown in Program~\ref{lst:ex-reflection}, which presents a code snippet that prints the return type and name of all methods contained in the \texttt{Person} type.
+Notice that something similar, obviously much more complex, will be performed by our documentation generator.
+The snippet may thus serve as a good starting point for the type and member data extraction.
+
+TODO: pridat tohle jako requirement?
+
+\begin{listing}[b] 
+\begin{lstlisting}
+Type personType = typeof(Person);
+
+foreach (MethodInfo method in personType.GetMethods())
+{
+    Console.WriteLine(
+        $"{method.ReturnType.Name} {method.Name}");
+}
+\end{lstlisting}
+\caption{Code that inspects type methods using reflection}
+\label{lst:ex-reflection}
+\end{listing}
 
 \section{XML documentation tags}
-
-Interestingly, the set of XML documentation tags isn't explicitly declared. 
-Instead, there's a set of recommended tags described in the official documentation.
-As a consequence, any XML tag is valid and can be used in the documentation 
-(although in this case, it may not be correctly interpreted in the output).
 
 The recommended tags used in all .NET languages are the following:
 
@@ -246,7 +231,7 @@ Doxygen can also be used for user documentation, as it allows us to include cust
 
 By default, the documentation may be created in a light or dark mode; however, Doxygen supports further customization at various levels.
 It is possible to provide a custom stylesheet, page fragment, or the whole layout.
-
+ 
 An example reference documentation generated by Doxygen is shown in Figures \ref{fig:doxygen1} and \ref{fig:doxygen2}. Notice that the default UI is unfortunately quite old-school.
 
 \begin{figure}
