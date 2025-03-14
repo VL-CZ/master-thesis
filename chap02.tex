@@ -6,21 +6,31 @@ To fulfill the goals, we must first address the fundamental challenges associate
 
 Firstly, it is worth noting that all major .NET languages use structured XML comments, well known from C\#, to document types and type members.
 Interestingly, the set of XML documentation tags is not explicitly defined.
-Instead, the official documentation provides a set of recommended tags.
+Instead, the official documentation~\cite{csharp_xml_docs} provides a set of recommended tags.
 As a result, any XML tag is valid and can be used in the documentation comments
 (although in this case, it may not be correctly interpreted).
 
 An example of a C\# method with XML documentation is shown in Program~\ref{lst:ex-cs-xml}; 
 notice that both parameters and the return value are documented as well (using the \texttt{param} and \texttt{returns} tags, respectively).
-Program~\ref{lst:ex-vb-xml} displays an analogous method in VB .NET.
-We can see that Visual Basic uses a different symbol for denoting documentation comments: triple single-quote mark.
-However, the format of the comments remains the same, which is crucial.
+Program~\ref{lst:ex-vb-xml} displays an analogous method in VB.NET.
+We can see that VB.NET uses a different symbol for denoting documentation comments: triple single-quote mark.
+However, the format of the comments remains the same, which is crucial, because the comments can be processed similarly, regardless of the language.
+
+On the other hand, the documentation comments lack the context, such as:
+\begin{itemize}
+    \item the method name
+    \item return value
+    \item parameter types
+    \item modifiers (\texttt{public}, \texttt{static}, etc.)
+\end{itemize}
+
+As shown in Program~\ref{lst:ex-cs-xml}, none of this information is present in the XML, even though it is essential for the reference documentation.
+Thus, we can conclude that the documentation comments alone are insufficient for creating the reference docs. 
 
 \begin{listing}
 \begin{lstlisting}
 /// <summary>
-/// Calculates the area of a rectangle given its width
-/// and height.
+/// Calculates the area of a rectangle given its width and height.
 /// </summary>
 /// <param name="width">Width of the rectangle.</param>
 /// <param name="height">Height of the rectangle.</param>
@@ -43,44 +53,77 @@ public static double CalculateRectangleArea(
 ''' <param name="width">Width of the rectangle.</param>
 ''' <param name="height">Height of the rectangle.</param>
 ''' <returns>The area of the rectangle</returns>
-Public Shared Function CalculateRectangleArea(width As Double, 
-                                  height As Double) As Double
-    Return width * height
+Public Shared Function CalculateRectangleArea(
+    width As Double, height As Double) As Double
+        Return width * height
 End Function
 \end{lstlisting}
 \caption{Example of a VB.NET method with documentation}
 \label{lst:ex-vb-xml}
 \end{listing}
 
-\hfill
+\section{Extracting the context}
 
-We can conclude that the documentation comments alone are insufficient for the reference docs. 
-This is because they lack context, such as the corresponding member signature, which should be displayed in the documentation.
-For instance, note that the \texttt{param} element does not include any information about the parameter type.
+As discussed in the previous section, we need to obtain the definitions of types, members, and other code-related information (modifiers, attributes, etc.).
+A straightforward technique applicable to any programming language is to parse the source code and extract the relevant information.
 
-Therefore, we need to obtain the definitions of types, members, and other code-related information. 
-A straightforward approach applicable to any programming language is to parse the source code and extract the relevant information.
-One way to achieve this is by creating and using a custom parser, which is the approach used by e.g. \texttt{Doxygen}. 
-However, there is a major disadvantage -- complexity, since creating a language parser is a very complex task.
-Another, much easier, option is to use an existing parser, for instance \texttt{Roslyn}, which is what \texttt{DocFX} does internally. 
-Roslyn allows us to inspect the syntax tree and thus obtain the member signatures as well as to perform semantic analysis using the Semantic model.
-This way, we can easily obtain all members of a type and any data concerning it.
+\subsection*{Using a custom language parser}
 
-The disadvantage of \texttt{Roslyn} is that it is limited only to 2 languages: C\# and Visual Basic .NET.
-There's an analogous library for \texttt{F\#}: \texttt{FSharp.Compiler.Service}, however, it has a different API, so integrating those 2 parsers would further complicate the process. 
+One way to achieve the parsing is by creating and using a custom language parser, which is the approach used by e.g. \texttt{Doxygen}. 
+Although creating a language parser is often seen as a complex task, it could be partially simplified for our purposes, because we can skip the method bodies and parse solely the signatures.
+However, there are also numerous other challenges related to this approach.
 
-Since .NET is a managed environment, there is another way to develop a reference documentation generator, completely independent of the programming language: by extracting the data from an assembly. 
+We will illustrate the first one using a simple example. Consider a method that returns an instance of \texttt{Point} class.
+The parser can recognize the name of the return type, but it is not easy to discover any other information about the type, such as its namespace.
+This is a problem, because in the reference documentation we typically want to uniquely identify the type by providing a link to its definition or showing its fully qualified name, so the type name alone is insufficient.
+Moreover, multiple types with the same name may be declared in different namespaces.
+
+One possible solution would be to browse all files within the namespaces used by the current file and search for the given type.
+Nevertheless, this technique fails if the type is declared in an external library, as the source code is not part of the library distribution.
+
+It is worth noting that the similar issue applies to, for instance, base types. 
+Without properly resolving the base type, it becomes difficult to obtain the inherited members, and therefore they cannot be included in the resulting documentation.
+
+Another drawback is that a custom parser is not fully language independent, because each language has a different syntax. 
+Therefore, to satisfy the requirement R5, we would need either a separate parser for each language or a shared one capable of handling all languages.
+However, this would significantly complicate the process, since we would need to resolve many edge cases for each language.
+Furthermore, such a parser would need updates for every new language feature, which also adds a bit of complexity.
+
+\subsection*{Using an existing parser}
+
+Another, much easier, option is to use an existing language parser, as \texttt{DocFX} does internally. 
+The most popular tool for this purpose is the C\# compiler, \texttt{Roslyn}, which, among its other capabilities, can parse the source code.
+With Roslyn, we can easily inspect the syntax tree and perform semantic analysis using the semantic model, as described in the documentation~\cite{roslyn}.
+This way, we can easily obtain all types, type members, and all relevant data.
+The semantic model is essential because it resolves the issues with type identification discussed in the previous chapter.
+Furthermore, the API of the semantic model is quite easy to use, for instance, a method is represented by the \texttt{IMethodSymbol} interface, which provides access to various data concerning the method.
+For example, if we want to check whether a method is static, we can simply use the \texttt{IMethodSymbol.IsStatic} property. 
+The interface also offers many other properties and methods; notably, there is a method for retrieving the corresponding documentation comment.
+
+The disadvantage of \texttt{Roslyn} is that it is limited only to 2 languages: C\# and VB.NET.
+There is an analogous library for parsing \texttt{F\#} code: \texttt{FSharp.Compi\-ler.Service}~\cite{fsharp_compiler_service}; 
+however, it has a fundamentally different API, designed for F\# usage.
+The main difference is that since F\# is primarily a functional programming language, the API heavily uses functional constructs, which makes its usage from C\# quite inconvenient.
+Moreover, the objects representing F\# types and members are completely unrelated to the ones used by \texttt{Roslyn}, i.e. they do not share any common superclasses (except \texttt{object}) or interfaces.
+As a result, integrating these two libraries would be complicated, as we would probably end up with two completely separate codebases: one using \texttt{Roslyn} and one using \texttt{FSharp.Compiler.Service}.
+
+\subsection*{Using an assembly as the input}
+
+Fortunately, the context information necessary for reference documentation is also contained within an assembly. 
+This brings us to the idea of creating a generator that uses the assembly as its input and extracts the relevant data using reflection.
+The key advantage of such generators, like \texttt{SHFB}, is that they are naturally language independent, meaning they automatically satisfy the requirement R5.
 Before we dive into further details, we need to explain the compilation process in more depth.
 
 \section{Compilation process in .NET}
 
 As stated in the .NET documentation~\cite{dotnet_execution_model} and illustrated in Figure~\ref{fig:net_compilation}, the compilation translates the source code of the program 
 into the common intermediate language (CIL), which is a CPU-independent set of instructions that can be efficiently converted to native code. 
-CIL includes instructions for loading, storing, initializing, and calling methods on objects, as well as instructions for arithmetic and logical operations, control flow, and other operations.
 During program execution, CIL is converted to CPU-specific code, typically by a just-in-time (JIT) compiler.
 
 In addition to CIL, the compiler also produces metadata, which describes the types in the code, including the definition of each type, the signatures of its members, and other data that the runtime uses at execution time, according to~\cite{dotnet_execution_model}.
 The CIL and metadata are contained in a .NET assembly, which is typically stored as a dynamic link library (\texttt{.dll}).
+
+\section{XML documentation file}
 
 One important observation is that the documentation comments are not part of the assembly.
 Instead, the compiler can optionally create an XML file containing the documentation of the declared types and their members, 
@@ -96,6 +139,27 @@ The value of the \texttt{name} attribute is prefixed with an \textit{M} and a co
 \caption{Execution of a .NET program}
 \label{fig:net_compilation}
 \end{figure}
+
+\section*{Evaluation of approaches}
+
+In the previous sections, we have explained why creating a custom language parser or using an existing one may not be the best option.
+
+On the other hand, using assembly as an input seems to be a reasonable choice.
+Additionally, the development of such a generator is quite straightforward; we just need to extract the relevant data from the assembly metadata and combine it with the documentation comments retrieved from the XML documentation file.
+However, this approach also has a downside: the need for program compilation, i.e. the project must be built before the documentation is generated.
+Fortunately, this is not a limiting factor, since compiling the program is a routine task.
+
+It is crucial to mention that all the information relevant for the reference documentation about types and members can be retrieved from the metadata. 
+For instance, the object representing a method (i.e. \texttt{MethodInfo}) contains properties such as \texttt{IsStatic}, \texttt{IsPublic}, etc.
+
+Naturally, this also makes sense, because .NET package distributions contain assemblies, rather than source code.
+For example, when a method from a library is called, the caller simply needs to know whether it is e.g. static, to call it correctly.
+In general, any information that affects the caller must be stored somewhere in the assembly, or it can be inferred.
+There may be some constructs that are purely a language feature and cannot be deduced from the assembly; however, these are only an implementation detail.
+Therefore, these data are irrelevant for the reference documentation, because they do not have any impact on the caller.
+
+In conclusion, we can refine our objective -- to develop a reference
+documentation generator for .NET that uses assembly as its input.
 
 \begin{listing}
 \begin{lstlisting}[language=XML]
@@ -129,110 +193,102 @@ The value of the \texttt{name} attribute is prefixed with an \textit{M} and a co
 \label{lst:ex-xml-output}
 \end{listing}
 
-\hfill
+\section{Further requirement analysis}
 
-Using this knowledge, developing a generator that uses assembly as its input is quite straightforward; we just need to extract the relevant data from the assembly metadata and XML documentation file and combine it.
-A nice property of such generators, like \texttt{SHFB}, is that they automatically satisfy R5.
-On the other hand, the downside of this approach is the need for program compilation, i.e. the project must be built before the documentation is generated.
-However, this is not a limiting factor for us.
-Based on this, we can refine our objective -- to develop a reference
-documentation generator for .NET that uses assembly as its input.
+In this chapter, we will analyze the requirements R1 - R7, outlined in the first chapter, in more detail.
 
-Since we have not explained it yet, we will briefly describe how to extract the type and member information from the assembly metadata.
-This is done using reflection, which in general refers to the ability of a program to inspect or modify other code or itself.
-Reflection allows us to load assemblies, obtain the declared types and type members and inspect their data.
-An example usage of reflection is shown in Program~\ref{lst:ex-reflection}, which presents a code snippet that prints the return type and name of all methods contained in the \texttt{Person} type.
-Notice that something similar, obviously much more complex, will be performed by our documentation generator.
-The snippet may thus serve as a good starting point for the type and member data extraction.
+\subsubsection*{R1: Zero-configuration build of the documentation}
+As mentioned before, the generator should be easy to use, the only mandatory argument should be the 
+input -- i.e. an assembly.
+The remaining optional arguments, such as the output folder, should have reasonable default values.
+There should be support for configuration using a YAML file and command line arguments.
+If an option is specified both on the command line and in the configuration file, the command line value should take precedence.
 
-TODO: pridat tohle jako requirement?
+\subsubsection*{R2: Support for custom templates}
+The generator should be designed in an extensible way.
+The users should be able to write their own templates using a template engine of their choice. using the provided data representing the types and members.
 
-\begin{listing}[b] 
-\begin{lstlisting}
-Type personType = typeof(Person);
+TODO: zminit tady Razor? nebo jen obecne?
 
-foreach (MethodInfo method in personType.GetMethods())
-{
-    Console.WriteLine(
-        $"{method.ReturnType.Name} {method.Name}");
-}
-\end{lstlisting}
-\caption{Code that inspects type methods using reflection}
-\label{lst:ex-reflection}
-\end{listing}
 
-\section{XML documentation tags}
+\subsubsection*{R3: Support for custom static pages}
+The generator should provide an option to include a folder containing static files, specifically HTML and Markdown (with Markdown being converted to HTML).
+The generator should then wrap those pages in the default layout and copy them to the output folder, thus adding them to the resulting documentation.
+Additionally, custom CSS styles, JavaScript and various image formats should be copied as well.
 
-The recommended tags used in all .NET languages are the following:
+\subsubsection*{R4: Support for documentation versioning}
+There should be an option (both on command line and in the configuration file) to create a specific version of the documentation, e.g. \texttt{v1.2}.
+The generator should then store the output not to the specified folder, but to its subfolder identified by the version number (\texttt{v1.2} in our case).
+Thus, multiple versions of the documentation may coexist in the output folder.
 
-\subsection{Summary}
-The \texttt{summary} tag is the most commonly used documentation tag and provides a description of a type or member. 
-It can be applied to any type or member.
+The UI should contain a dropdown menu, allowing the users to select the documentation version.
+Whenever a new version of the documentation is generated, the generator should process all the older versions and add the most recent version to each dropdown.
 
-\subsection{Remarks}
-The \texttt{remarks} can also document any type or member. 
-Its purpose is to document any additional information not covered by the \texttt{summary} tag.
+\subsubsection*{R5: Language independence}
+The generator should process programs written in any .NET language.
+Since we have decided to extract the context data from an assembly, this requirement is satisfied automatically.
 
-\subsection{Param}
-The \texttt{param} tag documents a parameter, which is identified by the \texttt{name} attribute.
+\subsubsection*{R6: Modern UI}
+The default UI should use the components provided by the \texttt{Bootstrap}~\cite{boostrap} framework.
 
-\subsection{Returns}
-The \texttt{returns} tags provides documentation for a method's return value.
+\subsubsection*{R7: Platform independence}
+The generator should not use any platform dependent code or library.
+Sticking to this rule is enough, because .NET is a multiplatform framework
 
-\subsection{Typeparam}
+\section{Existing technologies}
 
-\subsection{Exception}
+In this chapter, we will briefly examine the other generators focusing on their core functionality and default UI to define additional requirements.
+For better understanding, we will present it using screenshots.
 
-\subsection{Value}
+As we can see in Figures~\ref{fig:doxygen3} and~\ref{fig:shfb3}, both \texttt{Doxygen} and \texttt{SHFB} generate a separate page for each namespace,
+displaying all the contained types \textit{(A)}.
+Then, each type has its own page, as shown in Figures~\ref{fig:doxygen1} and~\ref{fig:shfb1} displaying its documentation \textit{(B)} as well as the list of declared members \textit{(C)}.
+In Figure~\ref{fig:doxygen2}, we can notice that while Doxygen shows the members with their documentation \textit{(D)} at the bottom of the type page,
+SHFB uses a different approach -- using a separate page for each member \textit{(E)}, as displayed in Figure~\ref{fig:shfb2}).
+Also notice that both generators have a search bar at the top of the page \textit{(F)}.
+This knowledge helps us formulate the following requirements, so we do not miss any basic functionality:
 
-\subsection{Paramref}
+\subsubsection*{R8: Index page of the API}
+TODO
 
-\subsection{Typeparamref}
+\subsubsection*{R9: Separate page for each namespace}
+There should be a page for each namespace, displaying all of the types contained.
+For each type, there should be a link to its definition and its documentation.
 
-\subsection{See}
+\subsubsection*{R10: Separate page for each type}
+There should be a page for each type displaying its documentation.
+Furthermore, below the type definition, there should be a list of declared members, grouped
+into categories based on the member kind (field, property, method, etc.), similarly to \texttt{SHFB}.
+Each member should display its signature in C\# format and the documentation.
 
-\subsection{Seealso}
+\subsubsection*{R11: Top menu}
+There should be a menu at the top of the page.
+The following items should be included:
 
-\subsection{Para}
+\begin{itemize}
+    \item the index page
+    \item all pages stored in the user-specified folder with static files
+\end{itemize}
 
-\subsection{C}
+On top of that, each subfolder of the user-specified static files folder should be represented by a dropdown menu, listing the contained documents.
+Static pages located 3 or more levels deep in the folder will not be included in the menu.
 
-\subsection{Code}
+\subsubsection*{R12: Search bar}
+The top menu should include a search bar, allowing the users to search for types and members.
 
-\subsection{Example}
+\begin{figure}
+\centering
+\includegraphics[width=1\linewidth]{img/doxygen3.png}
+\caption{Documentation generated by Doxygen -- namespace detail}
+\label{fig:doxygen3}
+\end{figure}
 
-\subsection{List}
-
-\subsection{Item}
-
-\subsection{Inheritdoc}
-
-\subsection{Include}
-
-\section{Existing Technologies}
-
-\subsection{Doxygen}
-
-Doxygen is a well-established documentation generator that supports many languages, including C++, C\#, Java, PHP, and Python.
-It is a typical example of a generator parsing source code; 
-interestingly, there is a shared parser for all languages implemented using \texttt{flex}.~\cite{doxygen_docs} 
-
-Doxygen is highly configurable, offering more than 300 various options.
-
-TODO: rozepsat options? Nebo staci jen link?
-
-The configuration is stored as a collection of key-value pairs in a configuration file, typically called \texttt{Doxyfile}.
-The downside of the extensive option support is the complexity of the configuration file,
-which has by default over 2000 lines (most of the content consists of the individual option documentations, though).
-
-The documentation is built by running \texttt{Doxygen} from the command line.
-In addition to HTML, there are multiple output formats available, such as LaTeX and XML.
-Doxygen can also be used for user documentation, as it allows us to include custom static pages from the provided files in \texttt{.dox}, \texttt{.txt}, or \texttt{.md} format.~\cite{doxygen_docs}
-
-By default, the documentation may be created in a light or dark mode; however, Doxygen supports further customization at various levels.
-It is possible to provide a custom stylesheet, page fragment, or the whole layout.
- 
-An example reference documentation generated by Doxygen is shown in Figures \ref{fig:doxygen1} and \ref{fig:doxygen2}. Notice that the default UI is unfortunately quite old-school.
+\begin{figure}
+\centering
+\includegraphics[width=1\linewidth]{img/sandcastle3.png}
+\caption{Documentation generated by SHFB -- namespace detail}
+\label{fig:shfb3}
+\end{figure}
 
 \begin{figure}
 \centering
@@ -243,50 +299,16 @@ An example reference documentation generated by Doxygen is shown in Figures \ref
 
 \begin{figure}
 \centering
-\includegraphics[width=1\linewidth]{img/doxygen2.png}
-\caption{Documentation generated by Doxygen -- members detail}
-\label{fig:doxygen2}
-\end{figure}
-
-\subsection{DocFX}
-
-
-DocFX is a popular reference documentation generator, that can be also used as a static site generator. 
-
-It can process both compiled assemblies and source code.
-
-Configuration in docfx.json
-
-installed as a .NET tool.
-
-Several templates available by default.
-
-Custom templates: Using HTML and CSS
-
-\subsection{Sandcastle Help File Builder}
-
-Sandcastle Help File Builder (SHFB) is another documentation generator for .NET.
-It uses reflection to extract the data from the assembly.
-
-The configuration is stored in a standard MSBuild-format project file.
-This means that the documentation can be built using \texttt{dotnet build} or \texttt{msbuild} command.
-
-SHFB supports several custom documentation tags, for instance \texttt{threadsafety} tag denoting the thread safety of the member.
-
-There are several output formats available: HTML, Markdown, and Open XML document.
-The default HTML template has a separate page for each member.
-
-TODO: customization
-
-The default UI is shown in Figure \ref{fig:shfb1} -- type detail and Figure \ref{fig:shfb2} -- method detail.
-
-The major disadvantage of SHFB, is that it requires .NET framework, therefore it cannot be run outside Windows.
-
-\begin{figure}
-\centering
 \includegraphics[width=1\linewidth]{img/sandcastle1.png}
 \caption{Documentation generated by SHFB -- type detail}
 \label{fig:shfb1}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics[width=1\linewidth]{img/doxygen2.png}
+\caption{Documentation generated by Doxygen -- members detail}
+\label{fig:doxygen2}
 \end{figure}
 
 \begin{figure}
@@ -296,56 +318,60 @@ The major disadvantage of SHFB, is that it requires .NET framework, therefore it
 \label{fig:shfb2}
 \end{figure}
 
-\subsection{JavaDoc}
+All of the generators also have the support for cross-references.
+This means that, for instance, the member and parameter types contain a link to their definition, if possible.
+% The same applies to the types and members referenced in documentation comments using \texttt{<see>} of \texttt{<seealso>} tags.
+This gives us another requirement:
 
-Javadoc is a documentation generator for Java; furthermore, it is even part of the JDK.
+\subsubsection*{R13: Support for cross-references}
+Types of members, parameters, and return values should contain a link to their definition.
+Support for the types declared in the same project is mandatory. 
+Optionally, we can also add links for standard library types.
 
-The javadoc command parses the declarations and documentation comments in a set of Java source files and produces a corresponding set of HTML pages that describe (by default) the public and protected classes,
+Other requirements include the following:
 
-Can be run from command line.
+TODO: rozepsat context
 
-Super easy to use - no configuration. 
-However, configuration is possible using project file.
+\subsubsection*{R14: Support for selecting multiple assemblies}
+The generator should support projects consisting of multiple assemblies.
+TODO: vice rozepsat
 
-By default, it supports only HTML output, others can be achieved using (or writing own) extensions.
+\subsubsection*{R15: Option for selecting types/members based on their accessibility}
+There should be an option to select the types and members based on their accessibility level, such as private or public.
 
-\subsection{Sphinx}
+\subsubsection*{R16: Option for including/excluding the inherited members}
+There should be an option allowing the user to include or exclude the members inherited from base classes.
 
-Sphinx is a documentation generator or a tool that translates a set of plain text source files into various output formats, automatically producing cross-references, indices, etc. That is, if you have a directory containing a bunch of reStructuredText or Markdown documents, Sphinx can generate a series of HTML files, a PDF file (via LaTeX), man pages and much more.
+\subsubsection*{R17: Responsive UI}
+The UI should be reasonably responsive.
+TODO: vic do detailu
 
-Sphinx focuses on documentation, in particular handwritten documentation, however, Sphinx can also be used to generate blogs, homepages and even books. Much of Sphinx’s power comes from the richness of its default plain-text markup format, reStructuredText, along with its significant extensibility capabilities.
+\subsubsection*{R18: Installation as a .NET tool}
+The generator should be installed as a .NET tool.
 
-Quite complex configration options, many files.
+\section{XML documentation tags}
 
-Originally for Python, but includes support for other languages such as JavaScript and C++.
+The recommended tags used in all .NET languages are the following:
 
-Many built in themes, rtd is quite popular.
+\begin{table}[ht]
+\centering
+\begin{tabular}{|p{4cm}|p{4cm}|p{4cm}|}
+\hline
+\textbf{Tag} & \textbf{Description} & \textbf{Applicable to} \\
+\hline
+\texttt{<summary> DOC </summary>} & Describes a type or member. & Any type and member. \\
+\hline
+\texttt{<remarks> DOC </remarks>} & Provides additional information about a type or member. & Any type and member. \\
+\hline
+\texttt{<param name="..."> DOC </param>} & Documents a parameter, identified by the \texttt{name} attribute. & Methods and constructors \\
+\hline
+\texttt{<returns> DOC </returns>} & Documents a return value. & Methods \\
+\hline
+\end{tabular}
+\caption{Recommended XML Tags}
+\end{table}
 
-\section{Goals (or Requirements)}
-
-\subsection{Separate Page for Each Type Containing Its Members}
-TODO: nechat? pridat nejaky nakres?
-\subsection{List of Namespaces and Types Contained}
-\subsection{Cross-references support}
-
-The parameter and return types should contain a link to their definition, if possible.
-The same applies to the types and members referenced by \texttt{<see>} of \texttt{<seealso>} tags.
-
-Support for the types declared in the same project is mandatory.
-Optionally, we can also add support for standard library types.
-
-\subsection{Search bar}
-There should be a search bar at the top of the page, allowing the user to search for the types and members.
-
-\subsection{Zero Configuration Build}
-\subsection{Support for Selecting Just the Specified Assemblies}
-\subsection{Support for Selecting Types/Elements with the Given Accessibility}
-\subsection{Modern Looking UI}
-\subsection{Support for Custom Templates}
-\subsection{Multiplatform}
-\subsection{Installation as a .NET Tool}
-\subsection{Support for Documentation Versioning}
-\subsection{Support for .NET Languages}
+\newpage
 
 \section{Feature comparison}
-Include a table that compares the application with the existing tools.
+Porovnat jestli ostatni generator splnuji pozadavky???

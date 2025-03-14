@@ -112,7 +112,7 @@ Based on these insights, we introduce another requirement:
 \end{itemize}
 
 We should also consider that the program to be documented may be written in any .NET language. 
-Although C\# is the most popular, other .NET languages, such as F\# are also used in specific cases.
+Although C\# is the most popular, other .NET languages, notably F\# and VB.NET, are also used in specific cases.
 We do not want to exclude libraries written in those languages, so our app should be capable of handling programs written in any popular .NET language.
 This does not mean we aim to thoroughly test e.g. all F\# features; instead, the generator should be in principle not tied to a specific language, such as C\#.
 It is also important to mention that this applies only to the input of the documentation generator.
@@ -145,7 +145,7 @@ This gives us the final requirement:
 In this chapter, we will summarize the goals of this thesis.
 
 \begin{itemize}
-    \item G1: Further analysis of the requirements. The requirements outlined above are quite high-level, so we need to examine them in greater detail.
+    \item G1: Further analysis of the requirements. The requirements outlined above are quite high-level, so we need to examine them in greater detail and possibly create new ones.
     \item G2: Develop a reference documentation generator satisfying requirements R1 -- R7.
     \item G3: Test the generator on itself (i.e. create reference documentation of our app).
     \item G4: Test the generator on a selected well-documented NuGet package (i.e. generate its reference documentation). This should demonstrate that our app works as expected on a third-party project.
