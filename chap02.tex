@@ -75,16 +75,16 @@ However, there are also numerous other challenges related to this approach.
 
 We will illustrate the first one using a simple example. Consider a method that returns an instance of \texttt{Point} class.
 The parser can recognize the name of the return type, but it is not easy to discover any other information about the type, such as its namespace.
-This is a problem, because in the reference documentation we typically want to uniquely identify the type by providing a link to its definition or showing its fully qualified name, so the type name alone is insufficient.
+This is a problem, because in the reference documentation, we typically want to uniquely identify the type by providing a link to its definition or showing its fully qualified name, so the type name alone is insufficient.
 Moreover, multiple types with the same name may be declared in different namespaces.
 
 One possible solution would be to browse all files within the namespaces used by the current file and search for the given type.
 Nevertheless, this technique fails if the type is declared in an external library, as the source code is not part of the library distribution.
 
-It is worth noting that the similar issue applies to, for instance, base types. 
+It is worth noting that a similar issue applies to, for instance, base types. 
 Without properly resolving the base type, it becomes difficult to obtain the inherited members, and therefore they cannot be included in the resulting documentation.
 
-Another drawback is that a custom parser is not fully language independent, because each language has a different syntax. 
+Another drawback is that a custom parser is not fully language-independent, because each language has a different syntax. 
 Therefore, to satisfy the requirement R5, we would need either a separate parser for each language or a shared one capable of handling all languages.
 However, this would significantly complicate the process, since we would need to resolve many edge cases for each language.
 Furthermore, such a parser would need updates for every new language feature, which also adds a bit of complexity.
@@ -111,7 +111,7 @@ As a result, integrating these two libraries would be complicated, as we would p
 
 Fortunately, the context information necessary for reference documentation is also contained within an assembly. 
 This brings us to the idea of creating a generator that uses the assembly as its input and extracts the relevant data using reflection.
-The key advantage of such generators, like \texttt{SHFB}, is that they are naturally language independent, meaning they automatically satisfy the requirement R5.
+The key advantage of such generators, like \texttt{SHFB}, is that they are naturally language-independent, meaning they automatically satisfy the requirement R5.
 Before we dive into further details, we need to explain the compilation process in more depth.
 
 \section{Compilation process in .NET}
@@ -123,6 +123,13 @@ During program execution, CIL is converted to CPU-specific code, typically by a 
 In addition to CIL, the compiler also produces metadata, which describes the types in the code, including the definition of each type, the signatures of its members, and other data that the runtime uses at execution time, according to~\cite{dotnet_execution_model}.
 The CIL and metadata are contained in a .NET assembly, which is typically stored as a dynamic link library (\texttt{.dll}).
 
+\begin{figure}
+\centering
+\includegraphics[width=1\linewidth]{img/compilation.png}
+\caption{Execution of a .NET program}
+\label{fig:net_compilation}
+\end{figure}
+
 \section{XML documentation file}
 
 One important observation is that the documentation comments are not part of the assembly.
@@ -133,35 +140,7 @@ Program~\ref{lst:ex-xml-output} shows the resulting XML file containing the docu
 As we can see, the comments are stored inside a \texttt{member} element, which has a \texttt{name} attribute that uniquely identifies the corresponding type or type member.
 The value of the \texttt{name} attribute is prefixed with an \textit{M} and a colon, which indicates that the documentation belongs to a method.
 
-\begin{figure}
-\centering
-\includegraphics[width=1\linewidth]{img/compilation.png}
-\caption{Execution of a .NET program}
-\label{fig:net_compilation}
-\end{figure}
-
-\section*{Evaluation of approaches}
-
-In the previous sections, we have explained why creating a custom language parser or using an existing one may not be the best option.
-
-On the other hand, using assembly as an input seems to be a reasonable choice.
-Additionally, the development of such a generator is quite straightforward; we just need to extract the relevant data from the assembly metadata and combine it with the documentation comments retrieved from the XML documentation file.
-However, this approach also has a downside: the need for program compilation, i.e. the project must be built before the documentation is generated.
-Fortunately, this is not a limiting factor, since compiling the program is a routine task.
-
-It is crucial to mention that all the information relevant for the reference documentation about types and members can be retrieved from the metadata. 
-For instance, the object representing a method (i.e. \texttt{MethodInfo}) contains properties such as \texttt{IsStatic}, \texttt{IsPublic}, etc.
-
-Naturally, this also makes sense, because .NET package distributions contain assemblies, rather than source code.
-For example, when a method from a library is called, the caller simply needs to know whether it is e.g. static, to call it correctly.
-In general, any information that affects the caller must be stored somewhere in the assembly, or it can be inferred.
-There may be some constructs that are purely a language feature and cannot be deduced from the assembly; however, these are only an implementation detail.
-Therefore, these data are irrelevant for the reference documentation, because they do not have any impact on the caller.
-
-In conclusion, we can refine our objective -- to develop a reference
-documentation generator for .NET that uses assembly as its input.
-
-\begin{listing}
+\begin{listing}[H]
 \begin{lstlisting}[language=XML]
 <?xml version="1.0"?>
 <doc>
@@ -193,13 +172,156 @@ documentation generator for .NET that uses assembly as its input.
 \label{lst:ex-xml-output}
 \end{listing}
 
+\section*{Evaluation of approaches}
+
+In the previous sections, we have explained why creating a custom language parser or using an existing one may not be the best option.
+
+On the other hand, using assembly as an input seems to be a reasonable choice.
+Additionally, the development of such a generator is quite straightforward; we just need to extract the relevant data from the assembly metadata and combine it with the documentation comments retrieved from the XML documentation file.
+However, this approach also has a downside: the need for program compilation, i.e. the project must be built before the documentation is generated.
+Fortunately, this is not a limiting factor, since compiling the program is a routine task.
+
+It is crucial to mention that all the information relevant to the reference documentation about types and members can be retrieved from the metadata. 
+For instance, the object representing a method (i.e. \texttt{MethodInfo}) contains properties such as \texttt{IsStatic}, \texttt{IsPublic}, etc.
+
+Naturally, this also makes sense, because .NET package distributions contain assemblies, rather than source code.
+For example, when a method from a library is called, the caller simply needs to know whether it is e.g. static, to call it correctly.
+In general, any information that affects the caller must be stored somewhere in the assembly, or it can be inferred.
+Some constructs may be purely language features and cannot be deduced from the assembly; however, these are only implementation details.
+Therefore, such data are irrelevant to the reference documentation because they do not have any impact on the caller.
+
+In conclusion, we can refine our objective -- to develop a reference
+documentation generator for .NET that uses assembly as its input.
+
+\section{XML documentation tags}
+
+The recommended tags used in all .NET languages are the following:
+
+\subsection*{Top-level tags}
+
+There are several common top-level tags.
+The most common tag is \texttt{summary}, which describes a type or member.
+Sometimes, we need to document any supplementary information, which can be done using a \texttt{remarks} tag.
+For documenting parameters, identified by their names, we use \texttt{param} element.
+Analogously, there is a \texttt{typeparam} tag, intended for documentation of type parameters, 
+We can also provide documentation to a return value, with the help of a \texttt{returns} attribute.
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{|p{6cm}|p{6cm}|}
+\hline
+\textbf{Tag} & \textbf{Description} \\
+\hline
+\texttt{<summary>} & Describes a type or member. \\
+\hline
+\texttt{<remarks>} & Provides additional information about a type or member. \\
+\hline
+\texttt{<param name="...">} & Documents a parameter, identified by the \texttt{name} attribute \\
+\hline
+\texttt{<typeparam name="...">} & Documents a type parameter, identified by the \texttt{name} attribute. \\
+\hline
+\texttt{<returns>} & Documents a return value. \\
+\hline
+\texttt{<value>} & Documents a property value. \\
+\hline
+\texttt{<exception cref="...">} & Specifies and describes an exception that may be technically thrown. \\
+\hline
+\texttt{<seealso cref="..." /> } & Specifies a link to a related type or member. \\
+\hline
+\texttt{<seealso href="...">} & Specifies a link to a related URL. \\
+\hline
+\end{tabular}
+\caption{Top-level XML tags}
+\label{table:top-level-tags}
+\end{table}
+
+Inside these elements, there is documentation.
+Several exceptions:
+
+\subsubsection*{Cref attribute}
+As shown in Table~\ref{table:top-level-tags}, some tags have a \texttt{cref} attribute.
+This attribute documentation tag means "code reference", as described in the documentation~\cite{csharp_xml_docs}.
+It specifies that the inner text of the tag is a code element -- i.e. a type or type member.
+Documentation tools like DocFX and Sandcastle use the cref attributes to automatically generate hyperlinks to the page where the type or member is documented.
+
+The \texttt{<summary>}, \texttt{<remarks>}, and \texttt{<seealso>} tags can be applied to any type or member.
+The other top-level tags are typically provided only for a selection of types or members, as shown below.
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{|p{6cm}|p{6cm}|}
+\hline
+\textbf{Tag} & \textbf{Applicable to} \\
+\hline
+\texttt{<param name="...">} & Methods and constructors \\
+\hline
+\texttt{<typeparam name="...">} & Generic types and methods \\
+\hline
+\texttt{<returns>} & Methods \\
+\hline
+\texttt{<value>} & Properties \\
+\hline
+\texttt{<exception cref="...">} & Methods, properties and events \\
+\hline
+\end{tabular}
+\caption{Recommended XML Tags}
+\end{table}
+
+Furthermore, several tags, notably param, typeparam, exception and seealso may be present multiple times in the definition.
+
+The following tags may be present inside the top-level tags and are commonly recognized.
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{|p{6cm}|p{6cm}|}
+\hline
+\textbf{Tag} & \textbf{Description} \\
+\hline
+\texttt{<c>...</c>} & Inline code. \\
+\hline
+\texttt{<code>...</code>} & Code block. \\
+\hline
+\texttt{<example>...</example>} & Example block. \\
+\hline
+\texttt{<list>...</list>} & Example block. \\
+\hline
+\texttt{<para>...</para>} & Paragraph. \\
+\hline
+\texttt{<paramref name="name"/>} & Parameter reference. \\
+\hline
+\texttt{<see cref="..."/>} & Parameter reference. \\
+\hline
+\texttt{<see href="..."/>} & Parameter reference. \\
+\hline
+\texttt{<see langword="..."/>} & Parameter reference. \\
+\hline
+\texttt{<typeparamref name="name"/>} & Type parameter reference. \\
+\hline
+\end{tabular}
+\caption{Recommended XML Tags}
+\end{table}
+
+list - item, etc.
+
+There are two remaining commonly used tags -- \texttt{<include>} and \texttt{<inheritdoc>}.
+The \texttt{<include>} tag allows us to import the documentation from an external XML file by specifying the file path and the path to the element to include.
+Note that this tag is unsupported in some languages, such as F\#.
+When creating the XML documentation file, the compiler replaces the \texttt{<include>} tags with the actual documentation.
+Thus, the \texttt{<include>} elements are not present in the resulting documentation file, meaning that we do not need to process them in any way.
+
+inhertitdoc allows to inherit documentation. it has 2 optional arguments: cref and path.
+it can be applied to any type and member. type, inherit from base type or interfaces. member, base definition, interface definition.
+
+\newpage
+
 \section{Further requirement analysis}
 
-In this chapter, we will analyze the requirements R1 - R7, outlined in the first chapter, in more detail.
+In this section, we will analyze the requirements R1 - R7, outlined in the first chapter, in more detail.
 
 \subsubsection*{R1: Zero-configuration build of the documentation}
-As mentioned before, the generator should be easy to use, the only mandatory argument should be the 
+R1.1: As mentioned before, the generator should be easy to use, the only mandatory argument should be the 
 input -- i.e. an assembly.
+R2:
 The remaining optional arguments, such as the output folder, should have reasonable default values.
 There should be support for configuration using a YAML file and command line arguments.
 If an option is specified both on the command line and in the configuration file, the command line value should take precedence.
@@ -217,7 +339,7 @@ The generator should then wrap those pages in the default layout and copy them t
 Additionally, custom CSS styles, JavaScript and various image formats should be copied as well.
 
 \subsubsection*{R4: Support for documentation versioning}
-There should be an option (both on command line and in the configuration file) to create a specific version of the documentation, e.g. \texttt{v1.2}.
+There should be an option (both on the command line and in the configuration file) to create a specific version of the documentation, e.g. \texttt{v1.2}.
 The generator should then store the output not to the specified folder, but to its subfolder identified by the version number (\texttt{v1.2} in our case).
 Thus, multiple versions of the documentation may coexist in the output folder.
 
@@ -232,8 +354,8 @@ Since we have decided to extract the context data from an assembly, this require
 The default UI should use the components provided by the \texttt{Bootstrap}~\cite{boostrap} framework.
 
 \subsubsection*{R7: Platform independence}
-The generator should not use any platform dependent code or library.
-Sticking to this rule is enough, because .NET is a multiplatform framework
+The generator should not use any platform-dependent code or library.
+Sticking to this rule is enough because .NET is a multiplatform framework
 
 \section{Existing technologies}
 
@@ -245,7 +367,7 @@ displaying all the contained types \textit{(A)}.
 Then, each type has its own page, as shown in Figures~\ref{fig:doxygen1} and~\ref{fig:shfb1} displaying its documentation \textit{(B)} as well as the list of declared members \textit{(C)}.
 In Figure~\ref{fig:doxygen2}, we can notice that while Doxygen shows the members with their documentation \textit{(D)} at the bottom of the type page,
 SHFB uses a different approach -- using a separate page for each member \textit{(E)}, as displayed in Figure~\ref{fig:shfb2}).
-Also notice that both generators have a search bar at the top of the page \textit{(F)}.
+Also, notice that both generators have a search bar at the top of the page \textit{(F)}.
 This knowledge helps us formulate the following requirements, so we do not miss any basic functionality:
 
 \subsubsection*{R8: Index page of the API}
@@ -349,29 +471,31 @@ TODO: vic do detailu
 \subsubsection*{R18: Installation as a .NET tool}
 The generator should be installed as a .NET tool.
 
-\section{XML documentation tags}
-
-The recommended tags used in all .NET languages are the following:
-
-\begin{table}[ht]
-\centering
-\begin{tabular}{|p{4cm}|p{4cm}|p{4cm}|}
-\hline
-\textbf{Tag} & \textbf{Description} & \textbf{Applicable to} \\
-\hline
-\texttt{<summary> DOC </summary>} & Describes a type or member. & Any type and member. \\
-\hline
-\texttt{<remarks> DOC </remarks>} & Provides additional information about a type or member. & Any type and member. \\
-\hline
-\texttt{<param name="..."> DOC </param>} & Documents a parameter, identified by the \texttt{name} attribute. & Methods and constructors \\
-\hline
-\texttt{<returns> DOC </returns>} & Documents a return value. & Methods \\
-\hline
-\end{tabular}
-\caption{Recommended XML Tags}
-\end{table}
-
-\newpage
-
 \section{Feature comparison}
 Porovnat jestli ostatni generator splnuji pozadavky???
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{|c|c|c|c|}
+        \hline
+        \textbf{Requirement} & \textbf{DocFX} & \textbf{Doxygen} & \textbf{SHFB} \\
+        \hline
+        R1 & NO & NO & NO \\
+        \hline
+        R2 & YES & YES & YES \\
+        \hline
+        R3 & YES & YES & - \\
+        \hline
+        R4 & NO & NO & NO \\
+        \hline
+        R5 & NO & NO & YES \\
+        \hline
+        R6 & YES & NO & YES \\
+        \hline
+        R7 & YES & YES & NO \\
+        \hline
+    \end{tabular}
+    \caption{Table with requirements R1–R7}
+    \label{tab:requirements}
+\end{table}
+
