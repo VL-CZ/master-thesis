@@ -7,7 +7,7 @@ To fulfill the goals, we must first address the fundamental challenges associate
 Firstly, it is worth noting that all major .NET languages use structured XML comments, well known from C\#, to document types and type members.
 Interestingly, the set of XML documentation tags is not explicitly defined.
 Instead, the official documentation~\cite{csharp_xml_docs} provides a set of recommended tags.
-As a result, any XML tag is valid and can be used in the documentation comments
+As a result, any XML tag is valid and can be used in the documentation comments 
 (although in this case, it may not be correctly interpreted).
 
 An example of a C\# method with XML documentation is shown in Program~\ref{lst:ex-cs-xml}; 
@@ -91,7 +91,7 @@ Furthermore, such a parser would need updates for every new language feature, wh
 
 \subsection*{Using an existing parser}
 
-Another, much easier, option is to use an existing language parser, as \texttt{DocFX} does internally. 
+Another, much simpler option is to use an existing language parser, as \texttt{DocFX} does internally. 
 The most popular tool for this purpose is the C\# compiler, \texttt{Roslyn}, which, among its other capabilities, can parse the source code.
 With Roslyn, we can easily inspect the syntax tree and perform semantic analysis using the semantic model, as described in the documentation~\cite{roslyn}.
 This way, we can easily obtain all types, type members, and all relevant data.
@@ -174,7 +174,7 @@ The value of the \texttt{name} attribute is prefixed with an \textit{M} and a co
 
 \section*{Evaluation of approaches}
 
-In the previous sections, we have explained why creating a custom language parser or using an existing one may not be the best option.
+In the previous sections, we have explained why creating a custom language parser or using an existing one may not be ideal.
 
 On the other hand, using assembly as an input seems to be a reasonable choice.
 Additionally, the development of such a generator is quite straightforward; we just need to extract the relevant data from the assembly metadata and combine it with the documentation comments retrieved from the XML documentation file.
@@ -316,29 +316,30 @@ it can be applied to any type and member. type, inherit from base type or interf
 
 \section{Further requirement analysis}
 
-In this section, we will analyze the requirements R1 - R7, outlined in the first chapter, in more detail.
+In this section, we will analyze requirements R1-R7, outlined in the first chapter, in more detail.
 
-As mentioned in the previous chapter, the first requirement states that the generator should be easy 
+As discussed earlier, the first requirement states that the generator should be easy 
 to use, as the only mandatory argument should be the input -- i.e. an assembly.
-On the other hand, the generator should also offer other optional arguments, such as the output folder.
+On the other hand, the generator should also offer several optional arguments, such as the output folder.
 However, these options should have reasonable default values.
 
-Next, imagine a scenario where a user generates the documentation using a custom configuration, then updates the code and regenerates the documentation.
-Instead of specifying all the options again, saving the values in a configuration file would be much more convenient.
+Next, consider a scenario where a user generates the documentation using a custom configuration, then updates the code and wants to regenerate the documentation.
+Instead of specifying all the options again, saving the configuration in a file would be much more convenient.
 Various file formats, such as YAML, JSON, and XML, can be used for configuration.
-Nowadays, YAML and JSON seem to be the most popular ones, and since YAML is slightly more user-friendly, we will prefer YAML.
-We also want to handle the cases where the same option is specified both on the command line and in the configuration file; in such cases, the command line value should take precedence.
-
-Based on the insights above, we can introduce two sub-requirements of requirement R1.
+Nowadays, YAML and JSON seem to be the most popular ones, and since YAML is slightly more user-friendly, we will prefer it.
+Additionally, we need to handle the cases where the same option is specified both on the command line and in the configuration file; in such cases, the command line value should take precedence.
+Based on the insights above, we can introduce two sub-requirements of requirement R1:
 
 \begin{itemize}
-    \item R1.1: Provide reasonable default values for command line options.
+    \item R1.1: Provide reasonable default values for command line arguments.
     \item R1.2: Support configuration using a YAML file.
 \end{itemize}
 
-
-The generator should be designed in an extensible way, as described in the requirement R2.
+The generator should be designed to be extensible, as described in the requirement R2.
 The users should be able to write their own templates using a template engine of their choice. using the provided data representing the types and members.
+In addition to templates themselves, the users should also provide a code that generates them.
+
+Furthermore, it should be easily possible to use the same template system as the default UI.
 
 TODO: zminit tady Razor? nebo jen obecne?
 
@@ -347,58 +348,60 @@ TODO: zminit tady Razor? nebo jen obecne?
 The requirement R3 mentions support for user-specified static pages.
 As discussed before, the goal is not to create a full-fledged SSG; instead, a convention-based approach with no configuration is preferred.
 
-A simple, yet effective, approach is to give the user an option to include a folder containing static pages.
-The generator should then basically copy the folder into the directory containing the documentation.
-However, there are several details.
-recursively browse the folder, and search for all pages.
-First, simply copying the pages is not enough, as we would prefer to wrap them in the default layout first.
-Thus, the generator must recognize.
+A simple yet effective approach would be to give the user an option to include a folder containing static pages.
+The generator should then recursively copy the files in the folder into the output directory, thus including the pages in the documentation.
+Also, note that the relative paths between files stay the same because the directory structure is preserved.
+As a result, the links between files can stay intact, which is a huge advantage of this approach.
+However, there are several details to consider.
 
-We must consider several formats that users may want to use.
-The natural option is to use HTML, as the resulting page will be in HTML format.
-However, since Markdown is easy to use and extremely popular these days, we also want to include support for it.
-
-The folder containing the static pages also may include non-page files, such as CSS, JavaScript, or images. 
+First, simply copying the pages is not sufficient, as we would prefer to wrap them in the default layout.
+Therefore, the generator must recognize the page files and handle them accordingly.
+In addition to pages, the folder may contain other non-page files, such as CSS, JavaScript, or images. 
 The solution is easy here -- simply copying those files is enough.
 
+When it comes to pages, we must consider several formats that users may want to use.
+The natural option is to use HTML, as the resulting page will be in HTML format.
+Moreover, we also want to support Markdown, since it is extremely popular these days and easy to write.
+As a result, we can further clarify requirement R3:
+
 \begin{itemize}
-    \item R3.1 The generator should provide an option to include a folder containing static files to be included in the documentation. 
-    \item R3.2 The generator should support pages in both HTML and Markdown formats.
+    \item R3.1: Provide an option to add a folder containing static files to be included in the documentation. 
+    \item R3.2: Support static pages in both HTML and Markdown format.
 \end{itemize}
 
-The fourth requirement (R4) is all about documentation versioning.
+The fourth requirement (R4) focuses on documentation versioning.
 The generator should support an option (both on the command line and in the configuration file) for creating a specific version of the documentation, e.g. \texttt{v1.2}. 
 The resulting documentation should then be stored not in the output folder, but in its subfolder identified by the version number (\texttt{v1.2} in our case).
-Thus, the output folder may contain multiple versions of the documentation.
+This way, the output folder may contain multiple versions of the documentation.
 
-Additionally, it should be possible to switch between the versions in the default UI.
-So, the UI should contain a dropdown menu, allowing the users to select the required version.
+Additionally, the default UI should allow users to switch between different versions.
+To achieve this, the UI should include a dropdown menu showing the available versions.
 Whenever a new version of the documentation is generated, the generator should process all the older versions and add the most recent version to each dropdown.
+Thus, we can define two sub-requirements:
 
 \begin{itemize}
     \item R4.1: Option to create a specific version of the documentation.
     \item R4.2: Dropdown menu for version selection in the UI.
 \end{itemize}
 
-
 There are many ways to achieve a modern visually appealing UI, as requested by the requirement R6.
-The first option is to write custom styles and possibly JavaScript. 
-However, creating nice-looking UI components is not a particularly simple task, so as a consequence, there are many CSS libraries available.
+The first option is to write custom CSS styles and possibly JavaScript. 
+However, creating nice-looking UI components is not a particularly simple task, so as a consequence, there are many CSS libraries to ease the process.
 
 The most popular CSS libraries as of today are \texttt{Bootstrap}~\cite{boostrap}, and
 \texttt{Tailwind CSS}~\cite{tailwind}. 
-The fundamental difference between those is that \texttt{Bootstrap} is a component library, providing pre-styled components, such as buttons, navigation bars, forms, etc.
-In contrast, \texttt{Tailwind CSS} offers a large set of CSS utility classes, that can be used to build custom components.
+The fundamental difference between them is that \texttt{Bootstrap} is a component library, providing pre-styled components, such as buttons, navigation bars, forms, etc.
+In contrast, \texttt{Tailwind CSS} offers a large set of CSS utility classes, that can be used to build custom components, allowing for extensive customization.
 
 Since creating the UI using existing components is much easier, we will use \texttt{Boostrap}.
-Furthermore, the UI is not expected to contain any unique components, so we would not fully use the flexibility of \texttt{Tailwind CSS} anyway.
+Furthermore, the UI is expected to consist of commonly used components, so we would not fully utilize the flexibility of \texttt{Tailwind CSS} anyway. So, the only sub-requirement of R6 is:
 
 \begin{itemize}
-    \item R6.1: The default UI should be built using the components provided by \texttt{Bootstrap} framework.
+    \item R6.1: The default UI use the \texttt{Bootstrap} framework.
 \end{itemize}
 
-R5 and R7 stay as they are.
-Note that R5 is satisfied automatically since we have decided to extract the context data from an assembly, this requirement is satisfied automatically.
+We have skipped requirements R5 and R7, as they remain unchanged.
+Furthermore, since we have decided to extract the context data from an assembly, requirement R5 is automatically satisfied, as discussed earlier.
 
 \section{Existing technologies}
 
@@ -501,47 +504,49 @@ The UI should be reasonably responsive.
 TODO: vic do detail
 
 \section*{Other requirements}
-Other requirements include the following:
+In this section, we will present further requirements.
 
-The project itself may be quite large and consist of multiple assemblies. 
+An important observation is that the program to be documented may consist of multiple assemblies. 
 In this case, we typically want to include multiple assemblies in the documentation.
-However, often not all of them, for instance, we want to exclude the assembly containing tests. 
-
-Thus, our generator should have an option to select assemblies to be included. 
-
-\begin{itemize}
-    \item R15: Option for selecting multiple assemblies
-\end{itemize}
-
-As discussed in the first chapter, reference documentation is primarily intended for developers using a library, or maintainers of the library.
-In the first case, only the API is relevant, so public members alone are enough, while in the second case, it is often beneficial to include private members as well.
-
-This gives us another requirement:
+However, typically not all of them, for instance, we often want to exclude the assemblies containing tests. 
+Thus, there should be a way to include multiple assemblies in the resulting documentation, which leads us to the following requirement:
 
 \begin{itemize}
-    \item R16: Option for selecting types and members based on their accessibility.
+    \item R15: Option for selecting multiple assemblies.
 \end{itemize}
 
-Based on different use cases, it may be beneficial to include inherited members in the documentation.
+Additionally, the assembly itself may contain certain types, we would like to exclude from the documentation.
+For instance, consider an app that includes Razor templates, which are represented as regular .NET classes.
 
-\begin{itemize}
-    \item R17: Option for including/excluding the inherited members.
-\end{itemize}
+One option would be to use custom XML tags (for instance \texttt{<ignore />}) and mark each type to be excluded from the documentation. 
+However, this approach brings a significant disadvantage, as it creates a coupling between the program and the generator.
+In other words, the program developers need to be aware of the documentation generator.
 
-Additionally, the assembly may contain certain types that we would like to exclude from the documentation.
-As an example, Razor templates.
-
-One option would be to use custom XML (such as \texttt{<ignore/>}) to denote that the type should be not included in the documentation. 
-However, this approach brings a major disadvantage -- the program becomes coupled with our generator.
-In other words, the program developers need to keep in mind that they use our app for generating documentation.
-Another option is to support an option that allows the users to exclude types contained in certain namespaces.
+An alternative solution is to support an option that allows users to exclude types based on their namespaces, which completely removes the coupling. 
+Thus, we can formulate another requirement:
 
 \begin{itemize}
     \item R18: Option to exclude types in selected namespaces.
 \end{itemize}
 
-When it comes to installation, it should be done in a multiplatform way and allow easy updates.
-Installation as a .NET tool checks all boxes and thus seems as a reasonable option, which gives us another requirement
+As discussed in Section~\ref{section:context}, reference documentation is primarily intended for developers using a library, or maintainers of the library.
+In the first case, only the public API is relevant, so public members alone are enough, while in the second case, it is often beneficial to include private members as well.
+This gives us another requirement:
+
+\begin{itemize}
+    \item R17: Option for selecting types and members based on accessibility level.
+\end{itemize}
+
+It is also worth noting that users may want to exclude inherited members from the documentation, based on different use cases.
+For instance, excluding inherited members may be preferred to focus only on the specific API exposed by the types. 
+As a result, we can formulate the following requirement:
+
+\begin{itemize}
+    \item R18: Option for including/excluding the inherited members.
+\end{itemize}
+
+Another aspect to consider is that the program installation should be done in a multiplatform manner, allowing for easy updates.
+Installation as a .NET tool~\cite{dotnet_tools} meets those criteria, and thus seems like a reasonable choice, which gives us another requirement:
 
 \begin{itemize}
     \item R19: The generator should be installed as a .NET tool.
