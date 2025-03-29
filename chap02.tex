@@ -96,7 +96,7 @@ The most popular tool for this purpose is the C\# compiler, \texttt{Roslyn}, whi
 With Roslyn, we can easily inspect the syntax tree and perform semantic analysis using the semantic model, as described in the documentation~\cite{roslyn}.
 This way, we can easily obtain all types, type members, and all relevant data.
 The semantic model is essential because it resolves the issues with type identification discussed in the previous chapter.
-Furthermore, the API of the semantic model is quite easy to use, for instance, a method is represented by the \texttt{IMethodSymbol} interface, which provides access to various data concerning the method.
+Furthermore, the API of the semantic model is quite easy to use; for instance, a method is represented by the \texttt{IMethodSymbol} interface, which provides access to various data concerning the method.
 For example, if we want to check whether a method is static, we can simply use the \texttt{IMethodSymbol.IsStatic} property. 
 The interface also offers many other properties and methods; notably, there is a method for retrieving the corresponding documentation comment.
 
@@ -178,14 +178,13 @@ In the previous sections, we have explained why creating a custom language parse
 
 On the other hand, using assembly as an input seems to be a reasonable choice.
 Additionally, the development of such a generator is quite straightforward; we just need to extract the relevant data from the assembly metadata and combine it with the documentation comments retrieved from the XML documentation file.
-However, this approach also has a downside: the need for program compilation, i.e. the project must be built before the documentation is generated.
+However, this approach also has a downside: the need for program compilation, i.e., the project must be built before the documentation is generated.
 Fortunately, this is not a limiting factor, since compiling the program is a routine task.
 
 It is crucial to mention that all the information relevant to the reference documentation about types and members can be retrieved from the metadata. 
 For instance, the object representing a method (i.e. \texttt{MethodInfo}) contains properties such as \texttt{IsStatic}, \texttt{IsPublic}, etc.
-
 Naturally, this also makes sense, because .NET package distributions contain assemblies, rather than source code.
-For example, when a method from a library is called, the caller simply needs to know whether it is e.g. static, to call it correctly.
+For example, when a method from a library is called, the caller simply needs to know whether it is, e.g., static, to call it correctly.
 In general, any information that affects the caller must be stored somewhere in the assembly, or it can be inferred.
 Some constructs may be purely language features and cannot be deduced from the assembly; however, these are only implementation details.
 Therefore, such data are irrelevant to the reference documentation because they do not have any impact on the caller.
@@ -195,18 +194,20 @@ documentation generator for .NET that uses assembly as its input.
 
 \section{XML documentation tags}
 
-The recommended tags used in all .NET languages are the following:
+As mentioned earlier, the set of XML documentation tags is not explicitly defined. 
+Instead, the recommended tags are typically described in the documentation of each .NET language.
+It is also important to keep in mind that aside from the recommended tags, any XML tag is valid; in this case, it is simply copied to the XML documentation file.
 
-\subsection*{Top-level tags}
+The recommended tags slightly differ for each language, however, they can be classified into two categories, based on their usage.
 
-There are several common top-level tags.
-The most common tag is \texttt{summary}, which describes a type or member.
-Sometimes, we need to document any supplementary information, which can be done using a \texttt{remarks} tag.
-For documenting parameters, identified by their names, we use \texttt{param} element.
-Analogously, there is a \texttt{typeparam} tag, intended for documentation of type parameters, 
-We can also provide documentation to a return value, with the help of a \texttt{returns} attribute.
+\subsection{Top-level tags}
 
-\begin{table}[ht]
+Top-level tags are present directly at the type or member definition, meaning they are not contained inside another tag.
+
+The most common tag is \texttt{summary}, which describes a type or member, as previously shown in Program~\ref{lst:ex-cs-xml}. 
+However, there are numerous other commonly used top-level tags, as shown in Table~\ref{table:top-level-tags}.
+
+\begin{table}[h]
 \centering
 \begin{tabular}{|p{6cm}|p{6cm}|}
 \hline
@@ -224,28 +225,41 @@ We can also provide documentation to a return value, with the help of a \texttt{
 \hline
 \texttt{<value>} & Documents a property value. \\
 \hline
-\texttt{<exception cref="...">} & Specifies and describes an exception that may be technically thrown. \\
+\texttt{<exception cref="...">} & Specifies and describes an exception that may be thrown. \\
 \hline
 \texttt{<seealso cref="..." /> } & Specifies a link to a related type or member. \\
 \hline
-\texttt{<seealso href="...">} & Specifies a link to a related URL. \\
+\texttt{<seealso href="...">} & Specifies a link to a related URL, identified by the \texttt{href} attribute. \\
 \hline
 \end{tabular}
 \caption{Top-level XML tags}
 \label{table:top-level-tags}
 \end{table}
 
-Inside these elements, there is documentation.
-Several exceptions:
+The documentation is then stored inside those elements.
+The only exception is the \texttt{<seealso cref="..." /> } tag, which is unpaired and thus does not have any content.
+
+Additionally, several tags, notably \texttt{<param>}, \texttt{<typeparam>}, \texttt{<exception>}, and \texttt{<seealso>} may be present multiple times in the definition.
+For instance, if a method has 3 parameters, there could be up to 3 \texttt{<param>} tags (one for each parameter).
 
 \subsubsection*{Cref attribute}
-As shown in Table~\ref{table:top-level-tags}, some tags have a \texttt{cref} attribute.
-This attribute documentation tag means "code reference", as described in the documentation~\cite{csharp_xml_docs}.
-It specifies that the inner text of the tag is a code element -- i.e. a type or type member.
-Documentation tools like DocFX and Sandcastle use the cref attributes to automatically generate hyperlinks to the page where the type or member is documented.
+As shown in Table~\ref{table:top-level-tags}, several tags have a \texttt{cref} attribute.
+This attribute specifies that the tag references a code element, i.e., a type or a member. 
+
+For instance, if there is a method somehow related to \texttt{Console.WriteLine}, we can include the following tag in its documentation: \texttt{<seealso cref="Console.WriteLine" />}.
+The link to the \texttt{Console.WriteLine} should then be displayed in the resulting documentation of the given method.
+
+However, in the XML documentation file, the attribute value is stored in a slightly different format.
+The reason behind this is ambiguity, because there may be other \texttt{Console.WriteLine} method in a different namespace.
+Thus, the compiler resolves the type or member and replaces it with its fully qualified name, prefixed by its kind.
+In our case, the result would be 
+\texttt{<seealso cref="M:System.Console.WriteLine" />} (\textit{M} denotes a method).
+The whole format of the string is thoroughly described in the official documentation~\cite{csharp_xml_docs}.
+
+\subsubsection*{Usage}
 
 The \texttt{<summary>}, \texttt{<remarks>}, and \texttt{<seealso>} tags can be applied to any type or member.
-The other top-level tags are typically provided only for a selection of types or members, as shown below.
+The other top-level tags are typically intended only for a selection of types or members, as shown in Table~\ref{table:top-level-tags-usage}.
 
 \begin{table}[ht]
 \centering
@@ -264,70 +278,137 @@ The other top-level tags are typically provided only for a selection of types or
 \texttt{<exception cref="...">} & Methods, properties and events \\
 \hline
 \end{tabular}
-\caption{Recommended XML Tags}
+\caption{Top-level XML tags -- usage}
+\label{table:top-level-tags-usage}
 \end{table}
 
-Furthermore, several tags, notably param, typeparam, exception and seealso may be present multiple times in the definition.
 
-The following tags may be present inside the top-level tags and are commonly recognized.
+\subsection{Inner tags}
 
-\begin{table}[ht]
+The documentation inside top-level tags may contain, in addition to text, other XML tags, so-called inner tags.
+Typically, they affect how the text is rendered, i.e., they may specify a list of items, a paragraph, etc.
+The Table~\ref{table:inner-tags} shows a list of commonly recognized inner tags.
+
+\begin{table}[h]
 \centering
 \begin{tabular}{|p{6cm}|p{6cm}|}
 \hline
-\textbf{Tag} & \textbf{Description} \\
+\textbf{Tag} & \textbf{Meaning} \\
 \hline
-\texttt{<c>...</c>} & Inline code. \\
+\texttt{<c>} & Inline code. \\
 \hline
-\texttt{<code>...</code>} & Code block. \\
+\texttt{<code>} & Block of code. \\
 \hline
-\texttt{<example>...</example>} & Example block. \\
+\texttt{<example>} & Example of how to use the type or member. \\
 \hline
-\texttt{<list>...</list>} & Example block. \\
+\texttt{<list type="bullet">} & Bullet list. \\
 \hline
-\texttt{<para>...</para>} & Paragraph. \\
+\texttt{<list type="number">} & Numbered list. \\
 \hline
-\texttt{<paramref name="name"/>} & Parameter reference. \\
+\texttt{<list type="table">} & Table. \\
 \hline
-\texttt{<see cref="..."/>} & Reference to a type or member. \\
+\texttt{<para>} & Paragraph. \\
 \hline
-\texttt{<see href="..."/>} & Reference to an URL. \\
+\texttt{<paramref name="name"/>} & Reference to a parameter. \\
+\hline
+\texttt{<see cref="...">} & Reference to a type or member. \\
+\hline
+\texttt{<see href="...">} & Reference to an URL. \\
 \hline
 \texttt{<see langword="..."/>} & Reference to a language keyword. \\
 \hline
-\texttt{<typeparamref name="name"/>} & Type parameter reference. \\
+\texttt{<typeparamref name="name"/>} & Reference to a type parameter. \\
 \hline
 \end{tabular}
 \caption{Recommended XML Tags}
+\label{table:inner-tags}
 \end{table}
 
-list - item, etc.
+Except for the \texttt{<paramref>}, \texttt{<see langword="...">} and \texttt{<typeparamref>} tags, all of the other elements may contain text and other tags inside them.
 
-There are two remaining commonly used tags -- \texttt{<include>} and \texttt{<inheritdoc>}.
+The only special tag is \texttt{list}, because it allows extra tags as its contents.
+
+\texttt{item} can be used inside any list item and specifies an item of the list.
+\texttt{term} -- definition
+\texttt{description} -- explanation of the definition 
+
+\texttt{listheader} -- header of the list
+
+TODO: Describe list - item in more detail.
+
+\subsection{Reusing the documentation}
+
+There are two more commonly used tags -- \texttt{<include>} and \texttt{<inheritdoc>}, both top-level and unpaired.
+
 The \texttt{<include>} tag allows us to import the documentation from an external XML file by specifying the file path and the path to the element to include.
 Note that this tag is unsupported in some languages, such as F\#.
 When creating the XML documentation file, the compiler replaces the \texttt{<include>} tags with the actual documentation.
 Thus, the \texttt{<include>} elements are not present in the resulting documentation file, meaning that we do not need to process them in any way.
 
-inhertitdoc allows to inherit documentation. it has 2 optional arguments: cref and path.
-it can be applied to any type and member. type, inherit from base type or interfaces. member, base definition, interface definition.
+The \texttt{inheritdoc} tag can be applied to any type and member and allows users to inherit the 
+When applied to a type, the documentation is inherited from the base type or an implemented interface.
+The official documentation~\cite{csharp_xml_docs} does not specify what happens if, e.g., both the base type and implemented interface are documented.
+When the \texttt{inheritdoc} is applied to a member, the documentation is taken from the base definition of the member.
+This means the identical member in the base type or an implemented interface.
+Again, the documentation does not specify any precedence.
 
-\newpage
+The \texttt{<inheritdoc>} supports 2 optional arguments: \texttt{cref} and \texttt{path}.
+
+\begin{itemize}
+    \item The \texttt{cref} attribute explicitly specifies the type or member from which the documentation is inherited.
+    This is handy, for instance, if we have two equivalent methods -- one synchronous and the other asynchronous.
+    In this case, we can avoid repeating the documentation by using \texttt{<inheritdoc>} with the \texttt{cref} attribute.
+    \item The \texttt{path} attribute allows us to inherit only selected XML nodes, which is configured by providing an XPath query.
+    Then, only the matching nodes are inherited; in other words, we may specify to inherit only the \texttt{summary} tag.
+\end{itemize}
+
+Unlike the \texttt{<include>} element, the \texttt{<inheritdoc>} is not resolved by a compiler.
+In other words, the inheritdoc tags are still present in the resulting XML file.
+As a result, the documentation inheritance must be handled by the documentation generator.
 
 \section{Further requirement analysis}
 
-In this section, we will analyze requirements R1-R7, outlined in the first chapter, in more detail.
+In this section, we will analyze the requirements R1-R7, outlined in the first chapter, in more detail.
 
-As discussed earlier, the first requirement states that the generator should be easy 
-to use, as the only mandatory argument should be the input -- i.e. an assembly.
-On the other hand, the generator should also offer several optional arguments, such as the output folder.
+As discussed earlier, the requirement R1 states that the generator should be easy 
+to use, as the only mandatory argument should be the input.
+On the other hand, the generator naturally should also offer several optional arguments, such as the output folder.
 However, these options should have reasonable default values.
 
-Next, consider a scenario where a user generates the documentation using a custom configuration, then updates the code and wants to regenerate the documentation.
+\subsection*{Configuration using a file}
+
+Next, consider a scenario in which a user generates the documentation using a custom configuration, then updates the code and wants to regenerate the documentation.
 Instead of specifying all the options again, saving the configuration in a file would be much more convenient.
-Various file formats, such as YAML, JSON, and XML, can be used for configuration.
-Nowadays, YAML and JSON seem to be the most popular ones, and since YAML is slightly more user-friendly, we will prefer it.
-Additionally, we need to handle the cases where the same option is specified both on the command line and in the configuration file; in such cases, the command line value should take precedence.
+This also makes it easier to share configurations with other developers.
+
+\subsection*{Option format}
+
+Various file formats are used for configuration.
+The easiest solution would be to store the options in the same format as on the command line, 
+allowing users to copy the configuration into a file. 
+However, this approach brings multiple drawbacks.
+First, this file format is not standardized or widely recognized, so the text editor would not be capable of any text highlighting.
+Another disadvantage, stemming from the lack of standardization, is that there is no easy way to recognize comments in the file.
+Furthermore, we cannot use the command-line symbol for denoting comments, as it differs between various shells, which would cause inconsistency.
+It is important to note that adding comments is a useful feature of the configuration file, because it is often beneficial to explain the rationale behind setting a certain option to a specific value.
+In conclusion, the command line option format does not seem ideal.
+
+\subsection*{Well known format}
+
+The alternative way is to use a widely recognized configuration format, such as TOML, XML, JSON, or YAML. 
+Using this approach, the disadvantages outlined above are typically resolved.
+On the other hand, we lose the ability to simply copy-paste the options from the command line, although the conversion to the given format should not be complicated.
+
+One option is to use a key-value configuration format, such as \textit{.ini} file, as the configuration is not expected to have a hierarchical structure.
+While the \textit{.ini} format is not fully standardized, the \textit{TOML} format has a formal specification and is almost identical in structure.
+However, the main downside of those formats is that they are not as widely adopted, especially compared to  XML, JSON, and YAML.
+This is a disadvantage, as we should strive to use a format understood by a large share of users.
+
+Another option is to use XML for configuration. While it is a powerful format, it often tends to be verbose, which makes it less ideal for our purposes.
+JSON and YAML seem to be the most popular today.
+Additionally, it seems to be losing popularity nowadays, in favor of JSON and YAML.
+Compared to XML, JSON is more compact; however, its formal specification does not support comments, which is a considerable disadvantage.
+Finally, YAML checks all boxes: it is widely recognized, supports comments, and has an even more compact syntax than JSON, which makes it an ideal choice. 
 Based on the insights above, we can introduce two sub-requirements of requirement R1:
 
 \begin{itemize}
@@ -335,15 +416,22 @@ Based on the insights above, we can introduce two sub-requirements of requiremen
     \item R1.2: Support configuration using a YAML file.
 \end{itemize}
 
-The generator should be designed to be extensible, as described in the requirement R2.
-The users should be able to write their own templates using a template engine of their choice. using the provided data representing the types and members.
+Next, the generator should be designed to be extensible, as described in the requirement R2.
+The documentation pages will naturally be generated from templates, written in an unspecified templating language, which get populated with data while the documentation is generated.
+
+Firstly, it should be easily possible to use the same template system as the default UI.
+If the user wanted to generate the documentation using the template system and data, it should be sufficient to provide the equivalent templates.
+In other words, if the generator had 2 templates representing type and namespace pages, providing a custom version of those two should be sufficient.
+
+Furthermore, the users should be able to write their own templates using a template engine of their choice. 
+using the provided data representing the types and members.
 In addition to templates themselves, the users should also provide a code that generates them.
+In practice, this should be done by implementing a corresponding interface.
 
-Furthermore, it should be easily possible to use the same template system as the default UI.
-
-TODO: zminit tady Razor? nebo jen obecne?
-
-\hfill
+\begin{itemize}
+    \item R2.1: Support for custom templates written in the same template language as the default UI.
+    \item R2.2: The generator should allow users to use templates written in a templating language of their choice, accompanied by the code that generates them.
+\end{itemize}
 
 The requirement R3 mentions support for user-specified static pages.
 As discussed before, the goal is not to create a full-fledged SSG; instead, a convention-based approach with no configuration is preferred.
@@ -352,16 +440,11 @@ A simple yet effective approach would be to give the user an option to include a
 The generator should then recursively copy the files in the folder into the output directory, thus including the pages in the documentation.
 Also, note that the relative paths between files stay the same because the directory structure is preserved.
 As a result, the links between files can stay intact, which is a huge advantage of this approach.
-However, there are several details to consider.
-
-First, simply copying the pages is not sufficient, as we would prefer to wrap them in the default layout.
-Therefore, the generator must recognize the page files and handle them accordingly.
-In addition to pages, the folder may contain other non-page files, such as CSS, JavaScript, or images. 
-The solution is easy here -- simply copying those files is enough.
 
 When it comes to pages, we must consider several formats that users may want to use.
 The natural option is to use HTML, as the resulting page will be in HTML format.
 Moreover, we also want to support Markdown, since it is extremely popular these days and easy to write.
+In addition to pages, the folder may contain other non-page files, such as CSS, JavaScript, or images, so we need to handle those as well.
 As a result, we can further clarify requirement R3:
 
 \begin{itemize}
@@ -369,14 +452,14 @@ As a result, we can further clarify requirement R3:
     \item R3.2: Support static pages in both HTML and Markdown format.
 \end{itemize}
 
-The fourth requirement (R4) focuses on documentation versioning.
+The requirement R4 focuses on documentation versioning.
 The generator should support an option (both on the command line and in the configuration file) for creating a specific version of the documentation, e.g. \texttt{v1.2}. 
 The resulting documentation should then be stored not in the output folder, but in its subfolder identified by the version number (\texttt{v1.2} in our case).
 This way, the output folder may contain multiple versions of the documentation.
 
 Additionally, the default UI should allow users to switch between different versions.
 To achieve this, the UI should include a dropdown menu showing the available versions.
-Whenever a new version of the documentation is generated, the generator should process all the older versions and add the most recent version to each dropdown.
+Whenever a new version of the documentation is generated, all the older versions should be updated to include the most recent version in the dropdown.
 Thus, we can define two sub-requirements:
 
 \begin{itemize}
@@ -384,138 +467,265 @@ Thus, we can define two sub-requirements:
     \item R4.2: Dropdown menu for version selection in the UI.
 \end{itemize}
 
-There are many ways to achieve a modern visually appealing UI, as requested by the requirement R6.
-The first option is to write custom CSS styles and possibly JavaScript. 
-However, creating nice-looking UI components is not a particularly simple task, so as a consequence, there are many CSS libraries to ease the process.
-
-The most popular CSS libraries as of today are \texttt{Bootstrap}~\cite{boostrap}, and
-\texttt{Tailwind CSS}~\cite{tailwind}. 
-The fundamental difference between them is that \texttt{Bootstrap} is a component library, providing pre-styled components, such as buttons, navigation bars, forms, etc.
-In contrast, \texttt{Tailwind CSS} offers a large set of CSS utility classes, that can be used to build custom components, allowing for extensive customization.
-
-Since creating the UI using existing components is much easier, we will use \texttt{Boostrap}.
-Furthermore, the UI is expected to consist of commonly used components, so we would not fully utilize the flexibility of \texttt{Tailwind CSS} anyway. So, the only sub-requirement of R6 is:
-
-\begin{itemize}
-    \item R6.1: The default UI use the \texttt{Bootstrap} framework.
-\end{itemize}
-
-We have skipped requirements R5 and R7, as they remain unchanged.
+We have skipped requirements R5, R6, and R7, as they remain unchanged.
 Furthermore, since we have decided to extract the context data from an assembly, requirement R5 is automatically satisfied, as discussed earlier.
 
 \section{Existing technologies}
 
-In this chapter, we will briefly examine the other generators focusing on their core functionality and default UI to define additional requirements.
+In this chapter, we will briefly examine the other generators, focusing on their core functionality and default UI to define additional requirements.
 For better understanding, we will present it using screenshots.
+We will also include the official .NET documentation, as it is the most frequently used documentation in the .NET world.
 
-As we can see in Figures~\ref{fig:doxygen3} and~\ref{fig:shfb3}, both \texttt{Doxygen} and \texttt{SHFB} generate a separate page for each namespace,
-displaying all the contained types \textit{(A)}.
-Then, each type has its own page, as shown in Figures~\ref{fig:doxygen1} and~\ref{fig:shfb1} displaying its documentation \textit{(B)} as well as the list of declared members \textit{(C)}.
-In Figure~\ref{fig:doxygen2}, we can notice that while Doxygen shows the members with their documentation \textit{(D)} at the bottom of the type page,
-SHFB uses a different approach -- using a separate page for each member \textit{(E)}, as displayed in Figure~\ref{fig:shfb2}).
-Also, notice that both generators have a search bar at the top of the page \textit{(F)}.
-This knowledge helps us formulate the following requirements, so we do not miss any basic functionality:
+As we can see in Figures~\ref{fig:docfx-ns}, \ref{fig:doxygen-ns} and~\ref{fig:shfb-ns}; \texttt{DocFX}, \texttt{Doxygen} and \texttt{SHFB} generate a separate page for each namespace,
+displaying all the contained types \textit{(A)}. 
+The same applies to the official .NET documentation, as displayed in Figure~\ref{fig:off-ns}.
+Then, each type has its own page, as shown in Figures~\ref{fig:off-t1}, \ref{fig:off-t2}, \ref{fig:docfx-t}, \ref{fig:docfx-t2}, \ref{fig:doxygen-t} and~\ref{fig:shfb-t} displaying its documentation \textit{(B)} as well as the list of declared members \textit{(C)}.
+In Figures~\ref{fig:docfx-m} and~\ref{fig:doxygen-m}, we can notice that while DocFX and Doxygen show the members with their documentation \textit{(D)} at the bottom of the type page,
+SHFB and official .NET documentation use a different approach -- using a separate page for each member \textit{(E)}, as displayed in Figures~\ref{fig:off-m1}, \ref{fig:shfb-m}).
+Also, we can notice all generated documentations, except DocFX, have a search bar at the top of the page \textit{(F)}.
+However, the same can be achieved with DocFX by setting a corresponding option.
+This knowledge helps us formulate the following requirements regarding the UI, so we do not miss any basic functionality.
 
-\subsubsection*{R8: Index page of the API}
-TODO
+\begin{figure}
+\centering
+\includegraphics[width=1\linewidth]{img/official-namespace.png}
+\caption{Official .NET documentation -- namespace detail}
+\label{fig:off-ns}
+\end{figure}
 
-\subsubsection*{R9: Separate page for each namespace}
-There should be a page for each namespace, displaying all of the types contained.
-For each type, there should be a link to its definition and its documentation.
+\begin{figure}
+\centering
+\includegraphics[width=1\linewidth]{img/docfx-namespace.png}
+\caption{Documentation generated by DocFX -- namespace detail}
+\label{fig:docfx-ns}
+\end{figure}
 
-\subsubsection*{R10: Separate page for each type}
-There should be a page for each type displaying its documentation.
+\begin{figure}
+\centering
+\includegraphics[width=1\linewidth]{img/doxygen-namespace.png}
+\caption{Documentation generated by Doxygen -- namespace detail}
+\label{fig:doxygen-ns}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics[width=1\linewidth]{img/shfb-namespace.png}
+\caption{Documentation generated by SHFB -- namespace detail}
+\label{fig:shfb-ns}
+\end{figure}
+
+% -- type detail
+
+\begin{figure}
+\centering
+\includegraphics[width=1\linewidth]{img/official-type1.png}
+\caption{Official .NET documentation -- type detail, part 1}
+\label{fig:off-t1}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics[width=1\linewidth]{img/official-type2.png}
+\caption{Official .NET documentation -- type detail, part 2}
+\label{fig:off-t2}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics[width=1\linewidth]{img/docfx-type.png}
+\caption{Documentation generated by DocFX -- type detail, part 1}
+\label{fig:docfx-t}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics[width=1\linewidth]{img/docfx-type2.png}
+\caption{Documentation generated by DocFX -- type detail, part 2}
+\label{fig:docfx-t2}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics[width=1\linewidth]{img/doxygen-type.png}
+\caption{Documentation generated by Doxygen -- type detail}
+\label{fig:doxygen-t}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics[width=1\linewidth]{img/shfb-type.png}
+\caption{Documentation generated by SHFB -- type detail}
+\label{fig:shfb-t}
+\end{figure}
+
+% -- members detail
+
+\begin{figure}
+\centering
+\includegraphics[width=1\linewidth]{img/official-method1.png}
+\caption{Official .NET documentation -- method detail}
+\label{fig:off-m1}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics[width=1\linewidth]{img/docfx-method.png}
+\caption{Documentation generated by DocFX -- members detail}
+\label{fig:docfx-m}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics[width=1\linewidth]{img/doxygen-method.png}
+\caption{Documentation generated by Doxygen -- members detail}
+\label{fig:doxygen-m}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics[width=1\linewidth]{img/shfb-method.png}
+\caption{Documentation generated by SHFB -- method detail}
+\label{fig:shfb-m}
+\end{figure}
+
+First and foremost, it is essential to have an index page showing all namespaces contained in an assembly, and the types declared inside them.
+Thus, our eighth requirement is:
+
+\begin{itemize}
+    \item R8: Index page of the API.
+    \begin{itemize}
+        \item[•] R8.1: Show list of namespaces.
+        \item[•] R8.2: Show a list of types declared in each namespace.
+    \end{itemize}
+\end{itemize}
+
+Furthermore, there should be a page for each namespace, displaying all of the types contained.
+For each type, there should be a link to its definition and its documentation, which leads us to the following requirement:
+
+\begin{itemize}
+    \item R9: Separate page for each namespace.
+    \begin{itemize}
+        \item[•] R9.1: Display a list of types contained in the namespace.
+    \end{itemize}
+\end{itemize}
+
+Finally, there should be a page for each type displaying its signature in C\# format and documentation.
+The documentation should be divided into sections, corresponding to top-level XML tags.
+In addition to that, there should be a section displaying the attributes applied to a type.
+So, the documentation can contain those sections (the section should be displayed only if the corresponding tag is present):
+
+\begin{itemize}
+    \item[-] Summary (corresponding to the \texttt{<summary>} tag)
+    \item[-] Remarks (corresponding to the \texttt{<remarks>} tag)
+    \item[-] Type parameters (corresponding to the \texttt{<typeparam>} tags)
+    \item[-] See Also (corresponding to the \texttt{<seealso>} tags)
+    \item[-] Attributes
+\end{itemize}
+
 Furthermore, below the type definition, there should be a list of declared members, grouped
-into categories based on the member kind (field, property, method, etc.), similarly to \texttt{SHFB}.
-Each member should display its signature in C\# format and the documentation.
+into categories based on the member kind (field, property, method, etc.), similar to \texttt{SHFB}.
+Each member should again display the signature and the documentation, again corresponding to the XML tags, along with the section displaying attributes.
+So, potentially, the documentation can contain the following sections:
 
-\subsubsection*{R11: Top menu}
-There should be a menu at the top of the page.
+\begin{itemize}
+    \item[-] Summary (corresponding to the \texttt{<summary>} tag)
+    \item[-] Remarks (corresponding to the \texttt{<remarks>} tag)
+    \item[-] See Also (corresponding to the \texttt{<seealso>} tags)
+    \item[-] Type parameters (corresponding to the \texttt{<typeparam>} tags)
+    \item[-] Returns (corresponding to the \texttt{<returns>} tag)
+    \item[-] Param (corresponding to the \texttt{<param>} tag)
+    \item[-] Value (corresponding to the \texttt{<value>} tag)
+    \item[-] Attributes
+\end{itemize}
+
+This gives us another requirement:
+
+\begin{itemize}
+    \item R10: Separate page for each type
+    \begin{itemize}
+        \item[•] R10.1: Show type signature in C\# format.
+        \item[•] R10.2: Show type documentation, divided into sections corresponding to XML tags.
+        \item[•] R10.3: Show signatures of all members contained in the type.
+        \item[•] R10.4: Show documentation of all members, divided into sections corresponding to XML tags.
+    \end{itemize}
+\end{itemize}
+
+Next, there should be a menu at the top of each page.
 The following items should be included:
 
 \begin{itemize}
-    \item the index page
-    \item all pages stored in the user-specified folder with static files
+    \item[-] The API index page
+    \item[-] All pages stored in the user-specified folder with static files
 \end{itemize}
 
-On top of that, each subfolder of the user-specified static files folder should be represented by a dropdown menu, listing the contained documents.
-Static pages located 3 or more levels deep in the folder will not be included in the menu.
-
-\subsubsection*{R12: Search bar}
-The top menu should include a search bar, allowing the users to search for types and members.
-
-\begin{figure}
-\centering
-\includegraphics[width=1\linewidth]{img/doxygen3.png}
-\caption{Documentation generated by Doxygen -- namespace detail}
-\label{fig:doxygen3}
-\end{figure}
-
-\begin{figure}
-\centering
-\includegraphics[width=1\linewidth]{img/sandcastle3.png}
-\caption{Documentation generated by SHFB -- namespace detail}
-\label{fig:shfb3}
-\end{figure}
-
-\begin{figure}
-\centering
-\includegraphics[width=1\linewidth]{img/doxygen1.png}
-\caption{Documentation generated by Doxygen -- type detail}
-\label{fig:doxygen1}
-\end{figure}
-
-\begin{figure}
-\centering
-\includegraphics[width=1\linewidth]{img/sandcastle1.png}
-\caption{Documentation generated by SHFB -- type detail}
-\label{fig:shfb1}
-\end{figure}
-
-\begin{figure}
-\centering
-\includegraphics[width=1\linewidth]{img/doxygen2.png}
-\caption{Documentation generated by Doxygen -- members detail}
-\label{fig:doxygen2}
-\end{figure}
-
-\begin{figure}
-\centering
-\includegraphics[width=1\linewidth]{img/sandcastle2.png}
-\caption{Documentation generated by SHFB -- method detail}
-\label{fig:shfb2}
-\end{figure}
-
-All of the generators also have the support for cross-references.
-This means that, for instance, the member and parameter types contain a link to their definition, if possible.
-% The same applies to the types and members referenced in documentation comments using \texttt{<see>} of \texttt{<seealso>} tags.
-This gives us another requirement:
-
-\subsubsection*{R13: Support for cross-references}
-Types of members, parameters, and return values should contain a link to their definition.
-Support for the types declared in the same project is mandatory. 
-Optionally, we can also add links for standard library types.
-
-
-TODO: rozepsat context
-
-\subsubsection*{R14: Responsive UI}
-The UI should be reasonably responsive.
-TODO: vic do detail
-
-\section*{Other requirements}
-In this section, we will present further requirements.
-
-An important observation is that the program to be documented may consist of multiple assemblies. 
-In this case, we typically want to include multiple assemblies in the documentation.
-However, typically not all of them, for instance, we often want to exclude the assemblies containing tests. 
-Thus, there should be a way to include multiple assemblies in the resulting documentation, which leads us to the following requirement:
+On top of that, each subfolder of the static files folder should be represented by a dropdown menu, displaying the pages stored directly within the subfolder.
+Static pages located 3 or more levels deep will not be included in the menu.
+In conclusion, we can formulate the requirement as follows:
 
 \begin{itemize}
-    \item R15: Option for selecting multiple assemblies.
+    \item R11: Display the top menu on each page.
+    \begin{itemize}
+        \item[•] R11.1: Show the link to the API index page in the top menu.
+        \item[•] R11.2: Show the links to static pages in the top menu. TODO: ma zde byt i tohle?
+    \end{itemize}
 \end{itemize}
 
-Additionally, the assembly itself may contain certain types, we would like to exclude from the documentation.
+Moreover, the top menu should include a search bar, allowing the users to search for types and members.
+If a user tries to search for something, he/she will be redirected to the search page showing a list of results.
+
+\begin{itemize}
+    \item R12: Search functionality.
+    \begin{itemize}
+        \item[•] R12.1: Display a search bar in the top menu.
+        \item[•] R12.2: Show a list of results at the \textit{search} page.
+    \end{itemize}
+\end{itemize}
+
+Another essential feature of the documentation generator is to interpret the inner XML documentation tags correctly.
+
+\begin{itemize}
+    \item R13: Correctly interpret the inner XML tags, shown in Table~\ref{table:inner-tags}.
+\end{itemize}
+
+All of the generators also have support for cross-references.
+This means that, for instance, the member and parameter types contain a link to their definition, if possible.
+The same applies to the types and members referenced in documentation comments using \texttt{<see>} of \texttt{<seealso>} tags.
+Support for the types declared in the same project is mandatory. 
+Optionally, we can also add links for standard library types.
+This gives us another requirement:
+
+\begin{itemize}
+    \item R14: Support for cross-references.
+\end{itemize}
+
+The UI should be reasonably responsive. (TODO: rozepsat)
+
+\begin{itemize}
+    \item R15: Responsive UI.
+\end{itemize}
+
+\section*{Other requirements}
+In previous sections, we thoroughly described the requirements R1-R7 introduced in the first chapter. 
+Next, we stated multiple other requirements based on the analysis of existing solutions and the official .NET documentation.
+In this section, we will present the remaining requirements, based on various use cases.
+
+The first important observation is that the program to be documented may consist of multiple assemblies. 
+In this case, we typically want to include multiple assemblies in the documentation, which leads us to the following requirement:
+
+\hfill
+
+\textbf{\textcolor{blue}{R16: Option for selecting solution as the input.}}
+
+\hfill
+
+On the other hand, when generating a documentation for a solution, we typically do not want to include all projects contained in the solution; for instance, we often want to exclude the assemblies containing tests. 
+Thus, there should be a way to exclude selected assemblies from the resulting documentation, which is our next requirement:
+
+\begin{itemize}
+    \item R17: Option to exclude selected assemblies.
+\end{itemize}
+
+Additionally, the assembly may contain certain types we would like to exclude from the documentation.
 For instance, consider an app that includes Razor templates, which are represented as regular .NET classes.
 
 One option would be to use custom XML tags (for instance \texttt{<ignore />}) and mark each type to be excluded from the documentation. 
@@ -523,60 +733,36 @@ However, this approach brings a significant disadvantage, as it creates a coupli
 In other words, the program developers need to be aware of the documentation generator.
 
 An alternative solution is to support an option that allows users to exclude types based on their namespaces, which completely removes the coupling. 
-Thus, we can formulate another requirement:
+Thus, we can formulate the subsequent requirement:
 
 \begin{itemize}
     \item R18: Option to exclude types in selected namespaces.
 \end{itemize}
 
-As discussed in Section~\ref{section:context}, reference documentation is primarily intended for developers using a library, or maintainers of the library.
+As discussed in section~\ref{section:context}, reference documentation is primarily intended for developers using a library or maintainers of the library.
 In the first case, only the public API is relevant, so public members alone are enough, while in the second case, it is often beneficial to include private members as well.
 This gives us another requirement:
 
 \begin{itemize}
-    \item R17: Option for selecting types and members based on accessibility level.
+    \item R19: Option for selecting types and members based on their accessibility level.
 \end{itemize}
 
 It is also worth noting that users may want to exclude inherited members from the documentation, based on different use cases.
-For instance, excluding inherited members may be preferred to focus only on the specific API exposed by the types. 
+For instance, it may be preferred to exclude inherited members to focus solely on the specific API exposed by the types. 
 As a result, we can formulate the following requirement:
 
 \begin{itemize}
-    \item R18: Option for including/excluding the inherited members.
+    \item R20: Option for including/excluding the inherited members.
 \end{itemize}
 
+TODO: vic rozepsat
 Another aspect to consider is that the program installation should be done in a multiplatform manner, allowing for easy updates.
+
+There are multiple options: 
+
 Installation as a .NET tool~\cite{dotnet_tools} meets those criteria, and thus seems like a reasonable choice, which gives us another requirement:
 
 \begin{itemize}
-    \item R19: The generator should be installed as a .NET tool.
+    \item R21: The generator should be installed as a .NET tool.
 \end{itemize}
-
-\section{Feature comparison}
-Porovnat jestli ostatni generator splnuji pozadavky???
-
-\begin{table}[h]
-    \centering
-    \begin{tabular}{|p{3cm}|p{3cm}|p{3cm}|p{3cm}|}
-        \hline
-        \textbf{Requirement} & \textbf{DocFX} & \textbf{Doxygen} & \textbf{SHFB} \\
-        \hline
-        R1 & NO & NO & NO \\
-        \hline
-        R2 & YES & YES & YES \\
-        \hline
-        R3 & YES & YES & - \\
-        \hline
-        R4 & NO & NO & NO \\
-        \hline
-        R5 & NO & NO & YES \\
-        \hline
-        R6 & YES & NO & YES \\
-        \hline
-        R7 & YES & YES & NO \\
-        \hline
-    \end{tabular}
-    \caption{Table with requirements R1–R7}
-    \label{tab:requirements}
-\end{table}
 

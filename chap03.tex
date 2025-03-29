@@ -1,7 +1,28 @@
 
 \chapter{Technical Analysis}
 
-\section{Type and Member Representation}
+\section{Member representation}
+
+In this chapter, we will outline several ways how to represent type members in the code.
+
+The first idea is to use the objects provided by Reflection, such as \textit{MethodInfo}, which provide the context data we need.
+As mentioned before, these objects contain properties such as \texttt{IsStatic}, \texttt{IsPublic}, etc.
+
+However, as mentioned before, the documentation comments are not part of the assembly. 
+Therefore, the objects provided by reflection do not contain any data regarding the documentation comments.
+
+Option 1: reflection provided objects + external XML file
+
+Option 2: tuple (object, doc comment)
+
+disadvantages: 
+
+Option 3: custom objects (i.e. MethodData)
+
+advantages: common interfaces, doc comments included
+
+Nice object design, great for extensibility -> the users extending the library may easily 
+
 \begin{itemize}
     \item Data objects vs custom classes
 \end{itemize}
