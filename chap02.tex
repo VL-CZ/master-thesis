@@ -14,7 +14,7 @@ An example of a C\# method with XML documentation is shown in Program~\ref{lst:e
 notice that both parameters and the return value are documented as well (using the \texttt{param} and \texttt{returns} tags, respectively).
 Program~\ref{lst:ex-vb-xml} displays an analogous method in VB.NET.
 We can see that VB.NET uses a different symbol for denoting documentation comments: triple single-quote mark.
-However, the format of the comments remains the same, which is crucial, because the comments can be processed similarly, regardless of the language.
+However, the format of the comments remains the same, which is crucial because the comments can be processed similarly, regardless of the language.
 
 On the other hand, the documentation comments lack the context, such as:
 \begin{itemize}
@@ -203,8 +203,7 @@ The recommended tags slightly differ for each language, however, they can be cla
 \subsection{Top-level tags}
 
 Top-level tags are present directly at the type or member definition, meaning they are not contained inside another tag.
-
-The most common tag is \texttt{summary}, which describes a type or member, as previously shown in Program~\ref{lst:ex-cs-xml}. 
+The most common tag is \texttt{<summary>}, which describes a type or member, as previously illustrated in Program~\ref{lst:ex-cs-xml}. 
 However, there are numerous other commonly used top-level tags, as shown in Table~\ref{table:top-level-tags}.
 
 \begin{table}[h]
@@ -230,6 +229,8 @@ However, there are numerous other commonly used top-level tags, as shown in Tabl
 \texttt{<seealso cref="..." /> } & Specifies a link to a related type or member. \\
 \hline
 \texttt{<seealso href="...">} & Specifies a link to a related URL, identified by the \texttt{href} attribute. \\
+\hline
+\texttt{<example>} & Example of how to use the type or member. \\
 \hline
 \end{tabular}
 \caption{Top-level XML tags}
@@ -258,7 +259,7 @@ The whole format of the string is thoroughly described in the official documenta
 
 \subsubsection*{Usage}
 
-The \texttt{<summary>}, \texttt{<remarks>}, and \texttt{<seealso>} tags can be applied to any type or member.
+The \texttt{<summary>}, \texttt{<remarks>}, \texttt{<seealso>} and \texttt{<example>} tags can be applied to any type or member.
 The other top-level tags are typically intended only for a selection of types or members, as shown in Table~\ref{table:top-level-tags-usage}.
 
 \begin{table}[ht]
@@ -287,7 +288,10 @@ The other top-level tags are typically intended only for a selection of types or
 
 The documentation inside top-level tags may contain, in addition to text, other XML tags, so-called inner tags.
 Typically, they affect how the text is rendered, i.e., they may specify a list of items, a paragraph, etc.
-The Table~\ref{table:inner-tags} shows a list of commonly recognized inner tags.
+The Table~\ref{table:inner-tags} shows a list of commonly recognized inner tags. 
+Except for the \texttt{<paramref>}, \texttt{<see langword="...">} and \texttt{<typeparamref>} tags, all of the other elements may contain text and other tags inside them.
+Additionally, we can see that the \texttt{<example>} tag can appear both as a top-level and an inner tag.
+This is because the documentation includes examples in both contexts.
 
 \begin{table}[h]
 \centering
@@ -324,17 +328,11 @@ The Table~\ref{table:inner-tags} shows a list of commonly recognized inner tags.
 \label{table:inner-tags}
 \end{table}
 
-Except for the \texttt{<paramref>}, \texttt{<see langword="...">} and \texttt{<typeparamref>} tags, all of the other elements may contain text and other tags inside them.
+The only special tag is \texttt{<list>}, because it allows extra tags as its contents.
+The \texttt{<item>} tag can be used inside any list item and specifies an item of the list.
+The \texttt{<term>} tag contains a definition of a term, while the \texttt{<description>} tag contains its explanation.
 
-The only special tag is \texttt{list}, because it allows extra tags as its contents.
-
-\texttt{item} can be used inside any list item and specifies an item of the list.
-\texttt{term} -- definition
-\texttt{description} -- explanation of the definition 
-
-\texttt{listheader} -- header of the list
-
-TODO: Describe list - item in more detail.
+Moreover, it is also possible to define a heading row of a table, using the \texttt{<listheader>} tag.
 
 \subsection{Reusing the documentation}
 
@@ -370,18 +368,18 @@ As a result, the documentation inheritance must be handled by the documentation 
 
 In this section, we will analyze the requirements R1-R7, outlined in the first chapter, in more detail.
 
+\subsection*{Zero configuration build}
+
 As discussed earlier, the requirement R1 states that the generator should be easy 
 to use, as the only mandatory argument should be the input.
 On the other hand, the generator naturally should also offer several optional arguments, such as the output folder.
 However, these options should have reasonable default values.
 
-\subsection*{Configuration using a file}
-
-Next, consider a scenario in which a user generates the documentation using a custom configuration, then updates the code and wants to regenerate the documentation.
+Next, consider a scenario in which a user generates the documentation using a custom configuration, then updates the code, and wants to regenerate the documentation.
 Instead of specifying all the options again, saving the configuration in a file would be much more convenient.
 This also makes it easier to share configurations with other developers.
 
-\subsection*{Option format}
+\subsubsection*{Command line option format}
 
 Various file formats are used for configuration.
 The easiest solution would be to store the options in the same format as on the command line, 
@@ -393,7 +391,7 @@ Furthermore, we cannot use the command-line symbol for denoting comments, as it 
 It is important to note that adding comments is a useful feature of the configuration file, because it is often beneficial to explain the rationale behind setting a certain option to a specific value.
 In conclusion, the command line option format does not seem ideal.
 
-\subsection*{Well known format}
+\subsubsection*{Selection of the configuration format}
 
 The alternative way is to use a widely recognized configuration format, such as TOML, XML, JSON, or YAML. 
 Using this approach, the disadvantages outlined above are typically resolved.
@@ -405,10 +403,9 @@ However, the main downside of those formats is that they are not as widely adopt
 This is a disadvantage, as we should strive to use a format understood by a large share of users.
 
 Another option is to use XML for configuration. While it is a powerful format, it often tends to be verbose, which makes it less ideal for our purposes.
-JSON and YAML seem to be the most popular today.
 Additionally, it seems to be losing popularity nowadays, in favor of JSON and YAML.
 Compared to XML, JSON is more compact; however, its formal specification does not support comments, which is a considerable disadvantage.
-Finally, YAML checks all boxes: it is widely recognized, supports comments, and has an even more compact syntax than JSON, which makes it an ideal choice. 
+Finally, YAML checks all boxes: it is widely used, supports comments, and has an even more compact syntax than JSON, which makes it an ideal choice. 
 Based on the insights above, we can introduce two sub-requirements of requirement R1:
 
 \begin{itemize}
@@ -416,11 +413,13 @@ Based on the insights above, we can introduce two sub-requirements of requiremen
     \item R1.2: Support configuration using a YAML file.
 \end{itemize}
 
+\subsection*{Custom templates}
+
 Next, the generator should be designed to be extensible, as described in the requirement R2.
 The documentation pages will naturally be generated from templates, written in an unspecified templating language, which get populated with data while the documentation is generated.
 
 Firstly, it should be easily possible to use the same template system as the default UI.
-If the user wanted to generate the documentation using the template system and data, it should be sufficient to provide the equivalent templates.
+If the user wanted to generate the documentation using the same template system and data, it should be sufficient to provide the equivalent templates.
 In other words, if the generator had 2 templates representing type and namespace pages, providing a custom version of those two should be sufficient.
 
 Furthermore, the users should be able to write their own templates using a template engine of their choice. 
@@ -432,6 +431,8 @@ In practice, this should be done by implementing a corresponding interface.
     \item R2.1: Support for custom templates written in the same template language as the default UI.
     \item R2.2: The generator should allow users to use templates written in a templating language of their choice, accompanied by the code that generates them.
 \end{itemize}
+
+\subsection*{Custom static pages}
 
 The requirement R3 mentions support for user-specified static pages.
 As discussed before, the goal is not to create a full-fledged SSG; instead, a convention-based approach with no configuration is preferred.
@@ -451,6 +452,8 @@ As a result, we can further clarify requirement R3:
     \item R3.1: Provide an option to add a folder containing static files to be included in the documentation. 
     \item R3.2: Support static pages in both HTML and Markdown format.
 \end{itemize}
+
+\subsection*{Documentation versioning}
 
 The requirement R4 focuses on documentation versioning.
 The generator should support an option (both on the command line and in the configuration file) for creating a specific version of the documentation, e.g. \texttt{v1.2}. 
@@ -474,16 +477,18 @@ Furthermore, since we have decided to extract the context data from an assembly,
 
 In this chapter, we will briefly examine the other generators, focusing on their core functionality and default UI to define additional requirements.
 For better understanding, we will present it using screenshots.
-We will also include the official .NET documentation, as it is the most frequently used documentation in the .NET world.
+We will also include the official .NET documentation, as it is arguably the most frequently used documentation in the .NET world.
 
-As we can see in Figures~\ref{fig:docfx-ns}, \ref{fig:doxygen-ns} and~\ref{fig:shfb-ns}; \texttt{DocFX}, \texttt{Doxygen} and \texttt{SHFB} generate a separate page for each namespace,
+As we can see in Figures~\ref{fig:docfx-ns}, \ref{fig:doxygen-ns}, and~\ref{fig:shfb-ns}, DocFX, Doxygen, and SHFB generate a separate page for each namespace,
 displaying all the contained types \textit{(A)}. 
 The same applies to the official .NET documentation, as displayed in Figure~\ref{fig:off-ns}.
 Then, each type has its own page, as shown in Figures~\ref{fig:off-t1}, \ref{fig:off-t2}, \ref{fig:docfx-t}, \ref{fig:docfx-t2}, \ref{fig:doxygen-t} and~\ref{fig:shfb-t} displaying its documentation \textit{(B)} as well as the list of declared members \textit{(C)}.
 In Figures~\ref{fig:docfx-m} and~\ref{fig:doxygen-m}, we can notice that while DocFX and Doxygen show the members with their documentation \textit{(D)} at the bottom of the type page,
 SHFB and official .NET documentation use a different approach -- using a separate page for each member \textit{(E)}, as displayed in Figures~\ref{fig:off-m1}, \ref{fig:shfb-m}).
-Also, we can notice all generated documentations, except DocFX, have a search bar at the top of the page \textit{(F)}.
-However, the same can be achieved with DocFX by setting a corresponding option.
+
+Furthermore, as depicted in Figures~\ref{fig:doxygen-nsl}, \ref{fig:shfb-nsl}, and~\ref{fig:official-nsl}, all generators except DocFX create a page containing a list of namespaces \textit{(F)}; the same applies to the official .NET documentation.
+The default UI of DocFX does not contain any such page; instead, the data regarding namespaces is shown in a side menu \textit{(G)}.
+Additionally, we can notice that all generated documentations have a search bar at the top of the page \textit{(H)}.
 This knowledge helps us formulate the following requirements regarding the UI, so we do not miss any basic functionality.
 
 \begin{figure}
@@ -588,7 +593,31 @@ This knowledge helps us formulate the following requirements regarding the UI, s
 \label{fig:shfb-m}
 \end{figure}
 
-First and foremost, it is essential to have an index page showing all namespaces contained in an assembly, and the types declared inside them.
+% -- ns list
+
+\begin{figure}
+\centering
+\includegraphics[width=1\linewidth]{img/official-index.png}
+\caption{Official .NET documentation -- namespace list}
+\label{fig:official-nsl}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics[width=1\linewidth]{img/doxygen-namespace-list.png}
+\caption{Documentation generated by Doxygen -- namespace list}
+\label{fig:doxygen-nsl}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics[width=1\linewidth]{img/shfb-namespace-list.png}
+\caption{Documentation generated by SHFB -- namespace list}
+\label{fig:shfb-nsl}
+\end{figure}
+
+First and foremost, we would like to have an index page of the API showing all namespaces contained in an assembly.
+Additionally, under each namespace, there should be a list of types declared inside it.
 Thus, our eighth requirement is:
 
 \begin{itemize}
@@ -622,7 +651,10 @@ So, the documentation can contain those sections (the section should be displaye
     \item[-] Attributes
 \end{itemize}
 
-Furthermore, below the type definition, there should be a list of declared members, grouped
+Then, we have two options: show the list of members on the type page, as DocFX and Doxygen do, or have a separate page for each member, similar to the official .NET documentation and SHFB.
+Since we aim to generate reference documentation for third-party libraries, which are usually not as extensively documented as the .NET API, 
+having a separate page per member would likely be unnecessarily complex.
+Thus, there should be a list of declared members below the type definition, grouped
 into categories based on the member kind (field, property, method, etc.), similar to \texttt{SHFB}.
 Each member should again display the signature and the documentation, again corresponding to the XML tags, along with the section displaying attributes.
 So, potentially, the documentation can contain the following sections:
@@ -641,7 +673,7 @@ So, potentially, the documentation can contain the following sections:
 This gives us another requirement:
 
 \begin{itemize}
-    \item R10: Separate page for each type
+    \item R10: Separate page for each type.
     \begin{itemize}
         \item[•] R10.1: Show type signature in C\# format.
         \item[•] R10.2: Show type documentation, divided into sections corresponding to XML tags.
@@ -664,10 +696,6 @@ In conclusion, we can formulate the requirement as follows:
 
 \begin{itemize}
     \item R11: Display the top menu on each page.
-    \begin{itemize}
-        \item[•] R11.1: Show the link to the API index page in the top menu.
-        \item[•] R11.2: Show the links to static pages in the top menu. TODO: ma zde byt i tohle?
-    \end{itemize}
 \end{itemize}
 
 Moreover, the top menu should include a search bar, allowing the users to search for types and members.
@@ -681,14 +709,15 @@ If a user tries to search for something, he/she will be redirected to the search
     \end{itemize}
 \end{itemize}
 
-Another essential feature of the documentation generator is to interpret the inner XML documentation tags correctly.
+Another essential feature of the documentation generator is to correctly interpret the inner XML documentation tags, shown in Table~\ref{table:inner-tags}.
+Thus, our next requirement is:
 
 \begin{itemize}
-    \item R13: Correctly interpret the inner XML tags, shown in Table~\ref{table:inner-tags}.
+    \item R13: Correctly interpret the inner XML tags.
 \end{itemize}
 
 All of the generators also have support for cross-references.
-This means that, for instance, the member and parameter types contain a link to their definition, if possible.
+This means that member, parameter, and return types contain a link to their definition, if possible.
 The same applies to the types and members referenced in documentation comments using \texttt{<see>} of \texttt{<seealso>} tags.
 Support for the types declared in the same project is mandatory. 
 Optionally, we can also add links for standard library types.
@@ -698,53 +727,95 @@ This gives us another requirement:
     \item R14: Support for cross-references.
 \end{itemize}
 
-The UI should be reasonably responsive. (TODO: rozepsat)
+Additionally, we should consider that some users prefer a light theme, while others may favor a dark one.
+In the official .NET documentation, users can seamlessly switch between themes using a dropdown, as shown in Figure~\ref{fig:official-themes} \textit{(A)}.
+The Figures~\ref{fig:official-light} and~\ref{fig:official-dark} display the same page in both light and dark themes.
+
+Among the generators, the support for dark theme varies.
+Doxygen has a built-in dark mode that can be toggled using a button; however, this functionality must be explicitly enabled by setting a corresponding option.
+The default UI of DocFX does not support dark mode; however, DocFX offers a variety of templates, such as the \textit{modern} template, which supports both light and dark modes. 
+Again, it is possible to switch between them using a button.
+Moreover, multiple DocFX templates are exclusively dark-themed.
+Finally, SHFB has neither built-in support for dark mode in the default UI nor a dark-themed template.
+In conclusion, our generator should support both light and dark themes, with an option to easily switch between them, which is our next requirement:
+
+\begin{figure}
+\centering
+\includegraphics[width=1\linewidth]{img/official-version-switch.png}
+\caption{Official .NET documentation -- switching between themes}
+\label{fig:official-themes}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics[width=1\linewidth]{img/official-light.png}
+\caption{Official .NET documentation -- light theme}
+\label{fig:official-light}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics[width=1\linewidth]{img/official-dark.png}
+\caption{Official .NET documentation -- dark theme}
+\label{fig:official-dark}
+\end{figure}
 
 \begin{itemize}
-    \item R15: Responsive UI.
+    \item R15: Support both light and dark themes.
+\end{itemize}
+
+Next, although reference documentation is primarily accessed on laptops and desktops, there are cases where users may browse it on tablets or mobile phones. 
+This means the UI should be reasonably responsive to accommodate this usage. 
+The default UIs of all generators support responsiveness, which leads us to the following requirement:
+
+\begin{itemize}
+    \item R16: Responsive UI.
 \end{itemize}
 
 \section*{Other requirements}
 In previous sections, we thoroughly described the requirements R1-R7 introduced in the first chapter. 
-Next, we stated multiple other requirements based on the analysis of existing solutions and the official .NET documentation.
+Next, we stated multiple other requirements based on the analysis of existing documentation generators and the official .NET documentation.
 In this section, we will present the remaining requirements, based on various use cases.
 
-The first important observation is that the program to be documented may consist of multiple assemblies. 
-In this case, we typically want to include multiple assemblies in the documentation, which leads us to the following requirement:
+The first important observation is that the program to be documented may consist of multiple projects, contained in a solution. 
+In this case, users typically want to include those projects in the documentation.
+
+However, not all projects in the solution need to be included; for instance, users often prefer to exclude the ones containing tests. 
+Thus, there should be a way to exclude selected projects from the resulting documentation.
+Considering these points, we can introduce the following two requirements:
 
 \hfill
 
-\textbf{\textcolor{blue}{R16: Option for selecting solution as the input.}}
+\textbf{\textcolor{blue}{R17: Option for selecting a solution as the input.}}
 
 \hfill
-
-On the other hand, when generating a documentation for a solution, we typically do not want to include all projects contained in the solution; for instance, we often want to exclude the assemblies containing tests. 
-Thus, there should be a way to exclude selected assemblies from the resulting documentation, which is our next requirement:
 
 \begin{itemize}
-    \item R17: Option to exclude selected assemblies.
+    \item R18: Option to exclude selected projects from the documentation.
 \end{itemize}
 
-Additionally, the assembly may contain certain types we would like to exclude from the documentation.
-For instance, consider an app that includes Razor templates, which are represented as regular .NET classes.
+Additionally, the project itself may contain certain types we would like to exclude from the documentation.
+For instance, consider an app that includes Razor templates, which get compiled into .NET classes.
+As a result, they would normally appear in the docs, which is usually undesirable.
 
-One option would be to use custom XML tags (for instance \texttt{<ignore />}) and mark each type to be excluded from the documentation. 
+One option would be to use an extra XML tag (for instance \texttt{<ignore />}), allowing the developers to mark types that should be excluded from the documentation. 
 However, this approach brings a significant disadvantage, as it creates a coupling between the program and the generator.
-In other words, the program developers need to be aware of the documentation generator.
+In other words, the program developers must be aware of the documentation generator.
 
-An alternative solution is to support an option that allows users to exclude types based on their namespaces, which completely removes the coupling. 
+An alternative solution is to support an option that allows users to exclude types based on their namespaces, as in most cases, these types are contained within a single namespace.
+This approach eliminates the dependency between the code and the generator.
 Thus, we can formulate the subsequent requirement:
 
 \begin{itemize}
-    \item R18: Option to exclude types in selected namespaces.
+    \item R19: Option to exclude types in selected namespaces.
 \end{itemize}
 
 As discussed in section~\ref{section:context}, reference documentation is primarily intended for developers using a library or maintainers of the library.
-In the first case, only the public API is relevant, so public members alone are enough, while in the second case, it is often beneficial to include private members as well.
+In the first case, only the public API is relevant, so public members alone are enough, while in the second case, it often makes sense to include non-public members as well.
 This gives us another requirement:
 
 \begin{itemize}
-    \item R19: Option for selecting types and members based on their accessibility level.
+    \item R20: Option for selecting types and members based on their accessibility level.
 \end{itemize}
 
 It is also worth noting that users may want to exclude inherited members from the documentation, based on different use cases.
@@ -752,17 +823,23 @@ For instance, it may be preferred to exclude inherited members to focus solely o
 As a result, we can formulate the following requirement:
 
 \begin{itemize}
-    \item R20: Option for including/excluding the inherited members.
+    \item R21: Option for including/excluding the inherited members.
 \end{itemize}
 
-TODO: vic rozepsat
-Another aspect to consider is that the program installation should be done in a multiplatform manner, allowing for easy updates.
+Last but not least, we should consider the program installation.
+Ideally, the installation method should be cross-platform and allow for easy updates.
 
-There are multiple options: 
+The first option is to install the generator as a standard executable app. 
+However, this approach has multiple disadvantages, for instance, the installation typically needs to be done manually.
+In addition to that, the same applies to updates.
 
-Installation as a .NET tool~\cite{dotnet_tools} meets those criteria, and thus seems like a reasonable choice, which gives us another requirement:
+Fortunately, there is an alternative option: install the generator as a .NET tool.
+As described in the documentation~\cite{dotnet_tools}, a .NET tool is a special NuGet package that contains a console application.
+.NET tools can be installed from the command line by running \texttt{dotnet tool install} and then invoked from the command line as well.
+Updates are also easy, as the app can be updated simply by running the \texttt{dotnet tool update} command.
+
+In conclusion, installation as a .NET tool meets all criteria, and thus seems like a reasonable choice, leading us to the last requirement:
 
 \begin{itemize}
-    \item R21: The generator should be installed as a .NET tool.
+    \item R22: The generator should be distributed as a .NET tool.
 \end{itemize}
-
