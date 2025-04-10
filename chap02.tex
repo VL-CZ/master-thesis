@@ -408,12 +408,16 @@ Another option is to use XML for configuration. While it is a powerful format, i
 Additionally, it seems to be losing popularity nowadays, in favor of JSON and YAML.
 Compared to XML, JSON is more compact; however, its formal specification does not support comments, which is a considerable disadvantage.
 Finally, YAML checks all boxes: it is widely used, supports comments, and has an even more compact syntax than JSON, which makes it an ideal choice. 
-Based on the insights above, we can introduce two sub-requirements of requirement R1:
+Based on the insights above, we can introduce two sub-requirements of Requirement~\ref{req:zero-conf}:
 
-\begin{itemize}
-    \item R1.1: Provide reasonable default values for command line arguments.
-    \item R1.2: Support configuration using a YAML file.
-\end{itemize}
+\setcounter{subrequirementcounter}{1}
+\begin{subrequirement}
+    Provide reasonable default values for command line arguments.
+\end{subrequirement}
+
+\begin{subrequirement}
+    Support configuration using a YAML file.
+\end{subrequirement}
 
 \subsection*{Custom templates}
 
@@ -429,10 +433,16 @@ using the provided data representing the types and members.
 In addition to templates themselves, the users should also provide a code that generates them.
 In practice, this should be done by implementing a corresponding interface.
 
-\begin{itemize}
-    \item R2.1: Support for custom templates written in the same template language as the default UI.
-    \item R2.2: The generator should allow users to use templates written in a templating language of their choice, accompanied by the code that generates them.
-\end{itemize}
+\setcounter{subrequirementcounter}{2}
+\setcounter{subrequirement}{0}
+
+\begin{subrequirement}
+    Support for custom templates written in the same template language as the default UI.
+\end{subrequirement}
+
+\begin{subrequirement}
+    The generator should allow users to use templates written in a templating language of their choice, accompanied by the code that generates them.
+\end{subrequirement}
 
 \subsection*{Custom static pages}
 
@@ -448,12 +458,18 @@ When it comes to pages, we must consider several formats that users may want to 
 The natural option is to use HTML, as the resulting page will be in HTML format.
 Moreover, we also want to support Markdown, since it is extremely popular these days and easy to write.
 In addition to pages, the folder may contain other non-page files, such as CSS, JavaScript, or images, so we need to handle those as well.
-As a result, we can further clarify requirement R3:
+As a result, we can further clarify Requirement~\ref{req:static-pages}:
 
-\begin{itemize}
-    \item R3.1: Provide an option to add a folder containing static files to be included in the documentation. 
-    \item R3.2: Support static pages in both HTML and Markdown format.
-\end{itemize}
+\setcounter{subrequirementcounter}{3}
+\setcounter{subrequirement}{0}
+
+\begin{subrequirement}
+    Provide an option to add a folder containing static files to be included in the documentation. 
+\end{subrequirement}
+
+\begin{subrequirement}
+    Support static pages in both HTML and Markdown format.
+\end{subrequirement}
 
 \subsection*{Documentation versioning}
 
@@ -467,10 +483,16 @@ To achieve this, the UI should include a dropdown menu showing the available ver
 Whenever a new version of the documentation is generated, all the older versions should be updated to include the most recent version in the dropdown.
 Thus, we can define two sub-requirements:
 
-\begin{itemize}
-    \item R4.1: Option to create a specific version of the documentation.
-    \item R4.2: Dropdown menu for version selection in the UI.
-\end{itemize}
+\setcounter{subrequirementcounter}{4}
+\setcounter{subrequirement}{0}
+
+\begin{subrequirement}
+    Option to create a specific version of the documentation.
+\end{subrequirement}
+
+\begin{subrequirement}
+    Dropdown menu for version selection in the UI.
+\end{subrequirement}
 
 We have skipped requirements~\ref{req:lang-ind}, \ref{req:modern-ui}, and~\ref{req:platf-ind}, as they remain unchanged.
 Furthermore, since we have decided to extract the context data from an assembly, requirement R5 is automatically satisfied, as discussed earlier.
@@ -626,10 +648,16 @@ Thus, our eighth requirement is:
     Index page of the API.
 \end{requirement}
 
-\begin{itemize}
-        \item R8.1: Show list of namespaces.
-        \item R8.2: Show a list of types declared in each namespace.
-    \end{itemize}
+\setcounter{subrequirementcounter}{8}
+\setcounter{subrequirement}{0}
+
+\begin{subrequirement}
+    Show the list of namespaces.
+\end{subrequirement}
+
+\begin{subrequirement}
+    Show a list of types declared in each namespace.
+\end{subrequirement}
 
 Furthermore, there should be a page for each namespace, displaying all of the types contained.
 For each type, there should be a link to its definition and its documentation, which leads us to the following requirement:
@@ -638,9 +666,12 @@ For each type, there should be a link to its definition and its documentation, w
     Separate page for each namespace.
 \end{requirement}
 
-\begin{itemize}
-        \item[•] R9.1: Display a list of types contained in the namespace.
-\end{itemize}
+\setcounter{subrequirementcounter}{9}
+\setcounter{subrequirement}{0}
+
+\begin{subrequirement}
+    Display a list of types contained in the namespace.
+\end{subrequirement}
 
 Finally, there should be a page for each type displaying its signature in C\# format and documentation.
 The documentation should be divided into sections, corresponding to top-level XML tags.
@@ -648,11 +679,11 @@ In addition to that, there should be a section displaying the attributes applied
 So, the documentation can contain those sections (the section should be displayed only if the corresponding tag is present):
 
 \begin{itemize}
-    \item[-] Summary (corresponding to the \texttt{<summary>} tag)
-    \item[-] Remarks (corresponding to the \texttt{<remarks>} tag)
-    \item[-] Type parameters (corresponding to the \texttt{<typeparam>} tags)
-    \item[-] See Also (corresponding to the \texttt{<seealso>} tags)
-    \item[-] Attributes
+    \item Summary (corresponding to the \texttt{<summary>} tag)
+    \item Remarks (corresponding to the \texttt{<remarks>} tag)
+    \item Type parameters (corresponding to the \texttt{<typeparam>} tags)
+    \item See Also (corresponding to the \texttt{<seealso>} tags)
+    \item Attributes
 \end{itemize}
 
 Then, we have two options: show the list of members on the type page, as DocFX and Doxygen do, or have a separate page for each member, similar to the official .NET documentation and SHFB.
@@ -664,14 +695,14 @@ Each member should again display the signature and the documentation, again corr
 So, potentially, the documentation can contain the following sections:
 
 \begin{itemize}
-    \item[-] Summary (corresponding to the \texttt{<summary>} tag)
-    \item[-] Remarks (corresponding to the \texttt{<remarks>} tag)
-    \item[-] See Also (corresponding to the \texttt{<seealso>} tags)
-    \item[-] Type parameters (corresponding to the \texttt{<typeparam>} tags)
-    \item[-] Returns (corresponding to the \texttt{<returns>} tag)
-    \item[-] Param (corresponding to the \texttt{<param>} tag)
-    \item[-] Value (corresponding to the \texttt{<value>} tag)
-    \item[-] Attributes
+    \item Summary (corresponding to the \texttt{<summary>} tag)
+    \item Remarks (corresponding to the \texttt{<remarks>} tag)
+    \item See Also (corresponding to the \texttt{<seealso>} tags)
+    \item Type parameters (corresponding to the \texttt{<typeparam>} tags)
+    \item Returns (corresponding to the \texttt{<returns>} tag)
+    \item Param (corresponding to the \texttt{<param>} tag)
+    \item Value (corresponding to the \texttt{<value>} tag)
+    \item Attributes
 \end{itemize}
 
 This gives us another requirement:
@@ -680,19 +711,31 @@ This gives us another requirement:
     Separate page for each type.
 \end{requirement}
 
-\begin{itemize}
-        \item[•] R10.1: Show type signature in C\# format.
-        \item[•] R10.2: Show type documentation, divided into sections corresponding to XML tags.
-        \item[•] R10.3: Show signatures of all members contained in the type.
-        \item[•] R10.4: Show documentation of all members, divided into sections corresponding to XML tags.
-\end{itemize}
+\setcounter{subrequirementcounter}{10}
+\setcounter{subrequirement}{0}
+
+\begin{subrequirement}
+    Show type signature in C\# format.
+\end{subrequirement}
+
+\begin{subrequirement}
+    Show type documentation, divided into sections corresponding to XML tags.
+\end{subrequirement}
+
+\begin{subrequirement}
+    Show signatures of all members contained in the type.
+\end{subrequirement}
+
+\begin{subrequirement}
+    Show documentation of all members, divided into sections corresponding to XML tags.
+\end{subrequirement}
 
 Next, there should be a menu at the top of each page.
 The following items should be included:
 
 \begin{itemize}
-    \item[-] The API index page
-    \item[-] All pages stored in the user-specified folder with static files
+    \item The API index page
+    \item All pages stored in the user-specified folder with static files
 \end{itemize}
 
 On top of that, each subfolder of the static files folder should be represented by a dropdown menu, displaying the pages stored directly within the subfolder.
@@ -710,10 +753,16 @@ If a user tries to search for something, he/she will be redirected to the search
     Search functionality.
 \end{requirement}
 
-\begin{itemize}
-        \item[•] R12.1: Display a search bar in the top menu.
-        \item[•] R12.2: Show a list of results at the \textit{search} page.
-\end{itemize}
+\setcounter{subrequirementcounter}{12}
+\setcounter{subrequirement}{0}
+
+\begin{subrequirement}
+    Display a search bar in the top menu.
+\end{subrequirement}
+
+\begin{subrequirement}
+    Show a list of results at the \textit{search} page.
+\end{subrequirement}
 
 Another essential feature of the documentation generator is to correctly interpret the inner XML documentation tags, shown in Table~\ref{table:inner-tags}.
 Thus, our next requirement is:
@@ -800,6 +849,7 @@ Considering these points, we can introduce the following two requirements:
 \begin{requirement}
     Option for selecting a solution as the input.
 \end{requirement}
+
 \begin{requirement}
     Option to exclude selected projects from the documentation.
 \end{requirement}

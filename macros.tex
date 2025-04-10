@@ -97,8 +97,12 @@
 \theoremstyle{requirement}
 \newtheorem{requirement}{Requirement}
 \newtheorem*{requirement*}{Requirement}
+\newtheorem{subrequirement}{Requirement}[requirement] % [requirement] makes it a subtheorem
 
 \renewcommand{\therequirement}{R\arabic{requirement}}
+
+\newcounter{subrequirementcounter} % Counter for subrequirements
+\renewcommand{\thesubrequirement}{R\arabic{subrequirementcounter}.\arabic{subrequirement}} % Subrequirements will have 1.1, 1.2, etc.
 
 \newtheoremstyle{goal}%
   {10pt}% Space above
