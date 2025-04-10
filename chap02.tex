@@ -131,6 +131,7 @@ The CIL and metadata are contained in a .NET assembly, which is typically stored
 \end{figure}
 
 \section{XML documentation file}
+\label{section:xml-doc}
 
 One important observation is that the documentation comments are not part of the assembly.
 Instead, the compiler can optionally create an XML file containing the documentation of the declared types and their members, 
@@ -290,8 +291,7 @@ The documentation inside top-level tags may contain, in addition to text, other 
 Typically, they affect how the text is rendered, i.e., they may specify a list of items, a paragraph, etc.
 The Table~\ref{table:inner-tags} shows a list of commonly recognized inner tags. 
 Except for the \texttt{<paramref>}, \texttt{<see langword="...">} and \texttt{<typeparamref>} tags, all of the other elements may contain text and other tags inside them.
-Additionally, we can see that the \texttt{<example>} tag can appear both as a top-level and an inner tag.
-This is because the documentation includes examples in both contexts.
+Additionally, we can see that the \texttt{<example>} tag can appear both as a top-level and an inner tag, as the official documentation includes examples in both contexts.
 
 \begin{table}[h]
 \centering
@@ -324,14 +324,16 @@ This is because the documentation includes examples in both contexts.
 \texttt{<typeparamref name="name"/>} & Reference to a type parameter. \\
 \hline
 \end{tabular}
-\caption{Recommended XML Tags}
+\caption{Inner XML tags}
 \label{table:inner-tags}
 \end{table}
 
 The only special tag is \texttt{<list>}, because it allows extra tags as its contents.
 The \texttt{<item>} tag can be used inside any list item and specifies an item of the list.
-The \texttt{<term>} tag contains a definition of a term, while the \texttt{<description>} tag contains its explanation.
+Additionally, the \texttt{<term>} tag contains a definition of a term, while the \texttt{<description>} tag contains its explanation.
+Both of these tags can be used inside the \texttt{<item>} tag.
 
+In the case of a table-style list, \texttt{<item>} tag represents a row, while \texttt{<term>} and \texttt{<description>} tags represent individual cells.
 Moreover, it is also possible to define a heading row of a table, using the \texttt{<listheader>} tag.
 
 \subsection{Reusing the documentation}
@@ -370,7 +372,7 @@ In this section, we will analyze the requirements R1-R7, outlined in the first c
 
 \subsection*{Zero configuration build}
 
-As discussed earlier, the requirement R1 states that the generator should be easy 
+As discussed earlier, the Requirement~\ref{req:zero-conf} states that the generator should be easy 
 to use, as the only mandatory argument should be the input.
 On the other hand, the generator naturally should also offer several optional arguments, such as the output folder.
 However, these options should have reasonable default values.
@@ -415,7 +417,7 @@ Based on the insights above, we can introduce two sub-requirements of requiremen
 
 \subsection*{Custom templates}
 
-Next, the generator should be designed to be extensible, as described in the requirement R2.
+Next, the generator should be designed to be extensible, as described in the Requirement~\ref{req:templates}.
 The documentation pages will naturally be generated from templates, written in an unspecified templating language, which get populated with data while the documentation is generated.
 
 Firstly, it should be easily possible to use the same template system as the default UI.
@@ -434,7 +436,7 @@ In practice, this should be done by implementing a corresponding interface.
 
 \subsection*{Custom static pages}
 
-The requirement R3 mentions support for user-specified static pages.
+The Requirement~\ref{req:static-pages} mentions support for user-specified static pages.
 As discussed before, the goal is not to create a full-fledged SSG; instead, a convention-based approach with no configuration is preferred.
 
 A simple yet effective approach would be to give the user an option to include a folder containing static pages.
@@ -455,7 +457,7 @@ As a result, we can further clarify requirement R3:
 
 \subsection*{Documentation versioning}
 
-The requirement R4 focuses on documentation versioning.
+The Requirement~\ref{req:versioning} focuses on documentation versioning.
 The generator should support an option (both on the command line and in the configuration file) for creating a specific version of the documentation, e.g. \texttt{v1.2}. 
 The resulting documentation should then be stored not in the output folder, but in its subfolder identified by the version number (\texttt{v1.2} in our case).
 This way, the output folder may contain multiple versions of the documentation.
@@ -470,7 +472,7 @@ Thus, we can define two sub-requirements:
     \item R4.2: Dropdown menu for version selection in the UI.
 \end{itemize}
 
-We have skipped requirements R5, R6, and R7, as they remain unchanged.
+We have skipped requirements~\ref{req:lang-ind}, \ref{req:modern-ui}, and~\ref{req:platf-ind}, as they remain unchanged.
 Furthermore, since we have decided to extract the context data from an assembly, requirement R5 is automatically satisfied, as discussed earlier.
 
 \section{Existing technologies}
@@ -620,22 +622,24 @@ First and foremost, we would like to have an index page of the API showing all n
 Additionally, under each namespace, there should be a list of types declared inside it.
 Thus, our eighth requirement is:
 
+\begin{requirement}
+    Index page of the API.
+\end{requirement}
+
 \begin{itemize}
-    \item R8: Index page of the API.
-    \begin{itemize}
-        \item[•] R8.1: Show list of namespaces.
-        \item[•] R8.2: Show a list of types declared in each namespace.
+        \item R8.1: Show list of namespaces.
+        \item R8.2: Show a list of types declared in each namespace.
     \end{itemize}
-\end{itemize}
 
 Furthermore, there should be a page for each namespace, displaying all of the types contained.
 For each type, there should be a link to its definition and its documentation, which leads us to the following requirement:
 
+\begin{requirement}
+    Separate page for each namespace.
+\end{requirement}
+
 \begin{itemize}
-    \item R9: Separate page for each namespace.
-    \begin{itemize}
         \item[•] R9.1: Display a list of types contained in the namespace.
-    \end{itemize}
 \end{itemize}
 
 Finally, there should be a page for each type displaying its signature in C\# format and documentation.
@@ -672,14 +676,15 @@ So, potentially, the documentation can contain the following sections:
 
 This gives us another requirement:
 
+\begin{requirement}
+    Separate page for each type.
+\end{requirement}
+
 \begin{itemize}
-    \item R10: Separate page for each type.
-    \begin{itemize}
         \item[•] R10.1: Show type signature in C\# format.
         \item[•] R10.2: Show type documentation, divided into sections corresponding to XML tags.
         \item[•] R10.3: Show signatures of all members contained in the type.
         \item[•] R10.4: Show documentation of all members, divided into sections corresponding to XML tags.
-    \end{itemize}
 \end{itemize}
 
 Next, there should be a menu at the top of each page.
@@ -694,27 +699,35 @@ On top of that, each subfolder of the static files folder should be represented 
 Static pages located 3 or more levels deep will not be included in the menu.
 In conclusion, we can formulate the requirement as follows:
 
-\begin{itemize}
-    \item R11: Display the top menu on each page.
-\end{itemize}
+\begin{requirement}
+    Display the top menu on each page.
+\end{requirement}
 
 Moreover, the top menu should include a search bar, allowing the users to search for types and members.
 If a user tries to search for something, he/she will be redirected to the search page showing a list of results.
 
+\begin{requirement}
+    Search functionality.
+\end{requirement}
+
 \begin{itemize}
-    \item R12: Search functionality.
-    \begin{itemize}
         \item[•] R12.1: Display a search bar in the top menu.
         \item[•] R12.2: Show a list of results at the \textit{search} page.
-    \end{itemize}
 \end{itemize}
 
 Another essential feature of the documentation generator is to correctly interpret the inner XML documentation tags, shown in Table~\ref{table:inner-tags}.
 Thus, our next requirement is:
 
-\begin{itemize}
-    \item R13: Correctly interpret the inner XML tags.
-\end{itemize}
+\begin{requirement}
+    Correctly interpret the inner XML tags.
+\end{requirement}
+
+Furthermore, the generator should be capable of replacing \texttt{<inheritdoc />} with the actual documentation, which leads us to the next requirement:
+
+\begin{requirement}
+    Resolve \texttt{<inheritdoc />} tags.
+    \label{req:inheritdoc}
+\end{requirement}
 
 All of the generators also have support for cross-references.
 This means that member, parameter, and return types contain a link to their definition, if possible.
@@ -723,9 +736,9 @@ Support for the types declared in the same project is mandatory.
 Optionally, we can also add links for standard library types.
 This gives us another requirement:
 
-\begin{itemize}
-    \item R14: Support for cross-references.
-\end{itemize}
+\begin{requirement}
+    Support for cross-references.
+\end{requirement}
 
 Additionally, we should consider that some users prefer a light theme, while others may favor a dark one.
 In the official .NET documentation, users can seamlessly switch between themes using a dropdown, as shown in Figure~\ref{fig:official-themes} \textit{(A)}.
@@ -760,17 +773,17 @@ In conclusion, our generator should support both light and dark themes, with an 
 \label{fig:official-dark}
 \end{figure}
 
-\begin{itemize}
-    \item R15: Support both light and dark themes.
-\end{itemize}
+\begin{requirement}
+    Support both light and dark themes.
+\end{requirement}
 
 Next, although reference documentation is primarily accessed on laptops and desktops, there are cases where users may browse it on tablets or mobile phones. 
 This means the UI should be reasonably responsive to accommodate this usage. 
 The default UIs of all generators support responsiveness, which leads us to the following requirement:
 
-\begin{itemize}
-    \item R16: Responsive UI.
-\end{itemize}
+\begin{requirement}
+    Responsive UI.
+\end{requirement}
 
 \section*{Other requirements}
 In previous sections, we thoroughly described the requirements R1-R7 introduced in the first chapter. 
@@ -784,19 +797,16 @@ However, not all projects in the solution need to be included; for instance, use
 Thus, there should be a way to exclude selected projects from the resulting documentation.
 Considering these points, we can introduce the following two requirements:
 
-\hfill
-
-\textbf{\textcolor{blue}{R17: Option for selecting a solution as the input.}}
-
-\hfill
-
-\begin{itemize}
-    \item R18: Option to exclude selected projects from the documentation.
-\end{itemize}
+\begin{requirement}
+    Option for selecting a solution as the input.
+\end{requirement}
+\begin{requirement}
+    Option to exclude selected projects from the documentation.
+\end{requirement}
 
 Additionally, the project itself may contain certain types we would like to exclude from the documentation.
 For instance, consider an app that includes Razor templates, which get compiled into .NET classes.
-As a result, they would normally appear in the docs, which is usually undesirable.
+As a result, they would normally appear in the documentation, which is usually undesirable.
 
 One option would be to use an extra XML tag (for instance \texttt{<ignore />}), allowing the developers to mark types that should be excluded from the documentation. 
 However, this approach brings a significant disadvantage, as it creates a coupling between the program and the generator.
@@ -806,25 +816,26 @@ An alternative solution is to support an option that allows users to exclude typ
 This approach eliminates the dependency between the code and the generator.
 Thus, we can formulate the subsequent requirement:
 
-\begin{itemize}
-    \item R19: Option to exclude types in selected namespaces.
-\end{itemize}
+\begin{requirement}
+    Option to exclude types in selected namespaces.
+    \label{req:option}
+\end{requirement}
 
 As discussed in section~\ref{section:context}, reference documentation is primarily intended for developers using a library or maintainers of the library.
 In the first case, only the public API is relevant, so public members alone are enough, while in the second case, it often makes sense to include non-public members as well.
 This gives us another requirement:
 
-\begin{itemize}
-    \item R20: Option for selecting types and members based on their accessibility level.
-\end{itemize}
+\begin{requirement}
+    Option for selecting types and members based on their accessibility level.
+\end{requirement}
 
 It is also worth noting that users may want to exclude inherited members from the documentation, based on different use cases.
 For instance, it may be preferred to exclude inherited members to focus solely on the specific API exposed by the types. 
 As a result, we can formulate the following requirement:
 
-\begin{itemize}
-    \item R21: Option for including/excluding the inherited members.
-\end{itemize}
+\begin{requirement}
+    Option for including/excluding the inherited members.
+\end{requirement}
 
 Last but not least, we should consider the program installation.
 Ideally, the installation method should be cross-platform and allow for easy updates.
@@ -840,6 +851,6 @@ Updates are also easy, as the app can be updated simply by running the \texttt{d
 
 In conclusion, installation as a .NET tool meets all criteria, and thus seems like a reasonable choice, leading us to the last requirement:
 
-\begin{itemize}
-    \item R22: The generator should be distributed as a .NET tool.
-\end{itemize}
+\begin{requirement}
+    The generator should be distributed as a .NET tool.
+\end{requirement}

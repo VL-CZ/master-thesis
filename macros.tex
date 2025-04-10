@@ -85,6 +85,36 @@
 \newtheorem*{rem}{Remark}
 \newtheorem*{example}{Example}
 
+\newtheoremstyle{requirement}%
+  {10pt}% Space above
+  {10pt}% Space below
+  {\color{blue}}% Body font
+  {}% Indent amount
+  {\bfseries\color{blue}}% Theorem head font
+  {\textcolor{blue}{:}}% Punctuation after theorem head
+  {.5em}% Space after theorem head
+  {}% Theorem head spec
+\theoremstyle{requirement}
+\newtheorem{requirement}{Requirement}
+\newtheorem*{requirement*}{Requirement}
+
+\renewcommand{\therequirement}{R\arabic{requirement}}
+
+\newtheoremstyle{goal}%
+  {10pt}% Space above
+  {10pt}% Space below
+  {\color{Brown}}% Body font
+  {}% Indent amount
+  {\bfseries\color{Brown}}% Theorem head font
+  {\textcolor{Brown}{:}}% Punctuation after theorem head
+  {.5em}% Space after theorem head
+  {}% Theorem head spec
+\theoremstyle{goal}
+\newtheorem{goal}{Goal}
+\newtheorem*{goal*}{Goal}
+
+\renewcommand{\thegoal}{G\arabic{goal}}
+
 %%% Style of captions of floating objects (figures etc.)
 
 \ifcsname DeclareCaptionStyle\endcsname
@@ -134,6 +164,9 @@
 %%% Asymptotic "O"
 \def\O{\mathcal{O}}
 
+%%% TODO items: remove before submitting :)
+\newcommand{\xxx}[1]{\textcolor{red!}{#1}}
+
 %%% Various math goodies
 \newcommand{\goto}{\rightarrow}
 \newcommand{\gotop}{\stackrel{P}{\longrightarrow}}
@@ -141,9 +174,6 @@
 \newcommand{\abs}[1]{\left|{#1}\right|}
 \newcommand{\dint}{\int_0^\tau\!\!\int_0^\tau}
 \newcommand{\isqr}[1]{\frac{1}{\sqrt{#1}}}
-
-%%% TODO items: remove before submitting :)
-\newcommand{\xxx}[1]{\textcolor{red!}{#1}}
 
 %%% Detailed settings of bibliography
 

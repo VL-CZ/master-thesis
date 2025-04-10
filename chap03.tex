@@ -1,99 +1,381 @@
-
 \chapter{Technical Analysis}
+
+In the previous chapter, we created several requirements that the documentation generator should adhere to.
+This chapter presents a thorough analysis of the solution, examining its structure and addressing numerous challenges to ensure these requirements are met.
 
 \section{Member representation}
 
-In this chapter, we will outline several ways how to represent type members in the code.
+First, we can notice that we must somehow represent type members in our codebase.
+That is because we need to know its name and various information about it. 
+For instance, it is mandatory to know whether a member is e.g. static, public, etc., as this information needs to be included in the reference documentation.
+In addition to that, we need to display the corresponding documentation comments.
 
-The first idea is to use the objects provided by Reflection, such as \textit{MethodInfo}, which provide the context data we need.
-As mentioned before, these objects contain properties such as \texttt{IsStatic}, \texttt{IsPublic}, etc.
+\subsection*{Using the types provided by reflection}
+The first idea is to use the objects provided by reflection, such as \texttt{FieldInfo} and \texttt{MethodInfo}, which provide the data we need to display.
+For instance, it is possible to obtain the name of a member; in addition to that 
+these types contain properties such as \texttt{IsStatic}, \texttt{IsPublic}, etc.
 
-However, as mentioned before, the documentation comments are not part of the assembly. 
-Therefore, the objects provided by reflection do not contain any data regarding the documentation comments.
+However, as explained earlier, the documentation comments are not part of the assembly. 
+Therefore, these types do not contain any data regarding the documentation comments.
+Since we need to somehow extract the comments, we can conclude that using the types provided by reflection alone is not sufficient.
 
-Option 1: reflection provided objects + external XML file
+The first option is to simply pass the XML documentation file along with the members.
+When obtaining the documentation comment, we would simply call e.g. \texttt{xmlDocFile.GetDocComment(memberName)}.
+However, there are multiple issues with this approach.
 
-Option 2: tuple (object, doc comment)
+As described in the Requirement~\ref{req:templates}, the generator should be designed in an extensible way.
+Thus, in the future, this API may be used by other developers, and therefore it should be as intuitive as possible.
+Unfortunately, the approach above does not create a particularly intuitive interface. 
+The main problem is that the concerns are mixed, as the data regarding the member is stored within the type, while the documentation needs to be extracted separately.
 
-disadvantages: 
+\subsection*{Using a tuple}
 
-Option 3: custom objects (i.e. MethodData)
+This leads us to an alternative approach: representing members as a tuple containing the reflection object and the corresponding documentation comment.
+By doing so, we address some of the issues outlined above; specifically, we achieve better cohesion by storing the documentation alongside the reflection object itself.
 
-advantages: common interfaces, doc comments included
+However, several problems still persist.
+The user still needs to parse the documentation in order to obtain the individual top-level tags, because those typically should be displayed in a different way.
+Furthermore, that API is still quite messy, since it contains, e.g., a method setting a field's value, and additional methods irrelevant to documentation generation.
 
-Nice object design, great for extensibility -> the users extending the library may easily 
+In addition to that, handling different kinds of members (e.g., properties and methods) in the program in a common way can be complicated.
+That is caused by the design of the .NET Reflection API, as e.g., there is no common superclass or interface for properties and methods, other than \texttt{MemberInfo}.
+However, this class provides only a handful of information about a member, specifically, it is not possible to determine whether the member is static or its accessibility level.
+
+TODO: vice rozepsat
+
+\subsection*{Using custom types}
+
+Instead of the reflection types, we can use custom types for the member representation.
+
+Ideally, those types could be simply wrappers around the built-in reflection types, providing extra information, such as the documentation comments.
+Moreover, the fields and methods not relevant to documentation generation do not need to be included in the API, as we want to keep the interface as clean as possible.
+This way, we can achieve a user-friendly object model, where all member types can have the following structure:
 
 \begin{itemize}
-    \item Data objects vs custom classes
+    \item name
+    \item whether it is static
+    \item accessibility (private, public, etc.)
+    \item ... (other member-related functionality)
+    \item summary documentation
+    \item remarks documentation
+    \item ... (other documentation related functionality)
 \end{itemize}
-Advantages:
+
+Furthermore, we can create custom interfaces or supertypes for a certain set of members that share common functionality. As an example, there could be a common interface for properties and methods, which allows us
+to process those in a common way in other parts of our code base.
+
+Based on these insights, we will prefer this approach.
+
+\section{Type representation}
+
+We have already decided how to represent type members, yet a similar question is relevant for types as well, as the types will be included in the documentation as well.
+One option is to use the built-in \texttt{System.Type} class, however, since we have already decided to use custom member classes, it would bring multiple drawbacks.
+
+Notably, there is no way to store the members of custom types inside an existing class.
+Next, the API of \texttt{System.Type} is not particularly clean for our purpose, for the same reasons as mentioned in the previous section.
+
+Thus, it would be preferred to create custom types representing the types, with the following structure:
+
 \begin{itemize}
-    \item Common interfaces
-    \item Documentation comments included
+    \item name
+    \item ... (other type related information)
+    \item fields
+    \item properties
+    \item methods
+    \item ... (other member related information)
+    \item summary documentation
+    \item remarks documentation
+    \item ... (other documentation related information)
 \end{itemize}
 
-describe MemberID
+\section{Assignment of the documentation comments}
 
-\section{Doc comment extraction}
+We have already described how to represent types and members in our codebase.
+On the other hand, we still have not explained how to assign the documentation to the corresponding types or members.
 
-- how to add comments to the members
+As explained in the section~\ref{section:xml-doc}, the documentation comments are stored inside the XML documentation file, whose format was already presented in Program~\ref{lst:ex-xml-output}.
+We have also noted before that the \texttt{name} attribute uniquely identifies the type or member that the documentation belongs to.
 
-\section{InheritDoc resolving}
+This ID string consists of two parts, separated by a colon. 
+The first part identifies the kind of the type or member, for example \textit{T} is used for types, \textit{M} for methods, \textit{F} for fields, etc.
+The complete list of the characters can be found in the documentation~\cite{csharp_xml_docs}.
+Additionally, the second part represents a fully qualified name of the type or member.
+In the case of a member, the name consists of the containing type name followed by the member name.
+If there are any parameters, they are enclosed in parentheses and identified by their type names.
+Further details about the format are described in the documentation~\cite{csharp_xml_docs}.
+Thus, once we get the documentation comment, we can simply find the corresponding type or member and assign the documentation to it.
 
-- how to resolve inheritdoc
-- three types of inheritance: type, member and code reference
+We can also notice that the same identifier is used inside the \texttt{cref} attributes.
+Thus, we can apply the same idea to the tags with \texttt{cref} attribute.
 
+\section{Resolving \texttt{inheritdoc} tags}
+
+As mentioned in Requirement~\ref{req:inheritdoc}, our generator must be capable of resolving \texttt{<inheritdoc />} tags.
+The key observation is that they may be used recursively, i.e., the resolved documentation may again contain \texttt{<inheritdoc />} tags.
+Thus, the resolution may be done using depth-first search.
+As stated earlier, there are 3 types of \texttt{<inheritdoc />} comments.
 \begin{itemize}
-    \item Depth-first search graph
+    \item Applied to a member (without \texttt{cref} attribute)
+    \item Applied to a type (without \texttt{cref} attribute)
+    \item With \texttt{cref} attribute
 \end{itemize}
 
-\section{Doc Comment Parser}
-\begin{itemize}
-    \item Describe XML documentation tags converted to HTML.
-\end{itemize}
+We can notice that the \texttt{cref} tags may possibly form a cycle, so we need to handle this case as well.
 
-\section{Template generator}
-\begin{itemize}
-    \item Describe XML documentation tags converted to HTML.
-\end{itemize}
+... somehow explain that resolving all at once is not ideal ...
 
-\section{Template Language Choice}
+However, a simple observation is that we can first resolve the tags without the \texttt{cref} attribute, 
+Thus, we can possibly copy \texttt{<inheritdoc>} tags with \texttt{cref}, however, this is not a problem, as these point to a fixed location.
+After that, we can resolve all tags with \texttt{cref}.
+This simplifies the process a little bit, as at one time we need to handle only 1 type of inheritdocs.
 
-\subsection{No template language?}
+However, we cannot do the same in reverse order; if we first resolve the tags with \texttt{cref} attribute, we may get another \texttt{inheritdoc} with no \texttt{cref} copied.
+Now, that \texttt{inheritdoc} points to a different location, which is a problem.
+
+Thus, it is safe to resolve first all tags without \texttt{cref} attribute.
+Then, we can proceed with the \texttt{cref} ones.
+
+\section{Templating language choice}
+
+Next, we need to choose a templating language for our templates.
+The language should definitely support conditions, because we would likely need to render a text only if a certain condition is true.
+As an example, we can think of a \textit{Remarks} section, which should be displayed only if there is a \texttt{<remarks>} tag provided.
+The support for loops is also required, as we will need to, e.g., print all fields, methods, etc., contained in a type. Without language support for loops, this would be hard to achieve.
+Additionally, the templating language should support including other templates, so we can reuse the code.
+TODO: vic do detailu?
+
+\subsection{No templating language}
+
+The first option is to use no templating language at all, in other words, to generate the HTML manually, by building the DOM tree.
+However, this approach is unpleasant to work with, especially as the templates grow bigger.
 
 \subsection{Mustache}
-\begin{itemize}
-    \item Stubble.NET library
-\end{itemize}
+
+Mustache~\cite{mustache} is a simple templating language that allows users to replace certain parts of the file with variable contents.
+This can be achieved by using tags, enclosed in double curly braces.
+For instance, the \texttt{\{\{name\}\}} tag is, during template compilation, replaced by the value of the \texttt{name} variable.
+
+While \textit{mustache} directly does not support conditions or loops, it is possible to achieve similar behaviour using special tags -- sections.
+A section begins with a hash sign and ends with a slash. That is, \texttt{\{\{\#person\}\}} begins a \textit{person} section while \texttt{\{\{/person\}\}} ends it, as stated in the documentation~\cite{mustache}. 
+There can be arbitrary content inside the section.
+Sections are rendered text zero or more times, depending on the variable.
+If the variable (in our case \texttt{person}) is \texttt{false} or an empty list, the section is not rendered at all.
+On the other hand, if the variable is a non-empty list, the section contents will be displayed once for each list item.
+Additionally, inside the section, the current item can be referenced by using \texttt{\{\{.\}\}} tag.
+This way, we can simulate conditions and loops, respectively.
+
+An example of a mustache template is shown in Program~\ref{lst:mustache}.
+The template should print the provided name and age.
+Then, if the \texttt{isAdult} property is set to true, this fact should be displayed as well.
+Finally, all owned items (i.e., all items contained in \texttt{itemsOwned} list) are shown as an unordered list.
+
+The whole idea behind \textit{mustache} is that the templates should contain as little logic as possible.
+Instead, the logic should be done in the code, and the templates should be used purely for rendering.
+That is why it does not support, e.g., comparing a value to a constant. 
+For instance, we cannot check if a person is an adult by comparing his/her age to 18, as this is not allowed in mustache templates.
+Instead of that, the object passed to the template should contain a field, named e.g. \texttt{isAdult}.
+
+In .NET, multiple libraries can be used for rendering of Mustache templates, notably Stubble.NET~\cite{stubble} and Nustache~\cite{nustache}.
+However, the support for Nustache is questionable, since the library has not been updated since 2019.
+
+\begin{listing}
+\begin{lstlisting}[language=HTML]
+<p>
+    <div>
+        Name: {{name}}
+    </div>
+    <div>
+        Age: {{age}}
+    </div>
+    
+    {{#isAdult}}
+    <div>
+        This person is an adult.
+    </div>
+    {{/isAdult}}
+    
+    <div>
+        Items Owned:
+        
+        <ul>
+        {{#itemsOwned}}
+            <li>
+                {{.}}
+            </li>
+        {{/itemsOwned}}
+        </ul>
+    </div>
+</p>
+\end{lstlisting}
+\caption{Example mustache template}
+\label{lst:mustache}
+\end{listing}
 
 \subsection{Handlebars}
-\begin{itemize}
-    \item Handlebars.NET library
-\end{itemize}
+
+Handlebars~\cite{handlebars} is another widely used templating language.
+Its syntax is very similar to Mustache and encompasses almost all of its functionality.
+On top of that, it has better support for conditions and loops -- by using the \textit{if} and \textit{each} keywords.
+However, the conditions can be evaluated only against true/false, so it is not possible to check, e.g., whether the number is greater than five.
+On the other hand, it is possible to add extra functionality using custom helpers.
+A helper is simply a function written in a programming language that is registered and then evaluated at runtime.
+For instance, we can write a helper comparing two numbers, or converting a string to uppercase.
+
+An example of a Handlebars template is displayed in Program~\ref{lst:handlebars}.
+We can also notice that a custom helper -- \texttt{geq} is used to check whether a person is an adult. 
+Additionally, before we compile the template, we need to register the helper by providing its code. TODO: ukazat priklad?
+Though Handlebars templates are primarily intended for JavaScript, .NET is also supported using the Handlebars.NET library~\cite{handlebars_net}.
+
+\begin{listing}
+\begin{lstlisting}[language=HTML]
+<p>
+    <div>
+        Name: {{name}}
+    </div>
+    <div>
+        Age: {{age}}
+    </div>
+    
+    {{#if (geq age 18)}}
+    <div>
+        This person is an adult.
+    </div>
+    {{/if}}
+    
+    <div>
+        Items Owned:
+
+        <ul>
+        {{#each itemsOwned}}
+            <li>
+                {{this}}
+            </li>
+        {{/each}}
+        </ul>
+    </div>
+</p>
+\end{lstlisting}
+\caption{Example Handlebars template}
+\label{lst:handlebars}
+\end{listing}
 
 \subsection{Liquid}
-\begin{itemize}
-    \item DotLiquid
-    \item Fluid.NET
-    \item Scriban
-\end{itemize}
+
+Another, more complex templating language is Liquid~\cite{liquid}.
+Again, its syntax is quite similar to mustache and Handlebars.
+
+However, unlike them, it supports a wide range of filters that can be used for output customization.
+Filters are typically used to change the output of a variable and are separated by a pipe character.
+For instance, the \texttt{upcase} filter converts the input string into uppercase. 
+Thus, we can, e.g., print the name of a person in uppercase by the following code: \texttt{\{\{ name | upcase \}\}}.
+Furthermore, Liquid supports all commonly used comparison operators as well as the \textit{and} and \textit{or} boolean operators, and using custom variables.
+An example of a Liquid template is shown in Program~\ref{lst:liquid}.
+
+Although the Liquid language itself does not specify support for custom filters, this functionality is typically provided by the libraries processing Liquid templates.
+In .NET, Liquid templates are supported using the DotLiquid~\cite{dotliquid} library, however, this library directly states that it is looking for maintainers, therefore, its future is unclear.
+Additionally, there are two other popular .NET libraries: Scriban~\cite{scriban} and Fluid~\cite{fluid}, which use a custom language that is almost identical to Liquid, with a range of extra filters added.
+
+\begin{listing}
+\begin{lstlisting}[language=HTML]
+<p>
+    <div>
+        Name: {{ name }}
+    </div>
+    <div>
+        Age: {{ age }}
+    </div>
+    {% if age >= 18 %}
+    <div>
+        This person is an adult.
+    </div>
+    {% endif %}
+    <div>
+        Items Owned:
+        {% for item in itemsOwned %}
+            <div>{{ item }}</div>
+        {% endfor %}
+    </div>
+</p>
+\end{lstlisting}
+\caption{Example Liquid template}
+\label{lst:liquid}
+\end{listing}
 
 \subsection{Razor}
+
+Finally, it is also possible to use Razor markup language~\cite{razor}.
+The major difference between Razor and other previously mentioned templating languages is that Razor allows embedding C\# code.
+As a consequence, it naturally supports C\# language constructs, such as conditions, loops, functions, etc.
+The transition to C\# is done using the at sign; thus, the expression \texttt{@name} renders the value of the variable \texttt{name}.
+Furthermore, it is also possible to include whole blocks of C\# code, enclosed in \texttt{@\{} and \texttt{\}}.
+As mentioned before, there could be arbitrary C\# code inside the code block.
+
+A big advantage of Razor is that it is statically typed, meaning that if we, e.g., mistype a variable name, a compilation error is thrown.
+This stems from the fact that when using Razor, we need to specify the types of the objects passed to the template.
+An example of a Razor file is shown in Program~\ref{lst:razor}.
+As we can see, the object of type \texttt{Person} is passed to the template.
+
+TODO: popsat jak funguje Razor?
+TODO: vice rozepsat?
+
+The rendering of Razor files can be done using the RazorLight library~\cite{razor_console}, however, certain constructs, such as methods, are not supported.
+Additionally, even though Razor was originally intended for usage in web applications, it is also possible
+to render Razor components in console applications, as mentioned in the official documentation~\cite{razor_console}.
+
+\begin{listing}[t]
+\begin{lstlisting}[language=HTML]
+<p>
+    <div>
+        Name: @Person.Name
+    </div>
+    <div>
+        Age: @Person.Age
+    </div>
+    @if (Person.Age >= 18)
+    {
+        <div>
+            This person is an adult.
+        </div>
+    }
+    <div>
+        Items Owned:
+
+        <ul>
+        @foreach (var item in Person.ItemsOwned)
+        {
+            <li>@item</li>
+        }
+        </ul
+    </div>
+</p>
+
+@code {
+    [Parameter]
+    public Person Person { get; set; }
+}
+\end{lstlisting}
+\caption{Example Razor template}
+\label{lst:razor}
+\end{listing}
+
+\newpage
+
+\subsection*{Evaluation of templating languages}
+
+Even though not explicitly mentioned, all of the templating languages above support reusing templates, which is a fundamental feature of a templating language.
+
+...
+
+\section{Template models}
+
+Next, we must consider what object we want to pass into Razor templates.
+
+First option is to use custom type and member data representing the types and members.
+Another way is to use so-called template models.
+
+\section{Handling inner XML tags}
 \begin{itemize}
-    \item RazorLight
-    \item Razor components in Console apps
+    \item Describe XML documentation tags converted to HTML.
 \end{itemize}
 
-\subsection{Conclusion}
-
-\section{Templates}
-
-\subsection{Template models}
-- describe
-- template model x memberData objects
-
-\subsection{Template model creators}
-- the conversion memberData -> template model
-
-\subsection{Razor templates}
-- decomposition
+\section{Documentation versioning}
