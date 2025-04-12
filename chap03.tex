@@ -1,14 +1,14 @@
 \chapter{Technical Analysis}
 
-In the previous chapter, we created several requirements that the documentation generator should adhere to.
+In the previous chapter, we formulated several requirements that the documentation generator should adhere to.
 This chapter presents a thorough analysis of the solution, examining its structure and addressing numerous challenges to ensure these requirements are met.
 
 \section{Member representation}
 
 First, we can notice that we must somehow represent type members in our codebase.
-That is because we need to know its name and various information about it. 
-For instance, it is mandatory to know whether a member is e.g. static, public, etc., as this information needs to be included in the reference documentation.
-In addition to that, we need to display the corresponding documentation comments.
+That is because we need to know their names and various data concerning them. 
+For instance, it is mandatory to know whether a member is static, public, etc., as this information needs to be included in the reference documentation.
+Additionally, we need to display the corresponding documentation comments.
 
 \subsection*{Using the types provided by reflection}
 The first idea is to use the objects provided by reflection, such as \texttt{FieldInfo} and \texttt{MethodInfo}, which provide the data we need to display.
@@ -20,7 +20,7 @@ Therefore, these types do not contain any data regarding the documentation comme
 Since we need to somehow extract the comments, we can conclude that using the types provided by reflection alone is not sufficient.
 
 The first option is to simply pass the XML documentation file along with the members.
-When obtaining the documentation comment, we would simply call e.g. \texttt{xmlDocFile.GetDocComment(memberName)}.
+When obtaining the documentation comment, we would call e.g. \texttt{xmlDocFile.GetDocComment(memberName)}.
 However, there are multiple issues with this approach.
 
 As described in the Requirement~\ref{req:templates}, the generator should be designed in an extensible way.
@@ -33,7 +33,7 @@ The main problem is that the concerns are mixed, as the data regarding the membe
 This leads us to an alternative approach: representing members as a tuple containing the reflection object and the corresponding documentation comment.
 By doing so, we address some of the issues outlined above; specifically, we achieve better cohesion by storing the documentation alongside the reflection object itself.
 
-However, several problems still persist.
+However, several problems persist.
 The user still needs to parse the documentation in order to obtain the individual top-level tags, because those typically should be displayed in a different way.
 Furthermore, that API is still quite messy, since it contains, e.g., a method setting a field's value, and additional methods irrelevant to documentation generation.
 
@@ -55,10 +55,10 @@ This way, we can achieve a user-friendly object model, where all member types ca
     \item name
     \item whether it is static
     \item accessibility (private, public, etc.)
-    \item ... (other member-related functionality)
+    \item + other member-related information
     \item summary documentation
     \item remarks documentation
-    \item ... (other documentation related functionality)
+    \item + other documentation-related information
 \end{itemize}
 
 Furthermore, we can create custom interfaces or supertypes for a certain set of members that share common functionality. As an example, there could be a common interface for properties and methods, which allows us
@@ -78,35 +78,46 @@ Thus, it would be preferred to create custom types representing the types, with 
 
 \begin{itemize}
     \item name
-    \item ... (other type related information)
+    \item + other type related information
     \item fields
     \item properties
     \item methods
-    \item ... (other member related information)
+    \item + other member-related information
     \item summary documentation
     \item remarks documentation
-    \item ... (other documentation related information)
+    \item + other documentation-related information
 \end{itemize}
 
 \section{Assignment of the documentation comments}
 
 We have already described how to represent types and members in our codebase.
-On the other hand, we still have not explained how to assign the documentation to the corresponding types or members.
+However, we have not yet explained how to assign the documentation to the corresponding types or members.
 
-As explained in the section~\ref{section:xml-doc}, the documentation comments are stored inside the XML documentation file, whose format was already presented in Program~\ref{lst:ex-xml-output}.
-We have also noted before that the \texttt{name} attribute uniquely identifies the type or member that the documentation belongs to.
+As explained in the Section~\ref{section:xml-doc}, the documentation comments are stored inside the XML documentation file, whose format was already presented in Program~\ref{lst:ex-xml-output}.
+We have also noted that the \texttt{name} attribute uniquely identifies the type or member to which the documentation belongs.
+An example of the ID string is shown in Program~\ref{lst:ex-xml-string}.
 
-This ID string consists of two parts, separated by a colon. 
-The first part identifies the kind of the type or member, for example \textit{T} is used for types, \textit{M} for methods, \textit{F} for fields, etc.
-The complete list of the characters can be found in the documentation~\cite{csharp_xml_docs}.
+The format of the string is thoroughly described in the documentation~\cite{csharp_xml_docs}.
+Generally, it consists of two parts, separated by a colon. 
+The first part identifies the kind of the type or member, for example, \textit{T} is used for types, \textit{M} for methods, \textit{F} for fields, etc.
 Additionally, the second part represents a fully qualified name of the type or member.
 In the case of a member, the name consists of the containing type name followed by the member name.
 If there are any parameters, they are enclosed in parentheses and identified by their type names.
-Further details about the format are described in the documentation~\cite{csharp_xml_docs}.
-Thus, once we get the documentation comment, we can simply find the corresponding type or member and assign the documentation to it.
+Thus, the string shown in Program~\ref{lst:ex-xml-string} identifies a method \texttt{CalculateRectangleArea}, 
+which is contained within the type \texttt{MyApp.MyClass} and takes two parameters of type \texttt{System.Double}.
+This way, we can find the corresponding type or member for the comment.
 
-We can also notice that the same identifier is used inside the \texttt{cref} attributes.
-Thus, we can apply the same idea to the tags with \texttt{cref} attribute.
+Thus, the generator can process the XML file, find all documentation comments, and assign them to the corresponding types or members, one by one.
+
+\begin{listing}
+\begin{lstlisting}[language=XML]
+<member name="M:MyApp.MyClass.CalculateRectangleArea
+                            (System.Double,System.Double)">
+\end{lstlisting}
+\caption{Example of the ID string}
+\label{lst:ex-xml-string}
+\end{listing}
+
 
 \section{Resolving \texttt{inheritdoc} tags}
 
