@@ -92,7 +92,6 @@ Thus, it would be preferred to create custom types representing the types, with 
 
 We have already described how to represent types and members in our codebase.
 However, we have not yet explained how to assign the documentation to the corresponding types or members.
-
 As explained in the Section~\ref{section:xml-doc}, the documentation comments are stored inside the XML documentation file, whose format was already presented in Program~\ref{lst:ex-xml-output}.
 We have also noted that the \texttt{name} attribute uniquely identifies the type or member to which the documentation belongs.
 An example of the ID string is shown in Program~\ref{lst:ex-xml-string}.
@@ -109,7 +108,7 @@ This way, we can find the corresponding type or member for the comment.
 
 Thus, the generator can process the XML file, find all documentation comments, and assign them to the corresponding types or members, one by one.
 
-\begin{listing}
+\begin{listing}[H]
 \begin{lstlisting}[language=XML]
 <member name="M:MyApp.MyClass.CalculateRectangleArea
                             (System.Double,System.Double)">
@@ -118,6 +117,7 @@ Thus, the generator can process the XML file, find all documentation comments, a
 \label{lst:ex-xml-string}
 \end{listing}
 
+\newpage
 
 \section{Resolving \texttt{inheritdoc} tags}
 
@@ -148,12 +148,35 @@ Then, we can proceed with the \texttt{cref} ones.
 
 \section{Templating language choice}
 
-Next, we need to choose a templating language for our templates.
+In the previous chapters, we described how to represent types and members, as well as how to assign the documentation to them.
+Yet, we still have not discussed the generation of the documentation pages.
+As mentioned in Requirement~\ref{req:templates}, we will likely need to choose a templating language.
+
+\subsection*{Context}
+
+Before we proceed with the comparison of various templating languages, we must introduce a bit of context to aid understanding.
+First, a templating language is used for writing templates, which are essentially files with static content and placeholders intended to be replaced with variable data. 
+In order to generate the resulting file, the variables must be provided, along with the template itself.
+This process is accomplished using a template processor, which takes both the template and variables as its input and creates the resulting file.
+Template processors are often distributed as software libraries, so processing a template can typically be achieved simply by calling a method.
+
+It is also important to note that variables in templating languages can have different types.
+While the set of supported types varies depending on the language, most templating languages support at least strings, booleans, and lists.
+Furthermore, structured objects are typically supported as well.
+
+Arguably, the main advantage of using such a templating language is that users can easily generate files with the same structure, but different content.
+For instance, we can create a template representing a type page, as requested in Requirement~\ref{req:type-page}.
+Then, we can create many such pages simply by providing the corresponding variables, such as the type name, its members, etc.
+Moreover, most templating languages support reusing templates.
+In other words, it is possible to import a template into another.
+This allows the users to extract shared pieces of content into a separate template and then import them where needed.
+
+\subsection*{Templating language requirements}
+
 The language should definitely support conditions, because we would likely need to render a text only if a certain condition is true.
 As an example, we can think of a \textit{Remarks} section, which should be displayed only if there is a \texttt{<remarks>} tag provided.
 The support for loops is also required, as we will need to, e.g., print all fields, methods, etc., contained in a type. Without language support for loops, this would be hard to achieve.
 Additionally, the templating language should support including other templates, so we can reuse the code.
-TODO: vic do detailu?
 
 \subsection{No templating language}
 
@@ -162,9 +185,8 @@ However, this approach is unpleasant to work with, especially as the templates g
 
 \subsection{Mustache}
 
-Mustache~\cite{mustache} is a simple templating language that allows users to replace certain parts of the file with variable contents.
-This can be achieved by using tags, enclosed in double curly braces.
-For instance, the \texttt{\{\{name\}\}} tag is, during template compilation, replaced by the value of the \texttt{name} variable.
+Mustache~\cite{mustache} is a simple templating language that allows users to replace certain parts of the file with variable contents, enclosed in double curly braces.
+For instance, the \texttt{\{\{name\}\}} tag is, during template processing, replaced by the value of the \texttt{name} variable.
 
 While \textit{mustache} directly does not support conditions or loops, it is possible to achieve similar behaviour using special tags -- sections.
 A section begins with a hash sign and ends with a slash. That is, \texttt{\{\{\#person\}\}} begins a \textit{person} section while \texttt{\{\{/person\}\}} ends it, as stated in the documentation~\cite{mustache}. 
@@ -372,8 +394,6 @@ to render Razor components in console applications, as mentioned in the official
 \newpage
 
 \subsection*{Evaluation of templating languages}
-
-Even though not explicitly mentioned, all of the templating languages above support reusing templates, which is a fundamental feature of a templating language.
 
 ...
 
