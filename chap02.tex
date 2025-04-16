@@ -337,6 +337,7 @@ In the case of a table-style list, \texttt{<item>} tag represents a row, while \
 Moreover, it is also possible to define a heading row of a table, using the \texttt{<listheader>} tag.
 
 \subsection{Reusing the documentation}
+\label{sec:reusing-docs}
 
 There are two more commonly used tags -- \texttt{<include>} and \texttt{<inheritdoc>}, both top-level and unpaired.
 
@@ -345,7 +346,7 @@ Note that this tag is unsupported in some languages, such as F\#.
 When creating the XML documentation file, the compiler replaces the \texttt{<include>} tags with the actual documentation.
 Thus, the \texttt{<include>} elements are not present in the resulting documentation file, meaning that we do not need to process them in any way.
 
-The \texttt{inheritdoc} tag can be applied to any type and member and allows users to inherit the 
+The \texttt{inheritdoc} tag can be applied to any type and member and allows users to inherit the documentation.
 When applied to a type, the documentation is inherited from the base type or an implemented interface.
 The official documentation~\cite{csharp_xml_docs} does not specify what happens if, e.g., both the base type and implemented interface are documented.
 When the \texttt{inheritdoc} is applied to a member, the documentation is taken from the base definition of the member.
@@ -442,6 +443,7 @@ In practice, this should be done by implementing a corresponding interface.
 
 \begin{subrequirement}
     The generator should allow users to use templates written in a templating language of their choice, accompanied by the code that generates them.
+    \label{subreq:custom-template-lang}
 \end{subrequirement}
 
 \subsection*{Custom static pages}
@@ -491,7 +493,7 @@ Thus, we can define two sub-requirements:
 \end{subrequirement}
 
 \begin{subrequirement}
-    Dropdown menu for version selection in the UI.
+    A dropdown menu for version selection in the UI.
 \end{subrequirement}
 
 We have skipped requirements~\ref{req:lang-ind}, \ref{req:modern-ui}, and~\ref{req:platf-ind}, as they remain unchanged.
@@ -508,7 +510,7 @@ displaying all the contained types \textit{(A)}.
 The same applies to the official .NET documentation, as displayed in Figure~\ref{fig:off-ns}.
 Then, each type has its own page, as shown in Figures~\ref{fig:off-t1}, \ref{fig:off-t2}, \ref{fig:docfx-t}, \ref{fig:docfx-t2}, \ref{fig:doxygen-t} and~\ref{fig:shfb-t} displaying its documentation \textit{(B)} as well as the list of declared members \textit{(C)}.
 In Figures~\ref{fig:docfx-m} and~\ref{fig:doxygen-m}, we can notice that while DocFX and Doxygen show the members with their documentation \textit{(D)} at the bottom of the type page,
-SHFB and official .NET documentation use a different approach -- using a separate page for each member \textit{(E)}, as displayed in Figures~\ref{fig:off-m1}, \ref{fig:shfb-m}).
+SHFB and official .NET documentation use a different approach -- using a separate page for each member \textit{(E)}, as displayed in Figures~\ref{fig:off-m1} and \ref{fig:shfb-m}.
 
 Furthermore, as depicted in Figures~\ref{fig:doxygen-nsl}, \ref{fig:shfb-nsl}, and~\ref{fig:official-nsl}, all generators except DocFX create a page containing a list of namespaces \textit{(F)}; the same applies to the official .NET documentation.
 The default UI of DocFX does not contain any such page; instead, the data regarding namespaces is shown in a side menu \textit{(G)}.
