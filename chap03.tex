@@ -149,7 +149,7 @@ public class Parent
 }
 
 /// <inheritdoc/>
-internal class Child : Parent
+public class Child : Parent
 {
     /// <inheritdoc cref="Console.WriteLine()" />   
     public override void Handle()
@@ -158,7 +158,7 @@ internal class Child : Parent
 }
 
 /// <inheritdoc/>
-internal class ChildChild : Child
+public class ChildChild : Child
 {
     /// <inheritdoc/>
     public override void Handle()
@@ -218,7 +218,7 @@ Arguably, the main advantage of using such a templating language is that users c
 For instance, we can create a template representing a type page, as requested in Requirement~\ref{req:type-page}.
 Then, we can create many such pages simply by providing the corresponding variables, such as the type name, its members, etc.
 Moreover, most templating languages support reusing templates.
-In other words, it is possible to import a template into another.
+In other words, it is possible to import a template into another one.
 This allows the users to extract shared pieces of content into a separate template and then import them where needed.
 For example, our generator will likely contain a template for the top menu, which is expected to be referenced on various pages.
 
@@ -429,16 +429,13 @@ The transition to C\# is done using the at sign; thus, the expression \texttt{@n
 Furthermore, it is also possible to include whole blocks of C\# code, enclosed in \texttt{@\{} and \texttt{\}}.
 As mentioned before, there could be arbitrary C\# code inside the code block.
 
-A big advantage of Razor is that it is statically typed, meaning that if we, for instance, mistype a variable name, a compilation error is thrown.
-This stems from the fact that when using Razor, we need to specify the types of the objects passed to the template.
 An example of a Razor file is shown in Program~\ref{lst:razor}.
 As we can see, the object of type \texttt{Person} is passed to the template.
-
 The processing of Razor files can be done using the RazorLight library~\cite{razor_console}, however, certain constructs, such as methods, are not supported.
 Additionally, even though Razor was originally intended for use in web applications, it is also possible
 to render Razor components in console applications, as mentioned in the official documentation~\cite{razor_console}.
 
-\begin{listing}[t]
+\begin{listing}[H]
 \begin{lstlisting}[language=HTML]
 <p>
     <div>
@@ -474,38 +471,62 @@ to render Razor components in console applications, as mentioned in the official
 \label{lst:razor}
 \end{listing}
 
-\newpage
+\section{Template decomposition}
+
+As stated before, certain parts of the UI might be reused in multiple places.
+Consider, e.g., the \textit{Type parameters} section, which can be present at both method and type definition.
+We aim to align with best practices and therefore remove the duplication, so the natural solution is to extract the common code into a separate template and then import it.
+Thus, the \textit{Type parameters} section should be stored in a separate template.
+The same idea can be applied in many other places, for instance, each member and type can possibly contain the \textit{Remarks} and \textit{See also} sections.
+Furthermore, the same goes for the top menu, mentioned in Requirement~\ref{req:top-menu}, as it should be displayed on each page.
+Next, consider the cross-references mentioned in Requirement~\ref{req:cross-ref}. 
+We would prefer to use the same styles across the app, so it makes sense to extract the cross-reference link into a separate template as well.
+In conclusion, the UI is expected to consist of many reusable templates.
+We should also bear in mind that there will be a separate template for each of the pages, mentioned in Requirements~\ref{req:index-page}, \ref{req:namespace-page}, and \ref{req:type-page}.
+
+Typically, certain data needs to be passed into the imported templates.
+For example, the \textit{Type parameters} template would require the type parameters to be passed.
+As discussed earlier, importing templates is a common feature of a templating language.
+On top of that, all of the languages mentioned support passing parameters to imported templates.
+The only exception is \textit{Mustache}, where the imported templates inherit the variables from the calling template.
+While it is possible to change the context using \textit{sections} to a certain extent, this technique has its limitations.
+First, it is not possible to assign a new name to a variable, which can cause problems.
+For instance, consider the cross-reference template mentioned before.
+We would like to use this template for, e.g., field types, method return types, as well as the parent type.
+However, each of these variables will likely have a different name: \texttt{Type} for fields, \texttt{ReturnType} for method return type, and \texttt{BaseType} accordingly.
+So, this makes it impossible to reuse such a template in \textit{Mustache}.
+
+\section{Template models}
+
+Next, we must consider what objects should be passed into the templates.
+The first option is to use the custom objects representing the types and members, introduced in sections~\ref{sec:member-repr} and~\ref{sec:type-repr}.
+The primary disadvantage of this approach is that it requires logic in the templates.
+For instance, the template must check whether a member is static to determine whether the \textit{static} keyword should be included in its definition.
+The same applies to other keywords, such as \textit{abstract}, \textit{virtual}, etc.
+Moreover, if a user creates a custom template, as described in the requirement~\ref{req:templates}, the logic must be duplicated there.
+
+The alternative option is to use special objects intended only for use in templates, called template models.
+The template models should ideally be read-only data objects with no other functionality corresponding to the type and member objects.
+Additionally, the template models should contain an array of keywords that should be included in the definition.
+The logic determining whether the keywords are present can thus be moved into another part of the codebase, which removes the possible duplication.
+As a result, the template itself becomes clearer, as it does not contain many conditions
+Furthermore, it is worth noting that the template models should be designed language-independent, so they can be reused if a user creates, e.g., a template using F\# syntax.
+Taking that into account, we will prefer the template models.
 
 \subsection*{Evaluation of templating languages}
 
 As we can notice, the templating languages were presented from the simplest to the most powerful.
-For multiple reasons, we will prefer Razor.
+First, we can deduce that \textit{Mustache} would not be sufficient, because it is designed to be as simple as possible, which makes it awkward to use for a more complex set of templates.
+Furthermore, the support for conditions is very basic, and adding several conditional fields to template models will likely be required.
 
-First, Razor supports full conditional logic, unlike Mustache and Handlebars, which often require extra variable definitions or custom functions.
-Next, it allows us to easily incorporate custom UI logic, written in C\#, making templates cleaner and more powerful.
-On top of that, as mentioned before, it uses compilation checks, meaning that many errors can be detected at compile time.
+While Handlebars and Liquid would technically be suitable, Razor has a big advantage by being statically typed.
+This stems from the fact that when using Razor, we need to specify the types of the objects passed to the template.
+As a result, many errors can be detected at compile time.
+For instance, a mistyped variable name causes an error during compilation, which greatly simplifies the process of development, especially in the case of non-trivial templates.
+Next, consider a user creating their own template, as mentioned in the Requirement~\ref{req:templates}.
 
-Additionally, as mentioned in Requirement~\ref{subreq:custom-template-lang}, writing templates in other templating languages is still possible.
+Additionally, it is worth noting that writing templates in other templating languages is still possible, as mentioned in Requirement~\ref{subreq:custom-template-lang}.
 The user just needs to provide the code that calls the template processor in addition to templates. 
-
-\section{Template decomposition?}
-
-Describe that we want template per page
-
-Describe that it's best to have snippets for shared components
-
-Describe that data can be passed between those
-
-\section{Template models}
-
-Next, we must consider what object we want to pass into Razor templates.
-The first option is to use the custom objects representing the types and members, introduced in sections~\ref{sec:member-repr} and~\ref{sec:type-repr}.
-
-this approach brings a major disadvantage - logic in template (IsStatic, IsAbstract, etc.)
-
-solution: create custom objects (template models), mention that they're language-independent
-
-i.e. modifiers are contained in an array
 
 \section{UI framework}
 
@@ -517,17 +538,27 @@ Boostrap - best, because it contains pre-built components
 
 \section{Documentation versioning} 
 
-- describe creating different versions
+As stated in Requirement~\ref{req:versioning}, the generator should support creating different versions of the documentation.
 
-- describe JSON config file
+creating new version:
 
-- describe updating the older versions of the page
+describe that each version should be contained in a separate folder.
+
+configuration file, 
+
+updating older versions:
+process all files
 
 \section{Handling inner XML tags}
 \begin{itemize}
     \item Describe XML documentation tags converted to HTML.
 \end{itemize}
 
-\section{Static pages?}
+\section{Other libraries}
 
-\section{Code references?}
+\subsection*{Mocking}
+
+- NSubstitute
+
+\subsection*{Test assertions}
+- FluentAssertions x Shouldly
