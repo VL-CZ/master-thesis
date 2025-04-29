@@ -474,6 +474,7 @@ As a result, we can further clarify Requirement~\ref{req:static-pages}:
 \end{subrequirement}
 
 \subsection*{Documentation versioning}
+\label{sec:doc-versions}
 
 The Requirement~\ref{req:versioning} focuses on documentation versioning.
 The generator should support an option (both on the command line and in the configuration file) for creating a specific version of the documentation, e.g. \texttt{v1.2}. 
@@ -481,7 +482,7 @@ The resulting documentation should then be stored not in the output folder, but 
 This way, the output folder may contain multiple versions of the documentation.
 
 Additionally, the default UI should allow users to switch between different versions.
-To achieve this, the UI should include a dropdown menu showing the available versions.
+To achieve this, the UI should include a drop-down menu showing the available versions.
 Whenever a new version of the documentation is generated, all the older versions should be updated to include the most recent version in the dropdown.
 Thus, we can define two sub-requirements:
 
@@ -494,10 +495,11 @@ Thus, we can define two sub-requirements:
 
 \begin{subrequirement}
     A dropdown menu for version selection in the UI.
+    \label{req:doc-version-dropdown}
 \end{subrequirement}
 
 We have skipped requirements~\ref{req:lang-ind}, \ref{req:modern-ui}, and~\ref{req:platf-ind}, as they remain unchanged.
-Furthermore, since we have decided to extract the context data from an assembly, requirement R5 is automatically satisfied, as discussed earlier.
+Furthermore, since we have decided to extract the context data from an assembly, requirement~\ref{req:lang-ind} is automatically satisfied, as discussed earlier.
 
 \section{Existing technologies}
 
@@ -764,6 +766,7 @@ If a user tries to search for something, he/she will be redirected to the search
 
 \begin{subrequirement}
     Display a search bar in the top menu.
+    \label{req:search-bar}
 \end{subrequirement}
 
 \begin{subrequirement}
@@ -831,6 +834,7 @@ In conclusion, our generator should support both light and dark themes, with an 
 
 \begin{requirement}
     Support both light and dark themes.
+    \label{req:dark-theme}
 \end{requirement}
 
 Next, although reference documentation is primarily accessed on laptops and desktops, there are cases where users may browse it on tablets or mobile phones. 
@@ -839,6 +843,7 @@ The default UIs of all generators support responsiveness, which leads us to the 
 
 \begin{requirement}
     Responsive UI.
+    \label{req:responsive}
 \end{requirement}
 
 \section*{Other requirements}

@@ -499,11 +499,15 @@ So, this makes it impossible to reuse such a template in \textit{Mustache}.
 \section{Template models}
 
 Next, we must consider what objects should be passed into the templates.
-The first option is to use the custom objects representing the types and members, introduced in sections~\ref{sec:member-repr} and~\ref{sec:type-repr}.
-The primary disadvantage of this approach is that it requires logic in the templates.
-For instance, the template must check whether a member is static to determine whether the \textit{static} keyword should be included in its definition.
+A straightforward option is to use the custom objects representing the types and members, introduced in sections~\ref{sec:member-repr} and~\ref{sec:type-repr}.
+We should remember that the documentation should display, e.g., if a method is static, virtual, abstract, etc.
+While the method object contains this information, it will be stored in fields \textit{IsStatic}, etc.
+
+Thus, the templates must include logic checking whether a member is static to determine whether the \textit{static} keyword should be included in its definition.
 The same applies to other keywords, such as \textit{abstract}, \textit{virtual}, etc.
 Moreover, if a user creates a custom template, as described in the requirement~\ref{req:templates}, the logic must be duplicated there.
+
+TODO: popsat reseni problem -> pole modifiers
 
 The alternative option is to use special objects intended only for use in templates, called template models.
 The template models should ideally be read-only data objects with no other functionality corresponding to the type and member objects.
@@ -530,24 +534,56 @@ The user just needs to provide the code that calls the template processor in add
 
 \section{UI framework}
 
-describe that we need good-looking UI without focusing too much on CSS
+There are many ways to achieve a modern, visually appealing UI, as requested by Requirement~\ref{req:modern-ui}.
+It is also crucial to mention that this applies only to the default UI, since user-created templates may use totally different framework.
+More specifically, the default UI is expected to include the top menu, search bar, dropdowns, links, etc., as mentioned in Requirements~\ref{req:top-menu}, \ref{req:search-bar}, \ref{req:doc-version-dropdown}, and~\ref{req:cross-ref}.
+Furthermore, the dark theme should be supported, as stated in Requirement~\ref{req:dark-theme}.
+Additionally, according to Requirement~\ref{req:responsive}, the UI should be responsive.
 
-introduce Bootstrap and Tailwind
+The first option is to write custom CSS and possibly JavaScript. 
+However, creating modern-looking responsive UI components is by no means a trivial task, so as a consequence, there are many CSS libraries available.
+The most popular ones as of today are \texttt{Bootstrap}~\cite{boostrap}, and
+\texttt{Tailwind CSS}~\cite{tailwind}. 
+There is a fundamental difference in philosophy between those libraries, as \texttt{Bootstrap} is primarily a component library, providing pre-styled components.
+For instance, there is a CSS class for a navigation bar, dropdown, button, etc.
+In contrast, \texttt{Tailwind CSS} offers a large set of CSS utility classes that can be used to build custom components.
+For example, Tailwind offers CSS classes for setting width, margin, background color, font, etc.
+By combining those classes, we may create, e.g., a styled dropdown.
+Thus, creating UIs with Tailwind is more complex; on the other hand, it offers great flexibility, because we can combine the utility classes as we want.
+While Tailwind also offers pre-styled components, such as dropdowns and navigation bars under Tailwind Plus, a major disadvantage is that only a handful of them are available in the free tier.
 
-Boostrap - best, because it contains pre-built components
+Additionally, Bootstrap has good support for dark theme, which can be achieved just by adding the \texttt{data-bs-theme="dark"} attribute to the HTML body, as described in the official documentation.
+In Tailwind, it is slightly more verbose, as we need to define a set of utility classes for the dark style of each component.
+Finally, responsivity is well-supported in both frameworks.
+Based on the observations above, Bootstrap seems as an ideal choice, since it beats Tailwind in most of the highlighted aspects.
 
-\section{Documentation versioning} 
+\section{Documentation versioning}
 
-As stated in Requirement~\ref{req:versioning}, the generator should support creating different versions of the documentation.
+As previously mentioned in Requirement~\ref{req:versioning}, the generator should support creating different versions of the documentation.
+The section~\ref{sec:doc-versions} states that this should be achieved by creating a separate folder with documentation for each version.
 
-creating new version:
+As described in Requirement~\ref{req:doc-version-dropdown}, there should be a dropdown menu in the UI.
+This brings us to two problems.
+First, we need to ensure that the newly generated documentation version dropdowns include all of the older versions of the page.
+Secondly, the older versions of the documentation must be updated to include the newest one.
 
-describe that each version should be contained in a separate folder.
+In order to obtain all versions of the page, we can simply check whether the corresponding file exists in the version directories, but there is a more lightweight approach -- to store this information in a configuration file.
+For instance, there could be an entry for each version containing its identifier and a list of pages generated.
+This makes it easy to recognize all the older versions of a file.
 
-configuration file, 
+The remaining problem is how to update the older version files to allow switching to the newest version.
+The first option is to store the data in an external file (e.g., JSON) and fetch it on the client side using JavaScript. 
+Then, when the page is loaded, the data is fetched.
+Theoretically, this works well, however, there is a fundamental problem -- CORS. 
+The problem is CORS, as several browsers, notably Chrome, 
+When the documentation is hosted on a website, this may not be a problem, however, when created locally, the browser block access to cross origin files (and different file is a cross-origin request).
+This is a major disadvantage.
 
-updating older versions:
-process all files
+An alternative way is to store the information in the HTML of each page (as a hidden element). 
+This requires parsing all of the older pages when creating a new documentation version and assigning it to the list of available versions.
+This approach may seem heavyweight, as it requires parsing a lot of pages, however, it is important to notice that the generator also does other potentially time-consuming operations, such as reflection or template processing.
+Additionally, performance is often not a critical feature of the reference doc generators.
+Furthermore, if this becomes a bottleneck in the future, this piece of code can easily be parallelized.
 
 \section{Handling inner XML tags}
 \begin{itemize}
@@ -558,7 +594,18 @@ process all files
 
 \subsection*{Mocking}
 
-- NSubstitute
+The most popular may be Moq, however, there was a problem with sponsor links.
+For those reasons, we will preferably use another library, 
+
+NSubstitute seems to offer similar functionality.
 
 \subsection*{Test assertions}
-- FluentAssertions x Shouldly
+
+FluentAssertions was the most popular assertions library for fluent-syntax tests.
+However, as described in the commit, it shifted to commercial license for organizations.
+While this project is not meant to become commercial, the image of project became compromised, and its future is unclear.
+
+Therefore, it is a good idea to look after alternatives.
+Community fork AwesomeAssertions
+The most popular one is Shouldly, which uses similar syntax, however, as opposed to FluentAssertions is fully free and open-source.
+For those reasons, we decided to use Shoudly.
