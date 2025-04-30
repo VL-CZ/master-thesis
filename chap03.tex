@@ -42,12 +42,9 @@ In addition to that, handling different kinds of members (e.g., properties and m
 That is caused by the design of the .NET Reflection API, as e.g., there is no common superclass or interface for properties and methods, other than \texttt{MemberInfo}.
 However, this class provides only a handful of information about a member, specifically, it is not possible to determine whether the member is static or its accessibility level.
 
-TODO: vice rozepsat
-
 \subsection*{Using custom types}
 
 Instead of the reflection types, we can use custom types for the member representation.
-
 Ideally, those types could be simply wrappers around the built-in reflection types, providing extra information, such as the documentation comments.
 Moreover, the fields and methods not relevant to documentation generation do not need to be included in the API, as we want to keep the interface as clean as possible.
 This way, we can achieve a user-friendly object model, where all member types can have the following structure:
@@ -217,10 +214,6 @@ Furthermore, structured objects are typically supported as well.
 Arguably, the main advantage of using such a templating language is that users can easily generate files with the same structure but different content.
 For instance, we can create a template representing a type page, as requested in Requirement~\ref{req:type-page}.
 Then, we can create many such pages simply by providing the corresponding variables, such as the type name, its members, etc.
-Moreover, most templating languages support reusing templates.
-In other words, it is possible to import a template into another one.
-This allows the users to extract shared pieces of content into a separate template and then import them where needed.
-For example, our generator will likely contain a template for the top menu, which is expected to be referenced on various pages.
 
 \subsection*{Key templating language features}
 
@@ -231,12 +224,22 @@ Therefore, the templating language must support conditions.
 In addition, support for iteration is also mandatory, as we will need to list all fields, methods, etc., contained in a type.
 Thus, the language should provide loops as well.
 
+\label{sec:templating-language-importing}
+Another key observation is that certain parts of the UI might be reused in multiple places.
+Consider, e.g., the \textit{Type parameters} section, displaying type parameters and their documentation, which can be present at both method and type definition.
+The same idea can be applied in many other places, for instance, each member and type can possibly contain the \textit{Remarks} and \textit{See also} sections.
+Furthermore, the same goes for the top menu, mentioned in Requirement~\ref{req:top-menu}, as it should be displayed on each page.
+The natural solution is to extract the common code (e.g., the \textit{Type parameters} section) into a separate template and then import it.
+On top of that, certain data usually needs to be passed into the imported templates. 
+For example, the \textit{Type parameters} template would require the type parameters data.
+Hence, the templating language must support importing other templates, which is, fortunately, quite a common feature.
+
 \subsection{Mustache}
 
 Mustache~\cite{mustache} is a simple templating language that allows users to replace certain parts of the file with variable contents, enclosed in double curly braces.
 For instance, the \texttt{\{\{name\}\}} placeholder is, during template processing, replaced by the value of the \texttt{name} variable.
 
-The fundamental idea behind mustache is that the templates should contain as little logic as possible.
+The fundamental idea behind Mustache is that the templates should contain as little logic as possible.
 Instead, the logic should be done in the code, and the templates should be used purely for rendering.
 That is why it does not support, for instance, comparing a value to a constant. 
 For instance, we cannot check if a person is an adult by comparing his/her age to 18, as this is not allowed in mustache templates.
@@ -381,8 +384,7 @@ Though Handlebars templates are primarily intended for JavaScript, .NET is also 
 \subsection{Liquid}
 
 Another, more complex templating language is Liquid~\cite{liquid}.
-Again, its syntax and functionality are quite similar to mustache and Handlebars.
-
+Again, its syntax and functionality are quite similar to Mustache and Handlebars.
 However, unlike them, it supports a wide range of filters that can be used for output customization.
 Filters are functions used to change the output of a variable; for instance, the \texttt{upcase} filter converts the input string into uppercase. 
 Syntactically, filters are separated by a pipe character.
@@ -433,7 +435,7 @@ An example of a Razor file is shown in Program~\ref{lst:razor}.
 As we can see, the object of type \texttt{Person} is passed to the template.
 The processing of Razor files can be done using the RazorLight library~\cite{razor_console}, however, certain constructs, such as methods, are not supported.
 Additionally, even though Razor was originally intended for use in web applications, it is also possible
-to render Razor components in console applications, as mentioned in the official documentation~\cite{razor_console}.
+to use Razor components and render them in console applications, as mentioned in the official documentation~\cite{razor_console}.
 
 \begin{listing}[H]
 \begin{lstlisting}[language=HTML]
@@ -471,30 +473,42 @@ to render Razor components in console applications, as mentioned in the official
 \label{lst:razor}
 \end{listing}
 
-\section{Template decomposition}
+\subsection*{Evaluation of templating languages}
 
-As stated before, certain parts of the UI might be reused in multiple places.
-Consider, e.g., the \textit{Type parameters} section, which can be present at both method and type definition.
-We aim to align with best practices and therefore remove the duplication, so the natural solution is to extract the common code into a separate template and then import it.
-Thus, the \textit{Type parameters} section should be stored in a separate template.
-The same idea can be applied in many other places, for instance, each member and type can possibly contain the \textit{Remarks} and \textit{See also} sections.
-Furthermore, the same goes for the top menu, mentioned in Requirement~\ref{req:top-menu}, as it should be displayed on each page.
-Next, consider the cross-references mentioned in Requirement~\ref{req:cross-ref}. 
-We would prefer to use the same styles across the app, so it makes sense to extract the cross-reference link into a separate template as well.
-In conclusion, the UI is expected to consist of many reusable templates.
-We should also bear in mind that there will be a separate template for each of the pages, mentioned in Requirements~\ref{req:index-page}, \ref{req:namespace-page}, and \ref{req:type-page}.
+We have presented several templating languages, starting from the simplest to the most powerful.
+As previously discussed, all of them support using conditions and loops; however, in Mustache, the support for conditions is very basic.
+Thus, if we decided to use Mustache, adding several conditional boolean fields to the data would likely be inevitable.
 
-Typically, certain data needs to be passed into the imported templates.
-For example, the \textit{Type parameters} template would require the type parameters to be passed.
-As discussed earlier, importing templates is a common feature of a templating language.
-On top of that, all of the languages mentioned support passing parameters to imported templates.
-The only exception is \textit{Mustache}, where the imported templates inherit the variables from the calling template.
-While it is possible to change the context using \textit{sections} to a certain extent, this technique has its limitations.
-First, it is not possible to assign a new name to a variable, which can cause problems.
-For instance, consider the cross-reference template mentioned before.
-We would like to use this template for, e.g., field types, method return types, as well as the parent type.
-However, each of these variables will likely have a different name: \texttt{Type} for fields, \texttt{ReturnType} for method return type, and \texttt{BaseType} accordingly.
-So, this makes it impossible to reuse such a template in \textit{Mustache}.
+Consequently, it is important to note that all of the languages mentioned support importing templates. 
+On top of that, most languages also support passing parameters to them.
+The only exception is Mustache, where the imported template inherits the variables of the calling one.
+Although this is sufficient in many cases, it may become a limiting factor.
+
+For instance, consider the cross-reference links mentioned in Requirement~\ref{req:cross-ref}.
+These links should have the same style and functionality, so it is a good idea to extract the code into a separate template to avoid duplication. 
+The template can then be used for displaying the type of a field, the return type of a method, the parent type of a type, and so on.
+Next, assume that inside the template, we refer to the variable denoting type as \texttt{type}.
+This means that in the context of a field object, its type must be stored in a \texttt{type} variable.
+However, the same goes for a method and its return type, as it also needs to be stored in a \texttt{type} variable in the context of a method object.
+More specifically, the natural name \texttt{returnType} for denoting the return type of a method cannot be used, as in the cross-reference link template, the variable is called \texttt{type}.
+This is a considerable disadvantage, as the variables passed to the template need to have a certain structure because of Mustache.
+On the other hand, in the remaining languages, which allow us to pass parameters, we could still refer to the return type of a method as \texttt{returnType}.
+Then, when importing the cross-reference link template, we would just pass this value to the \texttt{type} parameter.
+Consequently, these drawbacks suggest that Mustache is not an ideal choice.
+
+Next, even though both Handlebars and Liquid are suitable options, Razor has a big advantage by using static typing.
+This stems from the fact that when using Razor, we need to specify the types of the variables passed to the template.
+As a result, many errors, such as a mistyped variable name or type, can be detected at compile time, which greatly simplifies the development process, especially as the templates are expected to be non-trivial.
+Without static typing, we would need to include a variety of tests covering all conditions in the template to ensure that the output is as expected.
+This leads us to the conclusion that Razor is the most suitable choice.
+Additionally, we will prefer using Razor components over the RazorLight library due to the limitations discussed in the previous section.
+
+It is crucial to mention that the selection of Razor applies only to the default UI, as the generator should be completely independent of the templating language.
+This means that it should be easily possible to add support for other templating languages by adding a set of templates and the code that calls the template processor, as requested by Requirement~\ref{subreq:custom-template-lang}.
+Hence, if a user decides to write templates in, e.g., Liquid language, he/she must provide the code calling the Liquid template processor in addition to the templates.
+Once the support for Liquid is added, other users can reuse this code and possibly include custom Liquid templates.
+
+TODO: schema
 
 \section{Template models}
 
@@ -517,20 +531,6 @@ As a result, the template itself becomes clearer, as it does not contain many co
 Furthermore, it is worth noting that the template models should be designed language-independent, so they can be reused if a user creates, e.g., a template using F\# syntax.
 Taking that into account, we will prefer the template models.
 
-\subsection*{Evaluation of templating languages}
-
-As we can notice, the templating languages were presented from the simplest to the most powerful.
-First, we can deduce that \textit{Mustache} would not be sufficient, because it is designed to be as simple as possible, which makes it awkward to use for a more complex set of templates.
-Furthermore, the support for conditions is very basic, and adding several conditional fields to template models will likely be required.
-
-While Handlebars and Liquid would technically be suitable, Razor has a big advantage by being statically typed.
-This stems from the fact that when using Razor, we need to specify the types of the objects passed to the template.
-As a result, many errors can be detected at compile time.
-For instance, a mistyped variable name causes an error during compilation, which greatly simplifies the process of development, especially in the case of non-trivial templates.
-Next, consider a user creating their own template, as mentioned in the Requirement~\ref{req:templates}.
-
-Additionally, it is worth noting that writing templates in other templating languages is still possible, as mentioned in Requirement~\ref{subreq:custom-template-lang}.
-The user just needs to provide the code that calls the template processor in addition to templates. 
 
 \section{UI framework}
 
