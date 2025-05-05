@@ -13,7 +13,7 @@ As a result, any XML tag is valid and can be used in the documentation comments
 An example of a C\# method with XML documentation is shown in Program~\ref{lst:ex-cs-xml}; 
 notice that both parameters and the return value are documented as well (using the \texttt{param} and \texttt{returns} tags, respectively).
 Program~\ref{lst:ex-vb-xml} displays an analogous method in VB.NET.
-We can see that VB.NET uses a different symbol for denoting documentation comments: triple single-quote mark.
+We can see that VB.NET uses a different symbol for denoting documentation comments: a triple single-quote mark.
 However, the format of the comments remains the same, which is crucial because the comments can be processed similarly, regardless of the language.
 
 On the other hand, the documentation comments lack the context, such as:
@@ -75,14 +75,14 @@ However, there are also numerous other challenges related to this approach.
 
 We will illustrate the first one using a simple example. Consider a method that returns an instance of \texttt{Point} class.
 The parser can recognize the name of the return type, but it is not easy to discover any other information about the type, such as its namespace.
-This is a problem, because in the reference documentation, we typically want to uniquely identify the type by providing a link to its definition or showing its fully qualified name, so the type name alone is insufficient.
+This is a problem because in the reference documentation, we typically want to uniquely identify the type by providing a link to its definition or showing its fully qualified name, so the type name alone is insufficient.
 Moreover, multiple types with the same name may be declared in different namespaces.
 
 One possible solution would be to browse all files within the namespaces used by the current file and search for the given type.
 Nevertheless, this technique fails if the type is declared in an external library, as the source code is not part of the library distribution.
 
 It is worth noting that a similar issue applies to, for instance, base types. 
-Without properly resolving the base type, it becomes difficult to obtain the inherited members, and therefore they cannot be included in the resulting documentation.
+Without properly resolving the base type, it becomes difficult to obtain the inherited members, and therefore, they cannot be included in the resulting documentation.
 
 Another drawback is that a custom parser is not fully language-independent, because each language has a different syntax. 
 Therefore, to satisfy the requirement R5, we would need either a separate parser for each language or a shared one capable of handling all languages.
@@ -104,7 +104,7 @@ The disadvantage of \texttt{Roslyn} is that it is limited only to 2 languages: C
 There is an analogous library for parsing \texttt{F\#} code: \texttt{FSharp.Compi\-ler.Service}~\cite{fsharp_compiler_service}; 
 however, it has a fundamentally different API, designed for F\# usage.
 The main difference is that since F\# is primarily a functional programming language, the API heavily uses functional constructs, which makes its usage from C\# quite inconvenient.
-Moreover, the objects representing F\# types and members are completely unrelated to the ones used by \texttt{Roslyn}, i.e. they do not share any common superclasses (except \texttt{object}) or interfaces.
+Moreover, the objects representing F\# types and members are completely unrelated to the ones used by \texttt{Roslyn}, i.e., they do not share any common superclasses (except \texttt{object}) or interfaces.
 As a result, integrating these two libraries would be complicated, as we would probably end up with two completely separate codebases: one using \texttt{Roslyn} and one using \texttt{FSharp.Compiler.Service}.
 
 \subsection*{Using an assembly as the input}
@@ -184,11 +184,11 @@ Fortunately, this is not a limiting factor, since compiling the program is a rou
 
 It is crucial to mention that all the information relevant to the reference documentation about types and members can be retrieved from the metadata. 
 For instance, the object representing a method (i.e. \texttt{MethodInfo}) contains properties such as \texttt{IsStatic}, \texttt{IsPublic}, etc.
-Naturally, this also makes sense, because .NET package distributions contain assemblies, rather than source code.
+Naturally, this also makes sense because .NET package distributions contain assemblies, rather than source code.
 For example, when a method from a library is called, the caller simply needs to know whether it is, e.g., static, to call it correctly.
 In general, any information that affects the caller must be stored somewhere in the assembly, or it can be inferred.
 Some constructs may be purely language features and cannot be deduced from the assembly; however, these are only implementation details.
-Therefore, such data are irrelevant to the reference documentation because they do not have any impact on the caller.
+Therefore, such data is irrelevant to the reference documentation because they do not have any impact on the caller.
 
 In conclusion, we can refine our objective -- to develop a reference
 documentation generator for .NET that uses assembly as its input.
@@ -286,6 +286,8 @@ The other top-level tags are typically intended only for a selection of types or
 
 
 \subsection{Inner tags}
+
+\label{sec:inner-tags}
 
 The documentation inside top-level tags may contain, in addition to text, other XML tags, so-called inner tags.
 Typically, they affect how the text is rendered, i.e., they may specify a list of items, a paragraph, etc.
@@ -425,7 +427,7 @@ Based on the insights above, we can introduce two sub-requirements of Requiremen
 Next, the generator should be designed to be extensible, as described in the Requirement~\ref{req:templates}.
 The documentation pages will naturally be generated from templates, written in an unspecified templating language, which get populated with data while the documentation is generated.
 
-Firstly, it should be easily possible to use the same template system as the default UI.
+Firstly, it should be easy to use the same template system as the default UI.
 If the user wanted to generate the documentation using the same template system and data, it should be sufficient to provide the equivalent templates.
 In other words, if the generator had 2 templates representing type and namespace pages, providing a custom version of those two should be sufficient.
 
@@ -754,7 +756,7 @@ In conclusion, we can formulate the requirement as follows:
     \label{req:top-menu}
 \end{requirement}
 
-Moreover, the top menu should include a search bar, allowing the users to search for types and members.
+Moreover, the top menu should include a search bar, allowing users to search for types and members.
 If a user tries to search for something, he/she will be redirected to the search page showing a list of results.
 
 \begin{requirement}
@@ -839,12 +841,29 @@ In conclusion, our generator should support both light and dark themes, with an 
 
 Next, although reference documentation is primarily accessed on laptops and desktops, there are cases where users may browse it on tablets or mobile phones. 
 This means the UI should be reasonably responsive to accommodate this usage. 
-The default UIs of all generators support responsiveness, which leads us to the following requirement:
+The default UIs of all generators are responsive as well, which leads us to the following requirement:
 
 \begin{requirement}
     Responsive UI.
     \label{req:responsive}
 \end{requirement}
+
+Another thing to consider is that the official documentation as well as the other generators, support the resulting documentation using syntax of various languages, such as F\# and VB.NET.
+The languages may be toggled using a dropdown, as displayed in Figure XX.
+We do not aim to include support for languages other than C\#, however, the UI should be made with extensibility in mind.
+Thus, if we decide to add support for another language in the future, it should be relatively simple.
+Since these languages are considerably less 
+mention that the template should be ready to display code in 
+TODO: rozepsat
+
+\begin{requirement}
+    Future support for other .NET languages
+\end{requirement}
+
+It is also important to mention that the official .NET documentation can be browsed in various languages, based on the language settings.
+While this may be useful for the official documentation, used by all .NET developers, for projects it differs.
+Since English is the primarily language of Computer science, seeing some terms in a different language may be confusing for developers.
+Thus, we will not plan to support localization, similarly to DocFX, Doxygen and SHFB.
 
 \section*{Other requirements}
 In previous sections, we thoroughly described the requirements R1-R7 introduced in the first chapter. 
@@ -903,7 +922,7 @@ Last but not least, we should consider the program installation.
 Ideally, the installation method should be cross-platform and allow for easy updates.
 
 The first option is to install the generator as a standard executable app. 
-However, this approach has multiple disadvantages, for instance, the installation typically needs to be done manually.
+However, this approach has multiple disadvantages; for instance, the installation typically needs to be done manually.
 In addition to that, the same applies to updates.
 
 Fortunately, there is an alternative option: install the generator as a .NET tool.

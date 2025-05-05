@@ -88,6 +88,7 @@ Thus, it would be preferred to create custom types representing the types, with 
 \end{itemize}
 
 \section{Assignment of the documentation comments}
+\label{sec:id-string}
 
 We have already described how to represent types and members in our codebase.
 However, we have not yet explained how to assign the documentation to the corresponding types or members.
@@ -228,7 +229,7 @@ Thus, the language should provide loops as well.
 Another key observation is that certain parts of the UI might be reused in multiple places.
 Consider, e.g., the \textit{Type parameters} section, displaying type parameters and their documentation, which can be present at both method and type definition.
 The same idea can be applied in many other places, for instance, each member and type can possibly contain the \textit{Remarks} and \textit{See also} sections.
-Furthermore, the same goes for the top menu, mentioned in Requirement~\ref{req:top-menu}, as it should be displayed on each page.
+Furthermore, the top menu, mentioned in Requirement~\ref{req:top-menu}, should be displayed on each page.
 The natural solution is to extract the common code (e.g., the \textit{Type parameters} section) into a separate template and then import it.
 On top of that, certain data usually needs to be passed into the imported templates. 
 For example, the \textit{Type parameters} template would require the type parameters data.
@@ -475,7 +476,7 @@ to use Razor components and render them in console applications, as mentioned in
 
 \subsection*{Evaluation of templating languages}
 
-We have presented several templating languages, starting from the simplest to the most powerful.
+We have presented several templating languages, ranging from the simplest to the most powerful.
 As previously discussed, all of them support using conditions and loops; however, in Mustache, the support for conditions is very basic.
 Thus, if we decided to use Mustache, adding several conditional boolean fields to the data would likely be inevitable.
 Consequently, it is important to note that all of the languages mentioned support importing templates. 
@@ -485,19 +486,19 @@ Although this is sufficient in many cases, it may become a limiting factor.
 
 For instance, consider the cross-reference links mentioned in Requirement~\ref{req:cross-ref}.
 These links should have the same style and functionality, so it is a good idea to extract the code into a separate template to avoid duplication. 
-The template can then be used for displaying the type of a field, the return type of a method, the parent type of a type, and so on.
+The template can then be used to display the type of field, the return type of a method, the parent type of a type, and so on.
 Next, assume that inside the template, we refer to the variable denoting type as \texttt{type}.
-This means that in the context of a field object, its type must be stored in a \texttt{type} variable.
+This means that in the context of a field object, its type must be stored in a \texttt{type} variable, which seems natural.
 However, the same goes for a method and its return type, as it also needs to be stored in a \texttt{type} variable in the context of a method object.
 More specifically, the natural name \texttt{returnType} for denoting the return type of a method cannot be used, as in the cross-reference link template, the variable is called \texttt{type}.
 This is a considerable disadvantage, as the variables passed to the template need to have a certain structure because of Mustache.
 On the other hand, in the remaining languages, which allow us to pass parameters, we could still refer to the return type of a method as \texttt{returnType}.
 Then, when importing the cross-reference link template, we would just pass this value to the \texttt{type} parameter.
-Consequently, these drawbacks suggest that Mustache is not an ideal choice.
+To sum up, these drawbacks suggest that Mustache is not an ideal choice.
 
-Next, even though both Handlebars and Liquid are suitable options, Razor has a big advantage by using static typing.
+Next, while Handlebars, Liquid, and Razor are all suitable options, Razor has a huge advantage by using static typing.
 This stems from the fact that when using Razor, we need to specify the types of the variables passed to the template.
-As a result, many errors, such as a mistyped variable name or type, can be detected at compile time, which greatly simplifies the development process, especially as the templates are expected to be non-trivial.
+As a result, many errors, such as a mistyped variable name or type, can be detected at compile time, which significantly simplifies the development process, especially as the UI is expected to consist of many templates.
 Without static typing, we would need to include a variety of tests covering all conditions in the template to ensure that the output is as expected.
 This leads us to the conclusion that Razor is the most suitable choice.
 Additionally, we will prefer using Razor components over the RazorLight library due to the limitations of RazorLight discussed in the previous section.
@@ -508,11 +509,11 @@ It is also crucial to remember that even though the default UI will use Razor, t
 In other words, it should be easily possible to add support for other templating languages by adding a set of templates and the code that processes them, as requested by Requirement~\ref{subreq:custom-template-lang}.
 Ideally, the generator should contain a common interface, called \texttt{ITemplateProcessor}, 
 which represents a contract for accepting the type and member data, and creating the final documentation, as illustrated in Figure~\ref{fig:template-processors}.
-Then, there should be a template processor for each supported templating language.
-Hence, if a user decides to write templates in, e.g., Liquid language, he/she must provide the code processing the Liquid templates (\texttt{LiquidTemplateProcessor}) in addition to the templates.
+Then, there should be a separate template processor class for each supported templating language, implementing that interface.
+Hence, if a user decides to write templates in, e.g., Liquid language, he/she must provide the code processing the Liquid templates (\texttt{LiquidTemplateProcessor} class) in addition to the templates.
 Notice that the processing itself can be easily achieved by using a proper library.
-Once the support for Liquid is added, other users can reuse this code and possibly create custom Liquid templates.
-Figure~\ref{fig:template-processors} also distinguishes between the objects included in the generator by default (highlighted in green) and the objects that could be added in the future, possibly by other users (highlighted in orange). 
+Once the template processor for Liquid is added, other users can reuse it and possibly create custom Liquid templates.
+This is also depicted in Figure~\ref{fig:template-processors}, as the objects included in the generator by default are highlighted in green, while the objects that could be added in the future, possibly by other users, have an orange background. 
 
 \begin{figure}[H]
 \centering
@@ -526,11 +527,11 @@ Figure~\ref{fig:template-processors} also distinguishes between the objects incl
 In sections~\ref{sec:member-repr} and~\ref{sec:type-repr}, we introduced custom objects representing the types and members in our codebase, which are intended to be passed into the template processor.
 Next, we must consider what data should be passed into the default Razor templates.
 
-A straightforward way is to use those objects.
+A straightforward way is to use those objects again.
 We should remember that the documentation should display, e.g., whether a method is static, virtual, abstract, etc.
 Similarly, certain modifiers need to be shown for fields and properties.
-The member objects contain all this information, stored in boolean fields called \textit{IsStatic}, \textit{IsAbstract}, etc.
-Thus, the templates must include logic checking whether a method is static to determine whether the \textit{static} keyword should be included in its definition.
+The member objects contain all this information, stored in boolean fields called \textit{IsStatic}, \textit{IsAbstract}, and so on; therefore, using those objects is a viable option.
+However, the templates must include logic checking whether a method is static to determine whether the \textit{static} keyword should be included in its definition.
 The same applies to other modifiers, such as \textit{abstract}, \textit{virtual}, etc.
 Hence, the template would end up containing many conditions checking for various keywords, as illustrated in Program~\ref{lst:modifiers-ifs}.
 Moreover, if a user creates a custom template, as described in Requirement~\ref{req:templates}, the logic must be duplicated there.
@@ -552,21 +553,21 @@ Moreover, if a user creates a custom template, as described in Requirement~\ref{
 \label{lst:modifiers-ifs}
 \end{listing}
 
-Next, consider the namespace page, displaying a list of contained types, described in Requirement~\ref{req:namespace-page}.
+Next, consider the namespace page, described in Requirement~\ref{req:namespace-page}, which displays a list of contained types.
 This page requires the type data to be passed, as the type name and documentation should be displayed.
 However, the custom objects representing types contain many other variables, for instance, a list of all declared members or the \textit{See also} documentation, that are completely irrelevant to this page.
 Thus, the template would end up having access to a lot of data while using only a small subset of it.
-This may also be problematic for other users creating custom Razor templates, as they have access to the data that should likely not be used on the page.
+This may also be confusing for other users creating custom Razor templates, because they would have access to the data that should likely not be used on the page.
 In general, the problem is that while the custom objects representing types and members are great for their internal representation in the codebase, they do not completely correspond to the data that should be displayed in various templates.
 
 The alternative solution is to use special objects intended only for use in templates, which we will call \textit{template models}.
 The template models should ideally be read-only data objects with no other functionality, containing exactly the data intended to be used in a particular template.
 There will be a separate template model for each of the templates described in Requirements~\ref{req:index-page}, \ref{req:namespace-page}, and \ref{req:type-page}.
-Moreover, there will likely be a separate template model for each member (field, method, property, etc.).
+Moreover, there will likely be template models representing each member (a field, method, property, etc.).
 For instance, the template model for a method is expected to contain its name, list of parameters, documentation comments, etc.
-The modifiers could be stored in an array, as opposed to the member object having properties like \texttt{IsStatic}, \texttt{IsAbstract}, etc.
+The modifiers could be stored in an array, as opposed to the member object containing properties like \texttt{IsStatic}, \texttt{IsAbstract}, etc.
 This greatly simplifies the templates, as instead of checking many conditions, as previously displayed in Program~\ref{lst:modifiers-ifs}, it is sufficient to loop over the modifiers and print them. 
-As a consequence, creating custom templates gets easier, which is good news for future contributors.
+As a consequence, creating custom templates gets easier as well, which is good news for future contributors.
 
 Considering the namespace page mentioned earlier, its template model should contain only the necessary data, i.e., a list of template models containing the type name and its documentation. 
 The primary disadvantage of using template models is that we need the conversion from type and member objects into them. 
@@ -625,26 +626,70 @@ Additionally, performance is often not a critical feature of the reference doc g
 Furthermore, if this becomes a bottleneck in the future, this piece of code can easily be parallelized.
 
 \section{Handling inner XML tags}
-\begin{itemize}
-    \item Describe XML documentation tags converted to HTML.
-\end{itemize}
 
-\section{Other libraries}
+Next, our program must convert the inner XML tags, listed in section~\ref{sec:inner-tags}, into the corresponding HTML representation.
+For instance, the \texttt{<list type="bullet">} tag could be transformed to an HTML \texttt{<ul>} element.
+The mapping between XML tags and HTML elements must be defined somewhere in the program.
+A key observation is that customization must be supported, as different templates may want to use different styles for the HTML elements.
+Typically, the inner XML tags correspond quite well to HTML elements, so in the majority of cases, it would be sufficient to give the users just the option to style the HTML.
+However, in some cases, this may not be enough, as users may also want to change to what HTML element an XML is mapped to.
+For example, consider the \texttt{<c>} XML tag, representing inline code, that could be transformed to a \texttt{<code>} HTML element, or to a \texttt{<span>} rendered in a special font.
 
-\subsection*{Mocking}
+The solution is to first declare an interface containing properties representing the target HTML for each of the inner tags.
+This gives users the option to define a custom configuration, as previously requested, simply by implementing this interface.
+Then, we must create a default implementation that will be used in the default UI.
+Moreover, each target HTML should have a custom CSS class, which could be referenced from the CSS.
+For example, the default configuration could map the \texttt{<list type="bullet">} tag to HTML \texttt{<ul class="refdocgen-bullet-list">} element in the default UI.
+This gives users the option to style the bullet list tag simply by adding CSS properties to the corresponding class.
+An example, rendering the bullet list in red, is shown in Program XX.
 
-The most popular may be Moq, however, there was a problem with sponsor links.
-For those reasons, we will preferably use another library, 
+Furthermore, it is possible to inherit styles of existing CSS classes by using a CSS preprocessor, such as Sass.
+This way, we can also inherit, e.g., the styles from the Bootstrap framework, which will be used in the default UI.
+The process of replacing the tags with HTML is relatively straightforward, as it is sufficient to find all inner tags and replace them with HTML.
 
-NSubstitute seems to offer similar functionality.
+\section{Testing libraries}
+
+In this chapter, we will present several libraries that our program will use.
 
 \subsection*{Test assertions}
 
-FluentAssertions was the most popular assertions library for fluent-syntax tests.
-However, as described in the commit, it shifted to commercial license for organizations.
-While this project is not meant to become commercial, the image of project became compromised, and its future is unclear.
+While we can use the assertion methods provided by a testing framework, such as xUnit, using a separate assertion library is often beneficial.
+The main advantage of such libraries is that they often use fluent syntax, which makes the assertions easier to read, as they correspond to sentences in the English language.
+An example comparing equivalent assertions using both syntaxes is displayed in Program~\ref{lst:fluent-syntax}.
+Moreover, assertion libraries usually provide much more detailed error messages compared to testing frameworks, which is another considerable advantage.
 
-Therefore, it is a good idea to look after alternatives.
-Community fork AwesomeAssertions
-The most popular one is Shouldly, which uses similar syntax, however, as opposed to FluentAssertions is fully free and open-source.
-For those reasons, we decided to use Shoudly.
+\begin{listing}
+\begin{lstlisting}
+// xUnit assertion
+Assert.Equal("This method should be overridden by subclasses.", 
+    method.RemarksDocumentation)
+
+// fluent syntax assertion (using FluentAssertions library)
+method.RemarksDocumentation.Should().Be("This method should be 
+    overridden by subclasses.")
+\end{lstlisting}
+\caption{Razor template fragment displaying method modifiers}
+\label{lst:fluent-syntax}
+\end{listing}
+
+The most popular test assertion library in .NET is FluentAssertions.
+However, as stated on its homepage, it transitioned to a paid license for commercial use.
+While it is still possible to use older versions for free, and more importantly, our generator is not meant to become commercial, the reputation of the FluentAssertions library has been compromised by this decision.
+
+Therefore, it is a good idea to look for alternatives.
+First, there is a community fork of FluentAssertions called AwesomeAssertions, however the major problem is that this project is relatively new and not widely used yet, so its future is unfortunately not clear.
+Another popular alternative is Shouldly, which has a similar functionality, but as opposed to FluentAssertions, remains fully free.
+Given these considerations, we decided to use Shoudly.
+
+\subsection*{Mocking}
+
+Additionally, we will want to test various properties of the type and member objects, described in 
+sections~\ref{sec:member-repr} and \ref{sec:type-repr}.
+It is also important to remember that those objects are expected to be wrappers around the types provided by reflection.
+Then, we may check, e.g., whether the ID string, described in section~\ref{sec:id-string}, is as expected.
+
+In such cases, mocking those objects could be a viable option.
+An alternative would be to manually create those objects, which could easily become cumbersome.
+The most popular mocking library in .NET is Moq, however, there was a problem with sponsor links.
+Hence, similarly to FluentAssertions, the image of Moq became compromised.
+For those reasons, we will use NSubstitute, which offers similar functionality and is quite popular as well.
