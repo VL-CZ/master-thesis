@@ -805,7 +805,7 @@ Additionally, we should consider that some users prefer a light theme, while oth
 In the official .NET documentation, users can seamlessly switch between themes using a dropdown, as shown in Figure~\ref{fig:official-themes} \textit{(A)}.
 The Figures~\ref{fig:official-light} and~\ref{fig:official-dark} display the same page in both light and dark themes.
 
-Among the generators, the support for dark theme varies.
+Among the generators, the support for a dark theme varies.
 Doxygen has a built-in dark mode that can be toggled using a button; however, this functionality must be explicitly enabled by setting a corresponding option.
 The default UI of DocFX does not support dark mode; however, DocFX offers a variety of templates, such as the \textit{modern} template, which supports both light and dark modes. 
 Again, it is possible to switch between them using a button.
@@ -848,22 +848,23 @@ The default UIs of all generators are responsive as well, which leads us to the 
     \label{req:responsive}
 \end{requirement}
 
-Another thing to consider is that the official documentation as well as the other generators, support the resulting documentation using syntax of various languages, such as F\# and VB.NET.
-The languages may be toggled using a dropdown, as displayed in Figure XX.
-We do not aim to include support for languages other than C\#, however, the UI should be made with extensibility in mind.
-Thus, if we decide to add support for another language in the future, it should be relatively simple.
-Since these languages are considerably less 
-mention that the template should be ready to display code in 
-TODO: rozepsat
+Another thing to consider is that the official .NET documentation, as well as the other generators, support displaying the reference documentation in various other .NET languages, such as F\# and VB.NET.
+As a result, the displayed type and member signatures may change based on the selected language.
+The language can typically be selected using a dropdown.
+We do not aim to include support for languages other than C\# in the default UI, as previously explained in Requirement~\ref{req:lang-ind}; however, the default UI should be designed with extensibility in mind so that support for additional languages can be added in the future without major restructuring.
+Moreover, the same applies to the generator itself.
+Thus, the next requirement can be stated as follows:
 
 \begin{requirement}
-    Future support for other .NET languages
+    The generator and its default UI must be designed in a way that allows future support for additional programming languages.
+    \label{req:ui-multiple-langs}
 \end{requirement}
 
-It is also important to mention that the official .NET documentation can be browsed in various languages, based on the language settings.
-While this may be useful for the official documentation, used by all .NET developers, for projects it differs.
-Since English is the primarily language of Computer science, seeing some terms in a different language may be confusing for developers.
-Thus, we will not plan to support localization, similarly to DocFX, Doxygen and SHFB.
+It is also worth noting that the official .NET documentation can be browsed in various spoken languages, besides English.
+While localization may be helpful in official documentation, particularly for beginner developers who are less fluent in English, it is generally unnecessary for reference documentation of software libraries.
+This is because most developers are expected to understand English, especially as the API of the library is typically not localized either.
+Furthermore, seeing technical terms in a local language might be confusing for many developers, as English is the primary language of computer science.
+Therefore, we do not plan to support localization, similarly to DocFX, Doxygen, and SHFB.
 
 \section*{Other requirements}
 In previous sections, we thoroughly described the requirements R1-R7 introduced in the first chapter. 

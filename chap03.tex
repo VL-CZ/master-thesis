@@ -568,8 +568,13 @@ For instance, the template model for a method is expected to contain its name, l
 The modifiers could be stored in an array, as opposed to the member object containing properties like \texttt{IsStatic}, \texttt{IsAbstract}, etc.
 This greatly simplifies the templates, as instead of checking many conditions, as previously displayed in Program~\ref{lst:modifiers-ifs}, it is sufficient to loop over the modifiers and print them. 
 As a consequence, creating custom templates gets easier as well, which is good news for future contributors.
-
 Considering the namespace page mentioned earlier, its template model should contain only the necessary data, i.e., a list of template models containing the type name and its documentation. 
+
+It is also crucial to remember that the UI should be ready to be extended with support for other languages, as discussed in Requirement~\ref{req:ui-multiple-langs}.
+So, all language-specific data must be indexed by the corresponding language.
+Thus, instead of, e.g., storing modifiers directly in the method template model as an array, there could be a dictionary, whose keys represent .NET languages, and the value of the given key contains the array of corresponding modifiers.
+The same applies to other language-specific fields.
+
 The primary disadvantage of using template models is that we need the conversion from type and member objects into them. 
 However, such conversion should not be extra complicated, so taking that into account, we will prefer using template models.
 
@@ -641,24 +646,25 @@ Then, we must create a default implementation that will be used in the default U
 Moreover, each target HTML should have a custom CSS class, which could be referenced from the CSS.
 For example, the default configuration could map the \texttt{<list type="bullet">} tag to HTML \texttt{<ul class="refdocgen-bullet-list">} element in the default UI.
 This gives users the option to style the bullet list tag simply by adding CSS properties to the corresponding class.
-An example, rendering the bullet list in red, is shown in Program XX.
 
-Furthermore, it is possible to inherit styles of existing CSS classes by using a CSS preprocessor, such as Sass.
+Furthermore, it is possible to inherit styles of existing CSS classes by using a CSS preprocessor, such as Sass~\cite{sass}.
 This way, we can also inherit, e.g., the styles from the Bootstrap framework, which will be used in the default UI.
-The process of replacing the tags with HTML is relatively straightforward, as it is sufficient to find all inner tags and replace them with HTML.
+The process of replacing the tags with HTML is relatively straightforward, as it is sufficient to process the inner tags one by one and replace them with corresponding HTML elements.
 
 \section{Testing libraries}
 
-In this chapter, we will present several libraries that our program will use.
+Last but not least, the generator should be properly tested using both unit and integration tests.
+In this section, we will present several libraries that simplify the process of testing.
 
 \subsection*{Test assertions}
 
 While we can use the assertion methods provided by a testing framework, such as xUnit, using a separate assertion library is often beneficial.
-The main advantage of such libraries is that they often use fluent syntax, which makes the assertions easier to read, as they correspond to sentences in the English language.
+The main advantage of such libraries is that they typically use fluent syntax, which makes the assertions easier to read, as they correspond to sentences in the English language.
 An example comparing equivalent assertions using both syntaxes is displayed in Program~\ref{lst:fluent-syntax}.
 Moreover, assertion libraries usually provide much more detailed error messages compared to testing frameworks, which is another considerable advantage.
+It is also important to keep in mind that these libraries are often compatible with all major .NET testing frameworks.
 
-\begin{listing}
+\begin{listing}[H]
 \begin{lstlisting}
 // xUnit assertion
 Assert.Equal("This method should be overridden by subclasses.", 
@@ -668,7 +674,7 @@ Assert.Equal("This method should be overridden by subclasses.",
 method.RemarksDocumentation.Should().Be("This method should be 
     overridden by subclasses.")
 \end{lstlisting}
-\caption{Razor template fragment displaying method modifiers}
+\caption{Comparison of basic and fluent syntax assertions}
 \label{lst:fluent-syntax}
 \end{listing}
 

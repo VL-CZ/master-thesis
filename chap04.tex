@@ -1,10 +1,44 @@
 \chapter{Architecture}
 
-\section{Architecture Diagram}
-Include design of the application and code fragments (just descriptions).
+In this chapter, we will describe the architecture of our app.
+
+The main project is divided into four folders:
+
+\begin{itemize}
+    \item \texttt{AssemblyAnalysis} -- contains types responsible for extracting the relevant data from an assembly.
+    \item \texttt{CodeElements} -- contains objects representing the types and members, introduced in sections~\ref{sec:member-repr} and \ref{sec:type-repr}.
+    \item \texttt{DocExtraction} -- contains types responsible for extracting the documentation from the XML documentation file and assigning them to the corresponding type or member.
+    \item \texttt{TemplateProcessors} -- contains types responsible for generating the reference documentation from the type and member objects.
+\end{itemize}
+
+\section{Workflow}
+The whole process is managed by \texttt{DocGenerator} classes, stored in the root directory.
+Additionally, the project also contains a \texttt{Tools} folder, containing additional tools shared between those project parts.
+
+The simplified process of generating documentation is displayed in Figure XX.
+First, it is necessary to extract the information from an assembly and create the objects representing types and members, which is performed by the AssemblyTypeExtractor class.
+These objects are then stored within the TypeRegistry class, which is further passed to the DocCommentExtractor.
+This class extracts the documentation comments from the XML documentation file and assigns them to the corresponding types and members.
+Thus, the TypeRegistry now contains types with documentation.
+Next, this registry is passed to the ITemplateProcessor interface, which represents the base interface for processing various types of templates, as described in section XX.
+The default implementation, called RazorTemplateGenerator uses Razor templates, and processes them with the provided data and thus creates the reference documentation.
+
+\section{CodeElements}
+
+\subsection{Members}
+
+\textit{Abstract/Members} and \textit{Concrete/Members}
+
+This folder contains both type and member objects, introduced in sections~\ref{sec:member-repr} and \ref{sec:type-repr}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\linewidth]{img/diagram-members.png}
+\caption{Template processors -- architecture}
+\label{fig:template-processors}
+\end{figure}
 
 \section{Assembly Analysis}
-\section{Code Elements}
 \section{Documentation Extraction}
 \section{Template Generators}
 \subsection{Template Model}
