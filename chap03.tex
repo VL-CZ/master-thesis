@@ -61,8 +61,7 @@ This way, we can achieve a user-friendly object model, where all member types ca
 
 Furthermore, we can create custom interfaces or supertypes for a certain set of members that share common functionality. As an example, there could be a common interface for properties and methods, which allows us
 to process those in a common way in other parts of our code base.
-
-Based on these insights, we will prefer this approach.
+Based on the insights above, we will prefer this approach.
 
 \section{Type representation}
 \label{sec:type-repr}
@@ -72,7 +71,6 @@ One option is to use the built-in \texttt{System.Type} class, however, since we 
 
 Notably, there is no way to store the members of custom types inside an existing class.
 Next, the API of \texttt{System.Type} is not particularly clean for our purpose, for the same reasons as mentioned in the previous section.
-
 Thus, it would be preferred to create custom types representing the types, with the following structure:
 
 \begin{itemize}
@@ -632,37 +630,39 @@ Furthermore, if this becomes a bottleneck in the future, this piece of code can 
 
 \section{Handling inner XML tags}
 
-Next, our program must convert the inner XML tags, listed in section~\ref{sec:inner-tags}, into the corresponding HTML representation.
+Next, our program must transform the inner XML tags, listed in section~\ref{sec:inner-tags}, into their corresponding HTML representations.
 For instance, the \texttt{<list type="bullet">} tag could be transformed to an HTML \texttt{<ul>} element.
 The mapping between XML tags and HTML elements must be defined somewhere in the program.
-A key observation is that customization must be supported, as different templates may want to use different styles for the HTML elements.
-Typically, the inner XML tags correspond quite well to HTML elements, so in the majority of cases, it would be sufficient to give the users just the option to style the HTML.
-However, in some cases, this may not be enough, as users may also want to change to what HTML element an XML is mapped to.
-For example, consider the \texttt{<c>} XML tag, representing inline code, that could be transformed to a \texttt{<code>} HTML element, or to a \texttt{<span>} rendered in a special font.
+A key observation is that customization must be supported, as different templates may require different styles for the HTML elements.
+Since the inner XML tags often correspond closely to HTML elements, providing users the option to style the generated HTML would typically be sufficient.
+However, in some cases, this may not be enough, as users might also want to change which HTML element an XML tag is mapped to.
+For example, consider the \texttt{<c>} XML tag, representing inline code, that could be transformed into a \texttt{<code>} HTML element, or a \texttt{<span>} rendered in a special font.
 
-The solution is to first declare an interface containing properties representing the target HTML for each of the inner tags.
-This gives users the option to define a custom configuration, as previously requested, simply by implementing this interface.
-Then, we must create a default implementation that will be used in the default UI.
-Moreover, each target HTML should have a custom CSS class, which could be referenced from the CSS.
-For example, the default configuration could map the \texttt{<list type="bullet">} tag to HTML \texttt{<ul class="refdocgen-bullet-list">} element in the default UI.
-This gives users the option to style the bullet list tag simply by adding CSS properties to the corresponding class.
+The solution is to declare an interface containing properties representing the target HTML for each of the inner XML tags.
+Hence, users might define a custom configuration, as previously requested, simply by implementing this interface.
+Then, we must create a default configuration that will be used in the default UI.
+Moreover, each target HTML element should have a custom CSS class, which could be referenced from the stylesheets.
+For example, the default configuration could map the \texttt{<list type="bullet">} tag to HTML \texttt{<ul class="refdocgen-bullet-list">} element.
+This gives users the option to style the bullet list tags simply by adding properties to the corresponding CSS class.
 
-Furthermore, it is possible to inherit styles of existing CSS classes by using a CSS preprocessor, such as Sass~\cite{sass}.
-This way, we can also inherit, e.g., the styles from the Bootstrap framework, which will be used in the default UI.
-The process of replacing the tags with HTML is relatively straightforward, as it is sufficient to process the inner tags one by one and replace them with corresponding HTML elements.
+Furthermore, it is possible to inherit existing CSS classes by using a CSS preprocessor, such as \textit{Sass}~\cite{sass}.
+This also allows us to inherit, e.g., the styles from the Bootstrap framework, which will be used in the default UI.
+Additionally, the process of replacing the tags with HTML is relatively straightforward, as it is sufficient to process the inner tags one by one and replace them with corresponding HTML elements.
 
 \section{Testing libraries}
 
 Last but not least, the generator should be properly tested using both unit and integration tests.
-In this section, we will present several libraries that simplify the process of testing.
+This section presents several libraries that simplify the testing process.
+
+TOOO: zminit, ze budu pouzivat xUnit?
 
 \subsection*{Test assertions}
 
-While we can use the assertion methods provided by a testing framework, such as xUnit, using a separate assertion library is often beneficial.
+While we can use the assertion methods provided by a testing framework, such as \textit{xUnit}, using a separate assertion library often brings additional benefits.
 The main advantage of such libraries is that they typically use fluent syntax, which makes the assertions easier to read, as they correspond to sentences in the English language.
-An example comparing equivalent assertions using both syntaxes is displayed in Program~\ref{lst:fluent-syntax}.
-Moreover, assertion libraries usually provide much more detailed error messages compared to testing frameworks, which is another considerable advantage.
-It is also important to keep in mind that these libraries are often compatible with all major .NET testing frameworks.
+An example comparing equivalent assertions using \textit{xUnit} and an assertion library is displayed in Program~\ref{lst:fluent-syntax}.
+Moreover, assertion libraries typically provide much more detailed error messages compared to testing frameworks, which is another considerable advantage.
+It is also important to keep in mind that these libraries are usually compatible with all major .NET testing frameworks.
 
 \begin{listing}[H]
 \begin{lstlisting}
@@ -678,13 +678,13 @@ method.RemarksDocumentation.Should().Be("This method should be
 \label{lst:fluent-syntax}
 \end{listing}
 
-The most popular test assertion library in .NET is FluentAssertions.
-However, as stated on its homepage, it transitioned to a paid license for commercial use.
-While it is still possible to use older versions for free, and more importantly, our generator is not meant to become commercial, the reputation of the FluentAssertions library has been compromised by this decision.
+The most popular assertion library in .NET is \textit{FluentAssertions}~\cite{fluent_assertions}.
+However, as stated on its homepage, it has transitioned to a paid license for commercial use.
+While it is still possible to use older versions for free, and more importantly, our generator is not intended to become commercial, the reputation of the FluentAssertions library has been negatively affected by this decision.
 
 Therefore, it is a good idea to look for alternatives.
-First, there is a community fork of FluentAssertions called AwesomeAssertions, however the major problem is that this project is relatively new and not widely used yet, so its future is unfortunately not clear.
-Another popular alternative is Shouldly, which has a similar functionality, but as opposed to FluentAssertions, remains fully free.
+First, there is a community fork of \textit{FluentAssertions} called \textit{AwesomeAssertions}~\cite{awesome_assertions}, however, the major problem is that this project is relatively new and not widely used yet, so its future is unfortunately not clear.
+Another popular alternative is \textit{Shouldly}~\cite{shouldly}, which has a similar functionality, but as opposed to FluentAssertions, remains fully free.
 Given these considerations, we decided to use Shoudly.
 
 \subsection*{Mocking}
