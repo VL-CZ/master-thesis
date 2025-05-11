@@ -1,7 +1,6 @@
 \chapter{Architecture}
 
 In this chapter, we will describe the architecture of our app.
-
 The main project is divided into four folders:
 
 \begin{itemize}
@@ -25,21 +24,84 @@ The default implementation, called RazorTemplateGenerator uses Razor templates, 
 
 \section{CodeElements}
 
+This folder contains both type and member objects, introduced in sections~\ref{sec:member-repr} and \ref{sec:type-repr}.
+
 \subsection{Members}
 
-\textit{Abstract/Members} and \textit{Concrete/Members}
+Member and their interfaces are stored in \textit{Concrete/Members} and \textit{Abstract/Members} subfolders.
 
-This folder contains both type and member objects, introduced in sections~\ref{sec:member-repr} and \ref{sec:type-repr}.
+First, there is a separate class for each kind of member, such as field, method, and property, as illustrated in Figure~\ref{fig:members-concrete}.
+
+Thus, the classes are called FieldData, MethodData, PropertyData, etc.
+These classes have suffix Data, as opposed to the types provided by reflection, whose names end with Info.
+
+TODO: popsat strukturu
+
+Also notice that there is a separate class for both operators (OperatorData) and indexers (IndexerData), inherited from MethodData, or PropertyData, respectively.
+That is because an indexer in .NET is essentially a property, but with extra special functionality.
+
+The common code is extracted to base class, called MemberData.
+summary doc, remarks doc, name, ID string, etc.
+Similarly, there is a MethodLikeMemberData class containing the code shared between methods and constructors.
+Furthermore, there is a ParameterData class representing a parameter, outside the hierarchy.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=1\linewidth]{img/diagram-members.png}
 \caption{Template processors -- architecture}
-\label{fig:template-processors}
+\label{fig:members-concrete}
 \end{figure}
 
+The interfaces are shown in Figure XX. 
+There is an interface for each concrete type -> IFieldData, IMethodData, IPropertyData, etc.
+
+Notice that unlike the concrete member objects, the interfaces provide a read-only view over the data, as e.g. the documentation comments cannot be assigned.
+TODO: popsat vyznam
+
+Furthermore, there a several super-interfaces that represent common properties of a selection of members.
+
+TODO: diagram
+
+\subsection{Types}
+
+Similarly to members, the objects representing types are stored inside the abstract/types and concrete/types folders.
+
+Unlike the System.Type class, there is a hierarchy of types representing different kinds
+
+\begin{itemize}
+    \item EnumData
+    \item DelegateData
+    \item ObjectTypeData
+\end{itemize}
+
+TODO: popsat strukturu
+
+Furthermore, there is a TypeNameData class representing a field type or a return type.
+
+Similarly, there are interfaces 
+
+\subsection{Type registry}
+
+All types are stored and passed in a type registry class, which contains all types,
+
+\subsection{Tools}
+
 \section{Assembly Analysis}
+
+This folder contains classes responsible for creating and populating the TypeRegistry with types extracted from an assembly.
+
+Several classes: AssemblyTypeExtractor is the most important, as it extracts the data from an assembly in method XX.
+There is a method for creating enum and delegate types.
+
+For classes, interfaces and structs, the situation is quite different.
+The construction of those is much more complicated, as they may contain various members.
+For that reason, we used builder pattern, and created ObjectTypeBuilder class.
+Moreover, each member object is created from the corresponding reflection type. 
+This is done by creator classes, that are present for each member.
+-> FieldDataCreator, MethodDataCreator, etc.
+
 \section{Documentation Extraction}
+
 \section{Template Generators}
 \subsection{Template Model}
 \subsection{Template Model Creators}

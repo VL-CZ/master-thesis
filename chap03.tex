@@ -568,9 +568,9 @@ This greatly simplifies the templates, as instead of checking many conditions, a
 As a consequence, creating custom templates gets easier as well, which is good news for future contributors.
 Considering the namespace page mentioned earlier, its template model should contain only the necessary data, i.e., a list of template models containing the type name and its documentation. 
 
-It is also crucial to remember that the UI should be ready to be extended with support for other languages, as discussed in Requirement~\ref{req:ui-multiple-langs}.
+It is also crucial to remember that the UI should be designed to be extended with support for other languages, as discussed in Requirement~\ref{req:ui-multiple-langs}.
 So, all language-specific data must be indexed by the corresponding language.
-Thus, instead of, e.g., storing modifiers directly in the method template model as an array, there could be a dictionary, whose keys represent .NET languages, and the value of the given key contains the array of corresponding modifiers.
+Thus, instead of, e.g., storing modifiers directly in the method template model as an array, they could be stored as a dictionary, whose keys represent .NET languages, and the values contain the array of modifiers for the given language.
 The same applies to other language-specific fields.
 
 The primary disadvantage of using template models is that we need the conversion from type and member objects into them. 
@@ -670,7 +670,7 @@ It is also important to keep in mind that these libraries are usually compatible
 Assert.Equal("This method should be overridden by subclasses.", 
     method.RemarksDocumentation)
 
-// fluent syntax assertion (using FluentAssertions library)
+// fluent syntax assertion (using Fluent Assertions library)
 method.RemarksDocumentation.Should().Be("This method should be 
     overridden by subclasses.")
 \end{lstlisting}
@@ -678,24 +678,30 @@ method.RemarksDocumentation.Should().Be("This method should be
 \label{lst:fluent-syntax}
 \end{listing}
 
-The most popular assertion library in .NET is \textit{FluentAssertions}~\cite{fluent_assertions}.
+The most popular assertion library in .NET is \textit{Fluent Assertions}~\cite{fluent_assertions}.
 However, as stated on its homepage, it has transitioned to a paid license for commercial use.
-While it is still possible to use older versions for free, and more importantly, our generator is not intended to become commercial, the reputation of the FluentAssertions library has been negatively affected by this decision.
+While it is still possible to use older versions for free, and more importantly, our generator is by no means intended to become commercial, the reputation of the library has been negatively affected by this decision.
 
 Therefore, it is a good idea to look for alternatives.
-First, there is a community fork of \textit{FluentAssertions} called \textit{AwesomeAssertions}~\cite{awesome_assertions}, however, the major problem is that this project is relatively new and not widely used yet, so its future is unfortunately not clear.
-Another popular alternative is \textit{Shouldly}~\cite{shouldly}, which has a similar functionality, but as opposed to FluentAssertions, remains fully free.
-Given these considerations, we decided to use Shoudly.
+First, there is a community fork of \textit{Fluent Assertions} called \textit{Awesome Assertions}~\cite{awesome_assertions}, however, the main drawback is that this library is relatively new and not yet widely adopted, making its future uncertain.
+Another popular alternative is \textit{Shouldly}~\cite{shouldly}, which offers similar functionality, but unlike \textit{Fluent Assertions}, remains entirely free.
+Given these considerations, we decided to use \textit{Shouldly}.
 
 \subsection*{Mocking}
 
-Additionally, we will want to test various properties of the type and member objects, described in 
+Additionally, we want to test various data regarding the type and member objects, described in 
 sections~\ref{sec:member-repr} and \ref{sec:type-repr}.
-It is also important to remember that those objects are expected to be wrappers around the types provided by reflection.
-Then, we may check, e.g., whether the ID string, described in section~\ref{sec:id-string}, is as expected.
+We might test, e.g., whether the ID string, described in section~\ref{sec:id-string}, or its C\# signature is as expected.
+The logic may be non-trivial and, more importantly, shared between multiple classes, so it makes sense to extract it into a separate class that accepts the type or member objects as parameters.
+The same goes, for instance, for printing the type signature in C\# format.
 
-In such cases, mocking those objects could be a viable option.
-An alternative would be to manually create those objects, which could easily become cumbersome.
-The most popular mocking library in .NET is Moq, however, there was a problem with sponsor links.
-Hence, similarly to FluentAssertions, the image of Moq became compromised.
-For those reasons, we will use NSubstitute, which offers similar functionality and is quite popular as well.
+It is also important to remember that type and member objects are expected to be wrappers around the types provided by reflection.
+Thus, the straightforward way to test such functionality is to create dummy types, which will be wrapped by those objects.
+However, this would result in having many dummy types as the tests grow, especially if we decide to parametrize the tests.
+In such cases, mocking the type and member objects could be a viable option, assuming the types implement an interface.
+The most popular mocking library in .NET is \textit{Moq}~\cite{moq}, however, there were privacy issues regarding this library.
+More specifically, \textit{Moq} version \textit{4.20} scanned the local data 
+and sent the hashed email to a cloud service, as explained in the Github issue~\cite{moq_issue}
+and the related Reddit post~\cite{moq_reddit_post}.
+Although the problematic piece of code has already been removed from the project, similarly to \textit{Fluent Assertions}, the trust in \textit{Moq} among the developer community became significantly compromised.
+For those reasons, we will use \textit{NSubstitute}~\cite{nsub} instead, which offers similar functionality and is quite popular as well.
