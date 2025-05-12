@@ -1,26 +1,34 @@
 \chapter{Architecture}
 
-In this chapter, we will describe the architecture of our app.
-The main project is divided into four folders:
+This chapter describes the architecture of our app.
+The main project is stored in \texttt{src/RefDocGen} folder and further divided into the following four folders:
 
 \begin{itemize}
     \item \texttt{AssemblyAnalysis} -- contains types responsible for extracting the relevant data from an assembly.
     \item \texttt{CodeElements} -- contains objects representing the types and members, introduced in sections~\ref{sec:member-repr} and \ref{sec:type-repr}.
-    \item \texttt{DocExtraction} -- contains types responsible for extracting the documentation from the XML documentation file and assigning them to the corresponding type or member.
+    \item \texttt{DocExtraction} -- contains types responsible for extracting the documentation from the XML documentation file and assigning it to the corresponding type or member.
     \item \texttt{TemplateProcessors} -- contains types responsible for generating the reference documentation from the type and member objects.
+    This folder also includes Razor templates, representing individual fragments of the UI.
 \end{itemize}
 
-\section{Workflow}
-The whole process is managed by \texttt{DocGenerator} classes, stored in the root directory.
-Additionally, the project also contains a \texttt{Tools} folder, containing additional tools shared between those project parts.
+Additionally, the project also contains a \texttt{Tools} folder, containing additional tools shared between multiple parts of the project.
 
-The simplified process of generating documentation is displayed in Figure XX.
-First, it is necessary to extract the information from an assembly and create the objects representing types and members, which is performed by the AssemblyTypeExtractor class.
-These objects are then stored within the TypeRegistry class, which is further passed to the DocCommentExtractor.
+\section{Workflow}
+The whole process of generating reference documentation is managed by the \texttt{DocGenerator} class, stored in the root directory.
+The simplified process of generating documentation is displayed in Figure~\ref{fig:workflow}.
+First, it is necessary to extract the information from an assembly and create the objects representing types and members, which is performed by the \texttt{AssemblyTypeExtractor} class.
+These objects are then stored within the \texttt{TypeRegistry} class, which is further passed to the \texttt{DocCommentExtractor}.
 This class extracts the documentation comments from the XML documentation file and assigns them to the corresponding types and members.
-Thus, the TypeRegistry now contains types with documentation.
-Next, this registry is passed to the ITemplateProcessor interface, which represents the base interface for processing various types of templates, as described in section XX.
-The default implementation, called RazorTemplateGenerator uses Razor templates, and processes them with the provided data and thus creates the reference documentation.
+Hence, the \texttt{TypeRegistry} now contains documentation as well.
+Next, the registry is passed to the \texttt{ITemplateProcessor} interface, which represents the base interface for processing various types of templates, as described in section~\ref{sec:template-extensibility}.
+The default implementation, called \texttt{RazorTemplateGenerator}, uses \textit{Razor} templates, and processes them with the provided data and thus creates the reference documentation.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\linewidth]{img/workflow.png}
+\caption{Program workflow}
+\label{fig:workflow}
+\end{figure}
 
 \section{CodeElements}
 
@@ -28,51 +36,59 @@ This folder contains both type and member objects, introduced in sections~\ref{s
 
 \subsection{Members}
 
-Member and their interfaces are stored in \textit{Concrete/Members} and \textit{Abstract/Members} subfolders.
-
+Member types and interfaces are stored in \texttt{Concrete/Members} and \texttt{Abstract/Members} subfolders.
 First, there is a separate class for each kind of member, such as field, method, and property, as illustrated in Figure~\ref{fig:members-concrete}.
+These classes have a suffix \textit{Data}, as opposed to the types provided by reflection, whose names end with \textit{Info}.
+Thus, the types are named \texttt{FieldData}, \texttt{MethodData}, \texttt{PropertyData}, etc.
+Also, we can notice there is a separate class for operators (\texttt{OperatorData}) and indexers (\texttt{IndexerData}), inherited from \texttt{MethodData}, or \texttt{PropertyData}, respectively.
+That is because an overloaded operator in .NET is essentially a method using a special syntax, and similarly, an indexer is a special case of a .NET property.
 
-Thus, the classes are called FieldData, MethodData, PropertyData, etc.
-These classes have suffix Data, as opposed to the types provided by reflection, whose names end with Info.
+The structure of member types has already been outlined in section~\ref{sec:member-repr}.
+Basically, these types wrap the objects provided by reflection and provide all the necessary information about the member, as well as its documentation comments.
+Additionally, there is a base class, called \texttt{MemberData}, containing the common properties, such as summary and remarks documentation, member name, ID string, etc.
+Similarly, there is the \texttt{MethodLikeMemberData} class containing the functionality shared between methods and constructors.
+Furthermore, the project also includes the \texttt{ParameterData} class representing a parameter.
 
-TODO: popsat strukturu
+It is worth noting that the properties representing documentation comments (such as \texttt{SummaryDocComment} or \texttt{RemarksDocComment}) are writable.
+This is because the assignment of the documentation comments takes place after the members are loaded, as already explained in Figure~\ref{fig:workflow}.
 
-Also notice that there is a separate class for both operators (OperatorData) and indexers (IndexerData), inherited from MethodData, or PropertyData, respectively.
-That is because an indexer in .NET is essentially a property, but with extra special functionality.
+Next, there are multiple interfaces representing members, whose hierarchy is displayed in Figure~\ref{fig:members-abstract}. 
+First, there is a separate interface for each of the member types, called, e.g.
+\texttt{IFieldData}, \texttt{IMethodData}, \texttt{IPropertyData}, etc.
+Then, analogous to member classes, there are \texttt{IMemberData} and \texttt{IParameterData} interfaces.
+Secondly, there are several super-interfaces that represent common properties of a selection of members.
+TODO: rozepsat jednotlive interfaces?
 
-The common code is extracted to base class, called MemberData.
-summary doc, remarks doc, name, ID string, etc.
-Similarly, there is a MethodLikeMemberData class containing the code shared between methods and constructors.
-Furthermore, there is a ParameterData class representing a parameter, outside the hierarchy.
+The big difference between member interfaces and classes is that the interfaces provide a read-only view of the member data, because they are intended to be used by the template processors.
+In contrast, the classes are intended to be used by the types performing the extraction and assignment of the documentation comments.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=1\linewidth]{img/diagram-members.png}
-\caption{Template processors -- architecture}
+\caption{Member types -- inheritance graph}
 \label{fig:members-concrete}
 \end{figure}
 
-The interfaces are shown in Figure XX. 
-There is an interface for each concrete type -> IFieldData, IMethodData, IPropertyData, etc.
-
-Notice that unlike the concrete member objects, the interfaces provide a read-only view over the data, as e.g. the documentation comments cannot be assigned.
-TODO: popsat vyznam
-
-Furthermore, there a several super-interfaces that represent common properties of a selection of members.
-
-TODO: diagram
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\linewidth]{img/diagram-member-interfaces.png}
+\caption{Member interfaces -- inheritance graph}
+\label{fig:members-abstract}
+\end{figure}
 
 \subsection{Types}
-
-Similarly to members, the objects representing types are stored inside the abstract/types and concrete/types folders.
-
-Unlike the System.Type class, there is a hierarchy of types representing different kinds
+The objects representing types are stored inside the \texttt{Abstract/Types} and \texttt{Concrete/Types} folders.
+Unlike the \texttt{System.Type} class, which covers all .NET types, there is a different class representing each kind of member:
 
 \begin{itemize}
-    \item EnumData
-    \item DelegateData
-    \item ObjectTypeData
+    \item \texttt{EnumData} -- represents enums.
+    \item \texttt{DelegateData} -- represents delegates.
+    \item \texttt{ObjectTypeData} -- represents other types (classes, structures, and interfaces).
 \end{itemize}
+
+All of these types inherit from the base class, called \texttt{TypeDeclaration}, which represents any type.
+
+
 
 TODO: popsat strukturu
 
@@ -85,6 +101,7 @@ Similarly, there are interfaces
 All types are stored and passed in a type registry class, which contains all types,
 
 \subsection{Tools}
+TODO: vyhodit?
 
 \section{Assembly Analysis}
 

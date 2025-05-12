@@ -503,6 +503,8 @@ Additionally, we will prefer using Razor components over the RazorLight library 
 
 \subsection*{Extensibility}
 
+\label{sec:template-extensibility}
+
 It is also crucial to remember that even though the default UI will use Razor, the documentation generator should not be tied to a certain templating language.
 In other words, it should be easily possible to add support for other templating languages by adding a set of templates and the code that processes them, as requested by Requirement~\ref{subreq:custom-template-lang}.
 Ideally, the generator should contain a common interface, called \texttt{ITemplateProcessor}, 
@@ -658,7 +660,7 @@ TOOO: zminit, ze budu pouzivat xUnit?
 
 \subsection*{Test assertions}
 
-While we can use the assertion methods provided by a testing framework, such as \textit{xUnit}, using a separate assertion library often brings additional benefits.
+While we can use the assertion methods provided by a testing framework, such as \textit{xUnit}~\cite{xunit}, using a separate assertion library often brings additional benefits.
 The main advantage of such libraries is that they typically use fluent syntax, which makes the assertions easier to read, as they correspond to sentences in the English language.
 An example comparing equivalent assertions using \textit{xUnit} and an assertion library is displayed in Program~\ref{lst:fluent-syntax}.
 Moreover, assertion libraries typically provide much more detailed error messages compared to testing frameworks, which is another considerable advantage.
@@ -692,16 +694,16 @@ Given these considerations, we decided to use \textit{Shouldly}.
 Additionally, we want to test various data regarding the type and member objects, described in 
 sections~\ref{sec:member-repr} and \ref{sec:type-repr}.
 We might test, e.g., whether the ID string, described in section~\ref{sec:id-string}, or its C\# signature is as expected.
-The logic may be non-trivial and, more importantly, shared between multiple classes, so it makes sense to extract it into a separate class that accepts the type or member objects as parameters.
-The same goes, for instance, for printing the type signature in C\# format.
+The logic may be non-trivial and, more importantly, shared between multiple classes, so it is reasonable to extract it into a separate class that accepts the type or member objects as parameters.
+The same applies, for instance, for printing the type signature in C\# format.
 
 It is also important to remember that type and member objects are expected to be wrappers around the types provided by reflection.
-Thus, the straightforward way to test such functionality is to create dummy types, which will be wrapped by those objects.
-However, this would result in having many dummy types as the tests grow, especially if we decide to parametrize the tests.
+Thus, the most straightforward way to test such functionality is to create dummy types, which will be wrapped by those objects.
+However, this would result in creating many dummy types as the tests grow, especially if we decide to use parametrized tests.
 In such cases, mocking the type and member objects could be a viable option, assuming the types implement an interface.
-The most popular mocking library in .NET is \textit{Moq}~\cite{moq}, however, there were privacy issues regarding this library.
-More specifically, \textit{Moq} version \textit{4.20} scanned the local data 
-and sent the hashed email to a cloud service, as explained in the Github issue~\cite{moq_issue}
+The most popular mocking library in .NET is \textit{Moq}~\cite{moq}, however, there have been privacy concerns associated with this library.
+More specifically, version 4.20 of \textit{Moq} scanned the local data 
+and sent the hashed email to a cloud service, as documented in the Github issue~\cite{moq_issue}
 and the related Reddit post~\cite{moq_reddit_post}.
-Although the problematic piece of code has already been removed from the project, similarly to \textit{Fluent Assertions}, the trust in \textit{Moq} among the developer community became significantly compromised.
-For those reasons, we will use \textit{NSubstitute}~\cite{nsub} instead, which offers similar functionality and is quite popular as well.
+Although the problematic piece of code has already been removed from the project, similarly to \textit{Fluent Assertions}, the trust in \textit{Moq} within the developer community became significantly undermined.
+For those reasons, we decided to use \textit{NSubstitute}~\cite{nsub} instead, which offers similar functionality and is quite popular as well.
