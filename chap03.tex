@@ -633,7 +633,7 @@ Furthermore, if this becomes a bottleneck in the future, this piece of code can 
 \section{Handling inner XML tags}
 
 Next, our program must transform the inner XML tags, listed in section~\ref{sec:inner-tags}, into their corresponding HTML representations.
-For instance, the \texttt{<list type="bullet">} tag could be transformed to an HTML \texttt{<ul>} element.
+For instance, the \texttt{<list ty\-pe="bullet">} tag could be transformed to an HTML \texttt{<ul>} element.
 The mapping between XML tags and HTML elements must be defined somewhere in the program.
 A key observation is that customization must be supported, as different templates may require different styles for the HTML elements.
 Since the inner XML tags often correspond closely to HTML elements, providing users the option to style the generated HTML would typically be sufficient.
@@ -655,16 +655,15 @@ Additionally, the process of replacing the tags with HTML is relatively straight
 
 Last but not least, the generator should be properly tested using both unit and integration tests.
 This section presents several libraries that simplify the testing process.
-
-TOOO: zminit, ze budu pouzivat xUnit?
+First, it is important to mention that we will use the \textit{xUnit framework}~\cite{xunit}, which is a standard choice.
 
 \subsection*{Test assertions}
 
-While we can use the assertion methods provided by a testing framework, such as \textit{xUnit}~\cite{xunit}, using a separate assertion library often brings additional benefits.
+While we can use the assertion methods provided by \textit{xUnit}, using a separate assertion library often brings additional benefits.
 The main advantage of such libraries is that they typically use fluent syntax, which makes the assertions easier to read, as they correspond to sentences in the English language.
 An example comparing equivalent assertions using \textit{xUnit} and an assertion library is displayed in Program~\ref{lst:fluent-syntax}.
 Moreover, assertion libraries typically provide much more detailed error messages compared to testing frameworks, which is another considerable advantage.
-It is also important to keep in mind that these libraries are usually compatible with all major .NET testing frameworks.
+It is also important to keep in mind that these libraries are usually compatible with all major .NET testing frameworks, including \textit{xUnit}.
 
 \begin{listing}[H]
 \begin{lstlisting}
@@ -682,7 +681,7 @@ method.RemarksDocumentation.Should().Be("This method should be
 
 The most popular assertion library in .NET is \textit{Fluent Assertions}~\cite{fluent_assertions}.
 However, as stated on its homepage, it has transitioned to a paid license for commercial use.
-While it is still possible to use older versions for free, and more importantly, our generator is by no means intended to become commercial, the reputation of the library has been negatively affected by this decision.
+While it is still possible to use older versions for free, and more importantly, our generator is by no means intended to become commercial, this decision has negatively affected the reputation of the library.
 
 Therefore, it is a good idea to look for alternatives.
 First, there is a community fork of \textit{Fluent Assertions} called \textit{Awesome Assertions}~\cite{awesome_assertions}, however, the main drawback is that this library is relatively new and not yet widely adopted, making its future uncertain.
@@ -697,13 +696,20 @@ We might test, e.g., whether the ID string, described in section~\ref{sec:id-str
 The logic may be non-trivial and, more importantly, shared between multiple classes, so it is reasonable to extract it into a separate class that accepts the type or member objects as parameters.
 The same applies, for instance, for printing the type signature in C\# format.
 
-It is also important to remember that type and member objects are expected to be wrappers around the types provided by reflection.
-Thus, the most straightforward way to test such functionality is to create dummy types, which will be wrapped by those objects.
-However, this would result in creating many dummy types as the tests grow, especially if we decide to use parametrized tests.
-In such cases, mocking the type and member objects could be a viable option, assuming the types implement an interface.
-The most popular mocking library in .NET is \textit{Moq}~\cite{moq}, however, there have been privacy concerns associated with this library.
+It is important to remember that type and member objects are expected to be wrappers around the types provided by reflection.
+With this in mind, the easiest way to test such functionality is to declare custom types and methods in the code that will be used purely for testing purposes.
+Then, we can obtain the reflection objects describing those types and members, and manually create our type and member objects by wrapping those instances.
+However, this approach would lead to creating many types purely for testing as the number of tests grows, especially if we decide to use parameterized tests.
+
+An alternative option is to use dummy types, assuming the type and member objects implement an interface.
+First, it is possible to create dummy types manually by implementing these interfaces.
+However, this approach is also quite cumbersome, as it often requires writing a significant amount of code.
+For example, if an interface contains many methods, its dummy implementation must define all of them, which can result in a lot of lines of code.
+In general, this problem is often solved by using a mocking library that creates these dummy types automatically, which, in conclusion, is also our preferred approach.
+
+The most popular mocking library in .NET is \textit{Moq}~\cite{moq}, however, there have been privacy concerns associated with it.
 More specifically, version 4.20 of \textit{Moq} scanned the local data 
 and sent the hashed email to a cloud service, as documented in the Github issue~\cite{moq_issue}
 and the related Reddit post~\cite{moq_reddit_post}.
-Although the problematic piece of code has already been removed from the project, similarly to \textit{Fluent Assertions}, the trust in \textit{Moq} within the developer community became significantly undermined.
-For those reasons, we decided to use \textit{NSubstitute}~\cite{nsub} instead, which offers similar functionality and is quite popular as well.
+Although the problematic piece of code has already been removed from the project, similarly to \textit{Fluent Assertions}, the trust in \textit{Moq} within the developer community has been significantly undermined.
+For these reasons, we decided to use \textit{NSubstitute}~\cite{nsub} instead, which offers similar functionality and is quite popular as well.
