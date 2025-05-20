@@ -432,7 +432,7 @@ As mentioned before, there could be arbitrary C\# code inside the code block.
 
 An example of a Razor file is shown in Program~\ref{lst:razor}.
 As we can see, the object of type \texttt{Person} is passed to the template.
-The processing of Razor files can be done using the RazorLight library~\cite{razor_console}, however, certain constructs, such as methods, are not supported.
+The processing of Razor files can be done using the RazorLight library~\cite{razorlight}, however, certain constructs, such as methods, are not supported.
 Additionally, even though Razor was originally intended for use in web applications, it is also possible
 to use Razor components and render them in console applications, as mentioned in the official documentation~\cite{razor_console}.
 
@@ -704,7 +704,7 @@ However, this approach would lead to creating many types purely for testing as t
 An alternative option is to use dummy types, assuming the type and member objects implement an interface.
 First, it is possible to create dummy types manually by implementing these interfaces.
 However, this approach is also quite cumbersome, as it often requires writing a significant amount of code.
-For example, if an interface contains many methods, its dummy implementation must define all of them, which can result in a lot of lines of code.
+For example, if an interface contains many methods, its dummy implementation must define all of them, which can result in many lines of code.
 In general, this problem is often solved by using a mocking library that creates these dummy types automatically, which, in conclusion, is also our preferred approach.
 
 The most popular mocking library in .NET is \textit{Moq}~\cite{moq}, however, there have been privacy concerns associated with it.

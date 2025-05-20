@@ -884,6 +884,7 @@ Considering these points, we can introduce the following two requirements:
 
 \begin{requirement}
     Option to exclude selected projects from the documentation.
+    \label{req:exclude-assemblies}
 \end{requirement}
 
 Additionally, the project itself may contain certain types we would like to exclude from the documentation.
@@ -900,7 +901,7 @@ Thus, we can formulate the subsequent requirement:
 
 \begin{requirement}
     Option to exclude types in selected namespaces.
-    \label{req:option}
+    \label{req:exclude-namespaces}
 \end{requirement}
 
 As discussed in section~\ref{section:context}, reference documentation is primarily intended for developers using a library or maintainers of the library.
@@ -909,6 +910,7 @@ This gives us another requirement:
 
 \begin{requirement}
     Option for selecting types and members based on their accessibility level.
+    \label{req:exclude-accessibility}
 \end{requirement}
 
 It is also worth noting that users may want to exclude inherited members from the documentation, based on different use cases.
@@ -917,6 +919,7 @@ As a result, we can formulate the following requirement:
 
 \begin{requirement}
     Option for including/excluding the inherited members.
+    \label{req:exclude-inherited}
 \end{requirement}
 
 Last but not least, we should consider the program installation.
