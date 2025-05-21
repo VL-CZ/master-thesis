@@ -14,7 +14,6 @@ The main project is stored in \texttt{src/RefDocGen} folder and further divided 
 Additionally, the project also contains a \texttt{Tools} folder, containing additional tools shared between multiple parts of the project.
 
 \section{Workflow}
-The whole process of generating reference documentation is performed using the \texttt{DocGenerator} class.
 The simplified process of generating documentation is displayed in Figure~\ref{fig:workflow}.
 First, it is necessary to extract the information from an assembly and create the objects representing types and members, which is performed by the \texttt{AssemblyTypeExtractor} class.
 These objects are then stored within the \texttt{TypeRegistry} class, which is further passed to the \texttt{DocCommentExtractor}.
@@ -23,6 +22,7 @@ Hence, the \texttt{TypeRegistry} now contains documentation as well.
 Next, the registry is passed to the \texttt{ITemplateProcessor} interface, which represents the base interface for processing various types of templates, as described in section~\ref{sec:template-extensibility}.
 The default implementation, called \texttt{RazorTemplateProcessor}, uses \textit{Razor} templates, and processes them with the provided data and thus creates the reference documentation.
 
+The entire process is coordinated by the \texttt{DocGenerator.GenerateDoc} method, which gets called directly from the \texttt{Main} method.
 In the following sections, we will describe the individual parts of the codebase in more detail.
 
 \begin{figure}[H]
@@ -34,29 +34,22 @@ In the following sections, we will describe the individual parts of the codebase
 
 \section{Type registry}
 
-As mentioned in the previous section, the collection of declared types and members is shared across various parts of the application, as a \texttt{TypeRegistry} instance.
+As mentioned in the previous section, the collection of declared types and members is stored within a \texttt{TypeRegistry} instance and shared between various parts of the application.
 More specifically, the \texttt{TypeRegistry} is used at two places.
 First, it is accessed by the \texttt{DocCommentExtractor} and related classes to assign XML documentation comments to the appropriate types and members.
 After that, the data from the \texttt{TypeRegistry} is used by the template processors (such as the default \texttt{RazorTemplateProcessor}), and based on this data, the resulting documentation is generated.
 
-For now, we will focus on the first usage and return to the second case later.
-As stated earlier, the \texttt{DocCommentExtractor} class is expected to parse the XML documentation file and add the documentation comments to the appropriate types and members. 
-The comments are identified by the ID string, whose format is described in the official documentation~\cite{csharp_xml_docs}.
-Thus, the \texttt{DocCommentExtractor} class needs to search for the types and members in the type registry based on their ID string.
-
+For now, we will consider only the usage by the \texttt{DocCommentExtractor} and return to the second case later.
 Internally, the \texttt{TypeRegistry} organizes the types into the following three categories: enums, delegates, and the remaining types (classes, structures, and interfaces), which we will refer to as the \textit{object types}.
-Each of these categories of types is stored in a dictionary, indexed by the ID string, which allows simple and efficient retrieval of a type based on its ID string.
+Each of these categories of types is stored in a dictionary, indexed by the ID string, whose format is described in the official documentation~\cite{csharp_xml_docs}.
+More importantly, the ID string is also used in the XML documentation file to identify to which type the documentation belongs.
+This allows simple and efficient retrieval of a type based on its ID string, which is crucial for the
+\texttt{DocCommentExtractor}, as this class needs to assign documentation to individual types, based on the ID string.
 
 \subsection{Types}
 
-As mentioned in the previous section, the type registry stores all the declared types divided into three categories.
+As mentioned in the previous section, the type registry stores all the declared types organized into three categories.
 Next, it is crucial to note that we use custom objects to represent types, which was explained in the section~\ref{sec:type-repr}, 
-These objects contain any relevant data about a type, such as its name, namespace, etc., as well as its documentation comments and a collection of declared members.
-The documentation comments are stored in separate properties as \texttt{XElement} instances; 
-hence the classes have properties called \texttt{SummaryDocComment}, \texttt{RemarksDocComment}, etc.
-Notably, these properties are writable, unlike the rest of the data.
-This is necessary because the assignment of the documentation comments takes place after the members are created, as already explained in Figure~\ref{fig:workflow}.
-
 Unlike \texttt{System.Type}, there are multiple classes representing different kinds of types, which fundamentally differ in structure:
 
 \begin{itemize}
@@ -65,25 +58,40 @@ Unlike \texttt{System.Type}, there are multiple classes representing different k
     \item \texttt{ObjectTypeData} -- represents an object type (i.e., a class, structure, or an interface).
 \end{itemize}
 
-All of these classes inherit from the \texttt{TypeDeclaration} class, which contains the common code, as illustrated in Figure~\ref{fig:types-concrete}, 
-Furthermore, it is important to realize that we also need to somehow represent, e.g., a type of a field, or the return type of a method.
-In such cases, we only need its name-related information; in particular, we do not need any documentation comments, nor a collection of its members.
-For such purposes, we use the \texttt{TypeNameData} class, which, in general, represents a type that is not a declaration. 
+These objects contain all relevant data about a type, such as its name, namespace, etc., as well as its documentation comments and a collection of declared members.
+As illustrated in Figure~\ref{fig:types-concrete}, all these classes inherit from the \texttt{TypeDeclaration} class, which contains the common code.
+The documentation comments are stored in separate properties as \texttt{XElement} instances; 
+hence the classes have properties called \texttt{SummaryDocComment}, \texttt{RemarksDocComment}, etc.
+Importantly, these properties are writable, unlike the rest of the data.
+This is necessary because the documentation comments are assigned after the members are created, as explained earlier.
+
+Additionally, the \texttt{ObjectTypeData} stores its members in dictionaries, indexed by the member IDs, similar to how the types are stored in the \texttt{TypeRegistry}.
+The member ID corresponds to its identifier in the XML documentation file, the only difference is that in our case, the type name is not part of the ID.
+The members are stored according to their kind; therefore, the \texttt{ObjectTypeData} class declares seven distinct dictionaries, containing:
+
+\begin{itemize}
+    \item fields
+    \item properties
+    \item indexers
+    \item methods
+    \item operators
+    \item constructors
+    \item events
+\end{itemize}
+
+Accordingly, the \texttt{EnumData} class contains a dictionary of enum members.
+Moreover, if a type defines any type parameters, these are also stored in a separate dictionary indexed by their names, while the individual type parameters are represented by a custom class named \texttt{TypeParameterData}.
+Additionally, the program uses the \texttt{AttributeData} class to represent user-defined attributes (TODO: vyhodit tuhle vetu?).
+
+Furthermore, it is important to recognize that we also need to represent, e.g., a type of a field, or the return type of a method in our codebase.
+In such cases, we only need the name-related information of a type; in particular, we do not need any documentation comments, nor a collection of its members.
+For such purposes, the \texttt{TypeNameData} class is used.
 The functionality shared between \texttt{TypeNameData} and \texttt{TypeDeclaration} is extracted to the \texttt{TypeNameBaseData} class.
-
-Object types contain various members, which are stored again in dictionaries, indexed by the member ID, similar to how the types are stored in the \texttt{TypeRegistry}.
-Similarly, the member ID corresponds to its identifier in the XML documentation file, the only difference is that in our case, the type name is not part of the ID.
-The members are stored according to their kind, thus, the \texttt{ObjectTypeData} class contains separate dictionaries for fields, methods, properties, indexers, etc.
-Similarly, the \texttt{EnumData} class contains a dictionary of enum members.
-
-If a type contains any type parameters, these are also stored in a separate dictionary indexed by their names. 
-The individual type parameters are represented by a custom class named \texttt{TypeParameterData}.
-Additionally, the program uses the \texttt{AttributeData} class to represent user-defined attributes (TODO: vyhodit?).
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.8\linewidth]{img/types-concrete.png}
-\caption{Types -- inheritance graph}
+\caption{Type classes -- inheritance graph}
 \label{fig:types-concrete}
 \end{figure}
 
@@ -91,12 +99,13 @@ Additionally, the program uses the \texttt{AttributeData} class to represent use
 
 Similarly to types, the members are represented by custom objects, as outlined in section~\ref{sec:member-repr}.
 There is a separate class for each kind of member, such as field, method, and property, as illustrated in Figure~\ref{fig:members-concrete}.
-Basically, these types wrap the objects provided by reflection (such as \texttt{FieldInfo} and \texttt{MethodInfo}) and provide all the necessary information about the member, as well as its documentation comments.
-Additionally, we can notice there is a separate class for operators (\texttt{OperatorData}) and indexers (\texttt{IndexerData}), inherited from \texttt{MethodData}, or \texttt{PropertyData}, respectively.
+Essentially, these objects wrap the types provided by reflection (such as \texttt{FieldInfo} and \texttt{MethodInfo}) and provide all the necessary information about the member, as well as its documentation comments.
+Hence, for instance, the \texttt{FieldData} class wraps a \texttt{FieldInfo} instance.
+Additionally, there is a separate class for operators (\texttt{OperatorData}) and indexers (\texttt{IndexerData}), inherited from \texttt{MethodData}, or \texttt{PropertyData}, respectively.
 That is because an overloaded operator in .NET is essentially a method using a special syntax, and similarly, an indexer is a special case of a .NET property.
 
-All of the member classes inherit from a base class, called \texttt{MemberData}, declaring the common properties, such as the summary and remarks documentation comments, member name, etc.
-Similarly, there is the \texttt{MethodLikeMemberData} class containing the functionality shared between methods and constructors.
+All member classes inherit from a base class, called \texttt{MemberData}, which declares the common properties, such as the summary and remarks documentation comments, member name, etc.
+Similarly, the \texttt{MethodLikeMemberData} class encapsulates the functionality shared between methods and constructors.
 Additionally, methods, operators, constructors, and indexers may have parameters, which are represented by the \texttt{ParameterData} class.
 Similarly to type parameters, the parameters are also stored within a dictionary, indexed by their names.
 
@@ -107,17 +116,25 @@ Similarly to type parameters, the parameters are also stored within a dictionary
 \label{fig:members-concrete}
 \end{figure}
 
-\subsection{Interfaces}
+\subsection{Type and member interfaces}
 
 As mentioned earlier, the other part of our codebase using the \texttt{TypeRegistry} is the template processors, e.g., the default \texttt{RazorTemplateProcessor}.
-Here, the goal is to generate the resulting documentation based on this data.
+Here, the goal is to generate the resulting documentation based on the data.
 
-In this case, only the read-only view of the data is provided, as it should not be possible to update any data.
-Furthermore, the API should be as user-friendly as possible, especially as the generator should be extensible.
-This is achieved by using the \textit{ITypeRegistry} interface, which is implemented by the \texttt{TypeRegistry} class.
-This interface represents the type registry in a read-only form, and furthermore, 
-unlike the \texttt{TypeRegistry} class, the object types, delegates, and enums are not returned as a dictionary, but within an enumerable instead.
-It is also possible to obtain a hierarchical representation of the declared types consisting of assemblies, namespaces, and types included in them.
+We should strive to make the API as user-friendly as possible, especially because it may be used by other developers who develop custom template processors.
+Thus, we decided to use the \texttt{ITypeRegistry} interface, which is implemented by the \texttt{TypeRegistry} class, and exposes the registry data as read-only.
+Furthermore, unlike the \texttt{TypeRegistry} class, the object types, delegates, and enums are not returned as dictionaries, but within an enumerable instead.
+Accordingly, the members within a type are also returned as an enumerable.
+ 
+Moreover, when using the \texttt{ITypeRegistry} interface, the types are not returned as \texttt{ObjectTypeData}, \texttt{EnumTypeData}, and \texttt{DelegateTypeData} instances; instead, a corresponding interface, offering a read-only view of the data, is returned. 
+Hence, there is a corresponding interface for each of the type classes; for example, the \texttt{IObjectTypeData} interface is implemented by the \texttt{ObjectTypeData} class.
+The inheritance structure of these interfaces is displayed in Figure~\ref{fig:types-abstract}.
+
+Accordingly, the members within a type are also returned as interfaces, which allow us to only read the data.
+As with types, there is a separate interface for each of the member classes; for example, the \texttt{FieldData} class implements the \textit{IFieldData} interface.
+In addition, several super-interfaces represent common properties of a selection of members, as shown in Figure~\ref{fig:member-interfaces}.
+Using the \texttt{IParametrizedMemberData} interface, which represents a member that may have parameters (i.e., a constructor, method, or an indexer), it is possible to handle those types in the same way.
+The same goes for handling members storing a value, represented by \texttt{IValueMemberData} interface, or for \texttt{ICallableMemberData} providing the shared data of properties, methods, and events.
 
 \begin{figure} 
 \centering
@@ -125,16 +142,6 @@ It is also possible to obtain a hierarchical representation of the declared type
 \caption{Type interfaces -- inheritance graph}
 \label{fig:types-abstract}
 \end{figure}
-
-Similarly, the custom type objects implement corresponding interfaces that represent the read-only view of the data.
-Thus, e.g., the interfaces do not allow setting of documentation comments.
-Accordingly, the members contained within a type are returned as an enumerable, instead of a dictionary.
-
-The same goes for member objects, as these also implement corresponding interfaces that provide a read-only view of the given member.
-Thus, e.g., the \texttt{FieldData} class implements the \textit{IFieldData} interface.
-Secondly, there are several super-interfaces that represent common properties of a selection of members.
-Using the \texttt{IParametrizedMemberData} interface, which represents a member that may have parameters (i.e., a constructor, method, or an indexer), it is possible to handle those types in the same way.
-The same goes for handling members storing a value, represented by \texttt{IValueMemberData} interface, or for \texttt{ICallableMemberData} representing a member that can be \textit{"called"} by a developer.
 
 \begin{figure}[H]
 \centering
@@ -145,30 +152,32 @@ The same goes for handling members storing a value, represented by \texttt{IValu
 
 \section{Extracting the data from an assembly}
 
-As mentioned earlier, the \texttt{AssemblyTypeExtractor} class is responsible for extracting the relevant data from an assembly (or a collection of assemblies) and creating the \texttt{TypeRegistry} instance.
-Besides creating the type registry, the \texttt{AssemblyTypeExtractor} is also responsible for filtering the types that will be included in the documentation.
-Thus, if we select to exclude types contained in a given assembly or namespace, as described in requirements~\ref{req:exclude-assemblies} and~\ref{req:exclude-namespaces}, these types are simply ignored.
-The same goes for excluding members with given accessibility, or the inherited ones, as requested in requirements~\ref{req:exclude-accessibility} and~\ref{req:exclude-inherited}.
-The configuration describing these data is passed to the \texttt{AssemblyTypeExtractor} as a \texttt{AssemblyDataConfiguration} instance.
+In the previous section, we described the internal structure of the \texttt{TypeRegistry}, and
+now, we need to explain how the data from the assembly is loaded and the registry is created.
+As mentioned earlier, this task is performed by the \texttt{AssemblyTypeExtractor} class, which uses reflection to load the assembly and obtain the declared types.
 
-Next, the \texttt{AssemblyTypeExtractor} class uses reflection to obtain the types, and then converts them to the corresponding \texttt{ObjectTypeData}, \texttt{EnumTypeData}, and \texttt{DelegateTypeData} instances, stored in the \texttt{TypeRegistry}.
-The \texttt{ObjectTypeData} class is quite complex, as it contains a lot of propeties.
-For that reason, we used the builder pattern by using the \texttt{ObjectTypeDataBuilder} class.
+It is also important to mention that besides creating the type registry, the \texttt{AssemblyTypeExtractor} is also responsible for filtering the types that will be included in the documentation.
+Thus, if the user chooses to exclude types contained in a given assembly or namespace, as described in requirements~\ref{req:exclude-assemblies} and~\ref{req:exclude-namespaces}, these types are simply ignored.
+The same applies for excluding members with given accessibility, or the inherited ones, as requested in requirements~\ref{req:exclude-accessibility} and~\ref{req:exclude-inherited}.
+The configuration containing this information is provided to the \texttt{AssemblyTypeExtractor} as an \texttt{AssemblyDataConfiguration} instance.
 
-Moreover, each member object is created from the corresponding reflection type.
-Thus, e.g., \texttt{FieldData} object is constructed from the corresponding \texttt{FieldInfo} instance provided by reflection and other data (such as the reference to the declaring type), as displayed in Figure XX.
-This task is done by so-called creator classes, which are present for each member kind.
-These classes are named \texttt{FieldDataCreator}, \texttt{MethodDataCreator}, etc., and called from the \texttt{ObjectTypeDataBuilder}. 
-Additionally, many of those creator classes call the methods of the \texttt{MemberCreatorHelper} class, which contains shared functionality, such as the creation of \texttt{ParameterData} instances from the corresponding \texttt{ParameterInfo} objects.
+Next, the \texttt{AssemblyTypeExtractor} class converts the loaded types, represented as \texttt{System.Type} instances, to the corresponding \texttt{ObjectTypeData}, \texttt{Enum\-TypeData}, and \texttt{DelegateTypeData} objects.
+Since the initialization of the \texttt{ObjectTypeData} instance is quite complex, as it contains a large number of properties, we applied the builder pattern using the \texttt{ObjectTypeDataBuilder} class.
 
-For constructing other type classes (namely \texttt{EnumTypeData} and \texttt{DelegateTypeData}), no builder pattern is used, as these classes are significantly less complex.
-Instead, this task is performed directly by the methods of the \texttt{AssemblyTypeExtractor} class.
-Then, the instantiation of the \texttt{TypeRegistry} is trivial, as it is sufficient to provide a collection of object types, enums, and delegates.
+Moreover, each member object is created from its corresponding reflection type.
+For instance, a \texttt{FieldData} object is constructed from the corresponding \texttt{FieldInfo} instance provided by reflection, along with additional data (such as the reference to the declaring type), as displayed in Figure~\ref{fig:assembly-creators}.
+This task is performed by dedicated creator classes, with a separate class for each category of members.
+These classes are named \texttt{FieldDataCreator}, \texttt{MethodDataCreator}, etc., and called from within the \texttt{ObjectTypeDataBuilder}. 
+Additionally, many of those creator classes use the \texttt{MemberCreatorHelper} class, which contains shared functionality, such as the creation of \texttt{ParameterData} instances from the corresponding \texttt{ParameterInfo} objects.
+
+For constructing other type classes (namely \texttt{EnumTypeData} and \texttt{DelegateType\-Data}), no builder pattern is used, as these classes are significantly less complex.
+Instead, this task is performed directly by the corresponding methods of the \texttt{AssemblyTypeExtractor} class.
+After all the custom type objects are created, a \texttt{TypeRegistry} instance is initialized with this data and returned.
 
 \begin{figure}
 \centering
 \includegraphics[width=0.8\linewidth]{img/assembly-creators.png}
-\caption{Program workflow}
+\caption{Creation of member classes}
 \label{fig:assembly-creators}
 \end{figure}
 
