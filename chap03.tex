@@ -118,6 +118,7 @@ Thus, the generator can process the XML file, find all documentation comments, a
 \newpage
 
 \section{Resolving \texttt{inheritdoc} tags}
+\label{sec:inheritdoc-resolve}
 
 As mentioned in Requirement~\ref{req:inheritdoc}, our generator must be capable of resolving \texttt{<inheritdoc/>} tags.
 The key observation is that they may be used recursively, i.e., the resolved documentation may again contain \texttt{<inheritdoc/>} tags.

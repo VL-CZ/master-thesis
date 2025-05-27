@@ -67,17 +67,7 @@ This is necessary because the documentation comments are assigned after the memb
 
 Additionally, the \texttt{ObjectTypeData} stores its members in dictionaries, indexed by the member IDs, similar to how the types are stored in the \texttt{TypeRegistry}.
 The member ID corresponds to its identifier in the XML documentation file, the only difference is that in our case, the type name is not part of the ID.
-The members are stored according to their kind; therefore, the \texttt{ObjectTypeData} class declares seven distinct dictionaries, containing:
-
-\begin{itemize}
-    \item fields
-    \item properties
-    \item indexers
-    \item methods
-    \item operators
-    \item constructors
-    \item events
-\end{itemize}
+The members are stored according to their kind; therefore, the \texttt{ObjectTypeData} class declares seven distinct dictionaries, containing fields, properties, indexers, methods, operators, constructors, and events.
 
 Accordingly, the \texttt{EnumData} class contains a dictionary of enum members.
 Moreover, if a type defines any type parameters, these are also stored in a separate dictionary indexed by their names, while the individual type parameters are represented by a custom class named \texttt{TypeParameterData}.
@@ -131,7 +121,7 @@ Hence, there is a corresponding interface for each of the type classes; for exam
 The inheritance structure of these interfaces is displayed in Figure~\ref{fig:types-abstract}.
 
 Accordingly, the members within a type are also returned as interfaces, which allow us to only read the data.
-As with types, there is a separate interface for each of the member classes; for example, the \texttt{FieldData} class implements the \textit{IFieldData} interface.
+As with types, there is a separate interface for each of the member classes; for example, the \texttt{FieldData} class implements the \texttt{IFieldData} interface.
 In addition, several super-interfaces represent common properties of a selection of members, as shown in Figure~\ref{fig:member-interfaces}.
 Using the \texttt{IParametrizedMemberData} interface, which represents a member that may have parameters (i.e., a constructor, method, or an indexer), it is possible to handle those types in the same way.
 The same goes for handling members storing a value, represented by \texttt{IValueMemberData} interface, or for \texttt{ICallableMemberData} providing the shared data of properties, methods, and events.
@@ -174,7 +164,7 @@ For constructing other type classes (namely \texttt{EnumTypeData} and \texttt{De
 Instead, this task is performed directly by the corresponding methods of the \texttt{AssemblyTypeExtractor} class.
 After all the custom type objects are created, a \texttt{TypeRegistry} instance is initialized with this data and returned.
 
-\begin{figure}
+\begin{figure}[H]
 \centering
 \includegraphics[width=0.8\linewidth]{img/assembly-creators.png}
 \caption{Creation of member classes}
@@ -183,13 +173,74 @@ After all the custom type objects are created, a \texttt{TypeRegistry} instance 
 
 \section{Documentation Extraction}
 
-The documentation is extracted using the \texttt{DocCommentExtractor} class, which simply loads the XML documents and processes the XML elements one by one.
-As mentioned before, this class accepts the type registry instance and adds the documentation to the corresponding types and members.  
+Now, we know how the \texttt{TypeRegistry} instance is created and its internal structure.
+The documentation is extracted using the \texttt{DocCommentExtractor} class, which loads the XML documentation file and processes the XML elements one by one.
+As mentioned before, this class accesses the \texttt{TypeRegistry} instance and adds the documentation to the corresponding types and members.
+Additionally, all of the \texttt{<inheritdoc>} tags are resolved and replaced with the actual documentation.
+
+\subsection{Adding the documentation comments}
+
+Each comment is identified by an ID that determines the corresponding type or member.
+First, the \texttt{DocCommentExtractor} class parses the ID and checks whether the documentation belongs to a type or member.
+If it belongs to a type, the corresponding \texttt{TypeDeclaration} is obtained from the \texttt{TypeRegistry}, based on the ID.
+Then, the \texttt{TypeDeclaration} together with the raw XML documentation is passed to the \texttt{TypeDocHandler} class, which parses the XML and assigns the individual documentation comments (summary, remarks, etc.) to the given type.
+Similarly, if the type is a delegate, the \texttt{DelegateDocHandler} class is used. 
+This class inherits from the \texttt{TypeDocHandler} and thus performs the same operations.
+On top of that, it also assigns the documentation comments specific to delegates, such as the parameters and return value documentation.
+
+If the documentation belongs to a member, the \texttt{DocCommentExtractor} first obtains the type containing the member from the registry.
+Then, one of the member documentation handlers is called.
+There is a corresponding documentation handler for each member, as illustrated in Figure~\ref{fig:documentation-handlers}.
+All member handlers accept the following three parameters: the containing type, the member ID as a string, and the raw XML documentation.
+Then, each of the handlers parses the raw XML and assigns the contained documentation, similarly to the \texttt{TypeDocHandler}.
+It is worth noting that all of the handlers inherit from the base class, called \texttt{MemberDocHandler}, that is responsible for assigning the summary, remarks, example, and see also documentation, as these could be present at any member.
+The individual handlers then assign only the documentation unique to a given type.
+Furthermore, the shared functionality of method-like members is extracted to the \texttt{MethodLikeMemberDocHandler} class.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\linewidth]{img/member-doc-handlers.png}
+\caption{Member documentation handlers -- inheritance graph}
+\label{fig:documentation-handlers}
+\end{figure}
+
+\subsection{inheritdoc resolving}
+After all documentation comments are assigned, the \texttt{<inheritdoc>} tags are resolved.
+First, it is important to note that \texttt{<inheritdoc>} comments can be classified into three categories: those with the \texttt{cref} attribute, and those without it, which are further divided based on whether they are applied to a type or to a member.
+As explained in section~\ref{sec:inheritdoc-resolve}, we can begin by resolving the \texttt{<inheritdoc>} elements without the \texttt{cref} attribute, and then proceed with the ones that include it.
+
+The resolution is handled by the following three classes, each responsible for resolving the corresponding category of \texttt{<inheritdoc>} elements: \texttt{TypeInheritDocResolver}, \texttt{MemberInheritDocResolver}, and \texttt{CrefInheritDocResolver}, responsible for the resolution of the corresponding \texttt{<inheritdoc>} tags.
+
+In each of the three cases, the resolution is done recursively using DFS, as the resolved documentation may again contain \texttt{<inheritdoc>} tag.
+We can imagine the whole situation as a graph, where the nodes are the types and members containing \texttt{<inheritdoc>} tags, while the edges represent the places from which a node can possibly inherit documentation.
+Additionally, when resolving, the documentation of all visited nodes is resolved as well.
+The end condition of the recursion is when the node documentation has no \texttt{<inheritdoc>} elements (i.e., there is nothing to resolve).
+Also, the cycles are detected during the DFS.
+
+
+The resolution of all kinds of \texttt{inheritdoc} is quite similar, as the only difference is what the nodes are and how the set of parent nodes is obtained.
+Thus, the common code performing the DFS is stored in the class \texttt{InheritDocHandler} with a single generic parameter that represents the type of a node in the graph. 
+Then, the \texttt{TypeInheritDocHandler}, \texttt{MemberInheritDocHandler}, and \texttt{InheritDocCrefHandler} inherit from that class and implement only the method responsible for obtaining the parent nodes of a node, along with other minor functionality.
 
 \section{Template Generators}
 \subsection{Template Model}
 \subsection{Template Model Creators}
-\subsection{Templates}
+
+\subsubsection{Converting the }
+
+\subsection{Static pages}
+\subsection{Versioning}
+\subsection{Languages}
+
+\section{Templates}
+
+\subsection{Main templates}
+
+\subsection{Custom templates}
+
+\subsection{Shared variables}
+
+\subsection{Language specific templates}
 
 \section{Logging}
 Describe what happens if there are errors.
