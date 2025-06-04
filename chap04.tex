@@ -14,13 +14,15 @@ The main project is stored in \texttt{src/RefDocGen} folder and further divided 
 Additionally, the project also contains a \texttt{Tools} folder, containing additional tools shared between multiple parts of the project.
 
 \section{Workflow}
+\label{sec:workflow}
+
 The simplified process of generating documentation is displayed in Figure~\ref{fig:workflow}.
 First, it is necessary to extract the information from an assembly and create the objects representing types and members, which is performed by the \texttt{AssemblyTypeExtractor} class.
 These objects are then stored within the \texttt{TypeRegistry} class, which is further passed to the \texttt{DocCommentExtractor}.
 This class extracts the documentation comments from the XML documentation file and assigns them to the corresponding types and members.
 Hence, the \texttt{TypeRegistry} now contains documentation as well.
 Next, the registry is passed to the \texttt{ITemplateProcessor} interface, which represents the base interface for processing various types of templates, as described in section~\ref{sec:template-extensibility}.
-The default implementation, called \texttt{RazorTemplateProcessor}, uses \textit{Razor} templates, and processes them with the provided data and thus creates the reference documentation.
+The default implementation, called \texttt{RazorTemplateProcessor}, uses \textit{Razor} templates, processes them with the provided data, and thus creates the reference documentation.
 
 The entire process is coordinated by the \texttt{DocGenerator.GenerateDoc} method, which gets called directly from the \texttt{Main} method.
 In the following sections, we will describe the individual parts of the codebase in more detail.
@@ -34,6 +36,8 @@ In the following sections, we will describe the individual parts of the codebase
 
 \section{Type registry}
 
+\label{sec:type-registry}
+
 As mentioned in the previous section, the collection of declared types and members is stored within a \texttt{TypeRegistry} instance and shared between various parts of the application.
 More specifically, the \texttt{TypeRegistry} is used at two places.
 First, it is accessed by the \texttt{DocCommentExtractor} and related classes to assign XML documentation comments to the appropriate types and members.
@@ -41,10 +45,8 @@ After that, the data from the \texttt{TypeRegistry} is used by the template proc
 
 For now, we will consider only the usage by the \texttt{DocCommentExtractor} and return to the second case later.
 Internally, the \texttt{TypeRegistry} organizes the types into the following three categories: enums, delegates, and the remaining types (classes, structures, and interfaces), which we will refer to as the \textit{object types}.
-Each of these categories of types is stored in a dictionary, indexed by the ID string, whose format is described in the official documentation~\cite{csharp_xml_docs}.
-More importantly, the ID string is also used in the XML documentation file to identify to which type the documentation belongs.
-This allows simple and efficient retrieval of a type based on its ID string, which is crucial for the
-\texttt{DocCommentExtractor}, as this class needs to assign documentation to individual types, based on the ID string.
+Each of these categories of types is stored in a dictionary, indexed by the ID string, which is equal to the ID string used in the XML documentation file. 
+The format of the string is further described in section~\ref{sec:id-string} and the official .NET documentation~\cite{csharp_xml_docs}.
 
 \subsection{Types}
 
@@ -65,25 +67,33 @@ hence the classes have properties called \texttt{SummaryDocComment}, \texttt{Rem
 Importantly, these properties are writable, unlike the rest of the data.
 This is necessary because the documentation comments are assigned after the members are created, as explained earlier.
 
-Additionally, the \texttt{ObjectTypeData} stores its members in dictionaries, indexed by the member IDs, similar to how the types are stored in the \texttt{TypeRegistry}.
-The member ID corresponds to its identifier in the XML documentation file, the only difference is that in our case, the type name is not part of the ID.
-The members are stored according to their kind; therefore, the \texttt{ObjectTypeData} class declares seven distinct dictionaries, containing fields, properties, indexers, methods, operators, constructors, and events.
-
-Accordingly, the \texttt{EnumData} class contains a dictionary of enum members.
-Moreover, if a type defines any type parameters, these are also stored in a separate dictionary indexed by their names, while the individual type parameters are represented by a custom class named \texttt{TypeParameterData}.
-Additionally, the program uses the \texttt{AttributeData} class to represent user-defined attributes (TODO: vyhodit tuhle vetu?).
-
-Furthermore, it is important to recognize that we also need to represent, e.g., a type of a field, or the return type of a method in our codebase.
-In such cases, we only need the name-related information of a type; in particular, we do not need any documentation comments, nor a collection of its members.
-For such purposes, the \texttt{TypeNameData} class is used.
-The functionality shared between \texttt{TypeNameData} and \texttt{TypeDeclaration} is extracted to the \texttt{TypeNameBaseData} class.
-
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.8\linewidth]{img/types-concrete.png}
 \caption{Type classes -- inheritance graph}
 \label{fig:types-concrete}
 \end{figure}
+
+Additionally, the \texttt{ObjectTypeData} stores its members in dictionaries, indexed by the member IDs, similar to how the types are stored in the \texttt{TypeRegistry}.
+The member ID corresponds to its identifier in the XML documentation file, the only difference is that in our case, the type name is not part of the ID.
+The members are stored according to their kind; therefore, the \texttt{ObjectTypeData} class declares seven distinct dictionaries, containing fields, properties, indexers, methods, operators, constructors, and events.
+This is illustrated in Figure~\ref{fig:objecttype-structure}, which shows a simplified internal structure of an \texttt{ObjectTypeData} instance with two fields, \texttt{name} and \texttt{age}, and two properties, named \texttt{IsAdult} and \texttt{IsAdmin}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\linewidth]{img/registry-diagram.png}
+\caption{ObjectTypeData instance -- simplified structure}
+\label{fig:objecttype-structure}
+\end{figure}
+
+Accordingly, the \texttt{EnumData} class contains a dictionary of enum members.
+Moreover, if a type defines any type parameters, these are also stored in a separate dictionary indexed by their names, while the individual type parameters are represented by a custom class named \texttt{TypeParameterData}.
+Additionally, the program uses the \texttt{AttributeData} class to represent user-defined attributes.
+
+Furthermore, it is important to recognize that we also need to represent, e.g., a type of field or the return type of a method, in our codebase.
+In such cases, we only need the name-related information of a type; in particular, we do not need any documentation comments, nor a collection of its members.
+For such purposes, the \texttt{TypeNameData} class is used.
+The functionality shared between \texttt{TypeNameData} and \texttt{TypeDeclaration} is extracted to the \texttt{TypeNameBaseData} class.
 
 \subsection{Members}
 
@@ -152,7 +162,7 @@ The same applies for excluding members with given accessibility, or the inherite
 The configuration containing this information is provided to the \texttt{AssemblyTypeExtractor} as an \texttt{AssemblyDataConfiguration} instance.
 
 Next, the \texttt{AssemblyTypeExtractor} class converts the loaded types, represented as \texttt{System.Type} instances, to the corresponding \texttt{ObjectTypeData}, \texttt{Enum\-TypeData}, and \texttt{DelegateTypeData} objects.
-Since the initialization of the \texttt{ObjectTypeData} instance is quite complex, as it contains a large number of properties, we applied the builder pattern using the \texttt{ObjectTypeDataBuilder} class.
+Since the initialization of the \texttt{Object\-TypeData} instance is quite complex, as it contains a large number of properties, we applied the builder pattern using the \texttt{ObjectTypeDataBuilder} class.
 
 Moreover, each member object is created from its corresponding reflection type.
 For instance, a \texttt{FieldData} object is constructed from the corresponding \texttt{FieldInfo} instance provided by reflection, along with additional data (such as the reference to the declaring type), as displayed in Figure~\ref{fig:assembly-creators}.
@@ -166,36 +176,37 @@ After all the custom type objects are created, a \texttt{TypeRegistry} instance 
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.8\linewidth]{img/assembly-creators.png}
+\includegraphics[width=0.75\linewidth]{img/assembly-creators.png}
 \caption{Creation of member classes}
 \label{fig:assembly-creators}
 \end{figure}
 
-\section{Documentation Extraction}
+\section{Adding the documentation}
 
-Now, we know how the \texttt{TypeRegistry} instance is created and its internal structure.
-The documentation is extracted using the \texttt{DocCommentExtractor} class, which loads the XML documentation file and processes the XML elements one by one.
-As mentioned before, this class accesses the \texttt{TypeRegistry} instance and adds the documentation to the corresponding types and members.
-Additionally, all of the \texttt{<inheritdoc>} tags are resolved and replaced with the actual documentation.
+Now that we understand the internal structure of the \texttt{TypeRegistry} instance and how it is created, the next step is to add the documentation comments.
+The whole process is managed by the \texttt{DocCommentExtractor} class, which loads the XML documentation file and processes the XML comments one by one.
+As mentioned in section~\ref{sec:workflow}, this class accesses the \texttt{TypeRegistry} instance and adds the documentation to the corresponding types and members.
+Additionally, all \texttt{<inheritdoc>} tags are resolved and replaced with the actual documentation.
 
-\subsection{Adding the documentation comments}
+\subsection{Assignment of the documentation comments}
 
-Each comment is identified by an ID that determines the corresponding type or member.
-First, the \texttt{DocCommentExtractor} class parses the ID and checks whether the documentation belongs to a type or member.
-If it belongs to a type, the corresponding \texttt{TypeDeclaration} is obtained from the \texttt{TypeRegistry}, based on the ID.
-Then, the \texttt{TypeDeclaration} together with the raw XML documentation is passed to the \texttt{TypeDocHandler} class, which parses the XML and assigns the individual documentation comments (summary, remarks, etc.) to the given type.
+Each comment is identified by an ID that determines the corresponding type or member, as previously explained in section~\ref{sec:type-registry}.
+Hence, the \texttt{DocCommentExtractor} class first parses the ID and checks whether the documentation belongs to a type or a member.
+If it belongs to a type, the corresponding \texttt{TypeDeclaration} instance is obtained from the \texttt{TypeRegistry} based on the ID.
+Then, the instance together with the raw XML documentation is passed to the \texttt{TypeDocHandler} class, which parses the XML and assigns the individual documentation comments (summary, remarks, etc.) to the given type.
 Similarly, if the type is a delegate, the \texttt{DelegateDocHandler} class is used. 
 This class inherits from the \texttt{TypeDocHandler} and thus performs the same operations.
-On top of that, it also assigns the documentation comments specific to delegates, such as the parameters and return value documentation.
+In addition to that, it also assigns the documentation comments specific to delegates, such as those for parameters and return values.
 
-If the documentation belongs to a member, the \texttt{DocCommentExtractor} first obtains the type containing the member from the registry.
-Then, one of the member documentation handlers is called.
+If the documentation belongs to a member, the \texttt{DocCommentExtractor} again first obtains the type containing the member from the registry.
+Next, one of the member documentation handlers is called.
 There is a corresponding documentation handler for each member, as illustrated in Figure~\ref{fig:documentation-handlers}.
-All member handlers accept the following three parameters: the containing type, the member ID as a string, and the raw XML documentation.
-Then, each of the handlers parses the raw XML and assigns the contained documentation, similarly to the \texttt{TypeDocHandler}.
-It is worth noting that all of the handlers inherit from the base class, called \texttt{MemberDocHandler}, that is responsible for assigning the summary, remarks, example, and see also documentation, as these could be present at any member.
-The individual handlers then assign only the documentation unique to a given type.
-Furthermore, the shared functionality of method-like members is extracted to the \texttt{MethodLikeMemberDocHandler} class.
+All member handlers accept the following three parameters: the containing type, the member ID, and the raw XML documentation.
+Then, the handler parses the raw XML and assigns the contained documentation comments, similarly to the \texttt{TypeDocHandler}.
+
+All handlers inherit from the base class, called \texttt{MemberDocHandler}, which is responsible for assigning the \texttt{<summary>}, \texttt{<remarks>}, \texttt{<example>}, and \texttt{<seealso>} documentation tags, as these are valid for any member.
+The individual handlers then assign only the remaining comments, which differ for each member kind.
+Furthermore, the shared functionality related to method-like members is extracted to the \texttt{MethodLikeMemberDocHandler} class.
 
 \begin{figure}[H]
 \centering
@@ -204,43 +215,281 @@ Furthermore, the shared functionality of method-like members is extracted to the
 \label{fig:documentation-handlers}
 \end{figure}
 
-\subsection{inheritdoc resolving}
+\subsection{Resolution of \texttt{<inheritdoc>} tags}
 After all documentation comments are assigned, the \texttt{<inheritdoc>} tags are resolved.
-First, it is important to note that \texttt{<inheritdoc>} comments can be classified into three categories: those with the \texttt{cref} attribute, and those without it, which are further divided based on whether they are applied to a type or to a member.
-As explained in section~\ref{sec:inheritdoc-resolve}, we can begin by resolving the \texttt{<inheritdoc>} elements without the \texttt{cref} attribute, and then proceed with the ones that include it.
+First, it is important to remember that \texttt{<inheritdoc>} comments can be classified into three categories: those with the \texttt{cref} attribute, and those without it, which are further divided based on whether they are applied to a type or a member.
+As explained in section~\ref{sec:inheritdoc-resolve}, the resolution process begins by resolving all \texttt{<inheritdoc>} elements without the \texttt{cref} attribute, and then proceeds with the ones that include it.
 
-The resolution is handled by the following three classes, each responsible for resolving the corresponding category of \texttt{<inheritdoc>} elements: \texttt{TypeInheritDocResolver}, \texttt{MemberInheritDocResolver}, and \texttt{CrefInheritDocResolver}, responsible for the resolution of the corresponding \texttt{<inheritdoc>} tags.
+The following three classes handle the resolution, each responsible for resolving the corresponding kind of \texttt{<inheritdoc>} elements: \texttt{TypeInheritDoc\-Resolver}, \texttt{MemberInheritDocResolver}, and \texttt{CrefInheritDocResolver}.
+In each of the three cases, the resolved documentation may again contain \texttt{<inheritdoc>} tags of the same kind, so the resolution must be done recursively.
+Moreover, each of the cases can be viewed as a graph, where the nodes represent the types and members, whose documentation contains the \texttt{<inheritdoc>} tags of the given kind, while the edges indicate potential sources from which the documentation could be inherited.
+Then, the depth-first search is performed to resolve the individual tags, one by one, while the graph itself is constructed on the fly, rather than being precomputed.
+The recursion terminates when the parent node documentation has no \texttt{<inheritdoc>} elements of the given kind, i.e., there is nothing to resolve; in this case, the given \texttt{<inheritdoc>} tag is simply replaced by this XML.
+The other terminal condition is when the parent node does not contain any documentation at all; then, the search continues with the other parent nodes.
 
-In each of the three cases, the resolution is done recursively using DFS, as the resolved documentation may again contain \texttt{<inheritdoc>} tag.
-We can imagine the whole situation as a graph, where the nodes are the types and members containing \texttt{<inheritdoc>} tags, while the edges represent the places from which a node can possibly inherit documentation.
-Additionally, when resolving, the documentation of all visited nodes is resolved as well.
-The end condition of the recursion is when the node documentation has no \texttt{<inheritdoc>} elements (i.e., there is nothing to resolve).
-Also, the cycles are detected during the DFS.
+It is important to understand that once we consider the DFS graph, the resolution of all kinds of \texttt{<inheritdoc>} tags is the same, as the only difference is what the nodes represent and how the set of parent nodes is obtained.
+Therefore, the code performing the DFS is stored in the common base class, called \texttt{InheritDocResolver}, which has a single type parameter representing the type of the graph node.
+The DFS results are cached, i.e., the \texttt{<inheritdoc>} elements contained in visited nodes are resolved as well.
+Additionally, the cycle detection is included as well.
 
+Then, the \texttt{TypeInheritDocResolver}, \texttt{MemberInheritDocResolver}, and \texttt{Cref\-InheritDocResolver} 
+inherit from the \texttt{InheritDocResolver} class,  as shown in Figure~\ref{fig:inheritdoc-handlers},
+and implement only the method responsible for obtaining the parent nodes of a node, along with other minor functionality. 
+In \texttt{TypeInheritDocResolver}, the nodes represent the declared types, while the edges point to the base type and all implemented interfaces of a type.
+Similarly, in \texttt{MemberInheritDocResolver}, the nodes correspond to the individual members, and the edges go to the equivalent definition of a member in the base type and all implemented interfaces.
+Finally, the case of \texttt{CrefInheritDocResolver} is slightly different, as the nodes represent the individual XML comments. Then, the edge points to the documentation comment of the referenced type or member.
 
-The resolution of all kinds of \texttt{inheritdoc} is quite similar, as the only difference is what the nodes are and how the set of parent nodes is obtained.
-Thus, the common code performing the DFS is stored in the class \texttt{InheritDocHandler} with a single generic parameter that represents the type of a node in the graph. 
-Then, the \texttt{TypeInheritDocHandler}, \texttt{MemberInheritDocHandler}, and \texttt{InheritDocCrefHandler} inherit from that class and implement only the method responsible for obtaining the parent nodes of a node, along with other minor functionality.
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\linewidth]{img/inheritdoc-handlers.png}
+\caption{<inheritdoc> resolvers -- inheritance graph}
+\label{fig:inheritdoc-handlers}
+\end{figure}
 
-\section{Template Generators}
-\subsection{Template Model}
-\subsection{Template Model Creators}
+\section{Template processing}
 
-\subsubsection{Converting the }
+In the next step, the \texttt{ITypeRegistry} is passed to a template processor and the resulting HTML is generated.
+There is the \texttt{ITemplateProcessor} interface, which represents a contract for any template processor, and declares a single method, called \texttt{ProcessTemplates}, that accepts the \texttt{ITypeRegistry} and path to the output directory.
+
+The default implementation, called \texttt{RazorTemplateProcessor}, uses \textit{Razor} templates.
+However, before the templates are processed, a handful of other tasks are performed, as illustrated in Figure~\ref{fig:razor-template-processor}.
+First, the data from the type registry must be converted to the matching template models, which are then passed to the templates.
+This transformation is executed by classes, called template model creators.
+Additionally, all user-defined static pages must be gathered, which is done by the \texttt{StaticPageProcessor} class and then included in the documentation.
+Furthermore, if a specific documentation version is generated, the versioning must be handled with the help of the \texttt{DocVersionManager} class.
+The following sections describe each of these processes in further detail.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\linewidth]{img/razor-template-processor.png}
+\caption{\texttt{RazorTemplateProcessor} -- workflow}
+\label{fig:razor-template-processor}
+\end{figure}
+
+\subsection{Template models}
+
+The template models (TMs) are data-only objects that are passed to the templates as variables.
+They correspond to the type and member objects stored in the type registry, as there is a separate template model 
+for object type, enum type, delegate type, and for each member (field, property, method, etc).
+Likewise, there are template models for parameters, type parameters, and attributes.
+Additionally, there are multiple other template models, representing namespaces, assemblies, etc.
+
+Generally, a template model contains all the relevant information that will be included in the documentation. 
+For example, the field template model (\texttt{FieldTM}) includes the name of a field, its type, modifiers, documentation comments, etc.
+The member template models are then included within the type models; for instance, the template model for an object type, named \texttt{ObjectTypeTM}, includes its members (fields, properties, etc.) represented as template models.
+Unlike the documentation of types and member objects contained in the type registry, the documentation comments in template models are represented as raw HTML strings.
+It is also important to mention that the template models store language-specific data, for example, a collection of member modifiers, which differ for C\# and other languages.
+These data are stored in fields of type \texttt{LanguageSpecificData<T>}, which essentially functions as a dictionary, indexed by language identifiers.
+
+\subsubsection{Cross references}
+
+As requested by Requirement~\ref{req:cross-ref}, the generator supports cross-references.
+This is achieved using the \texttt{CodeLinkTM} class, which encapsulates a type or member name, together with a URL to its definition.
+The type or member name is stored as \texttt{LanguageSpecificData<T>}, as it may be displayed differently in each language.
+Similarly to \texttt{CodeLinkTM}, there is the \texttt{GenericTypeLinkTM} class, which represents a type name and URL, along with the names and URLs of its generic parameters.
+These template models are used to represent the type of a field, parameter, return type of a method, etc., and thus, creating cross-references in the templates is quite straightforward.
+
+\subsection{Template model creators}
+
+The template model creators (TM creators) are used by the \texttt{RazorTemplate\-Processor} to create the individual template models.
+There are multiple creators, as displayed in Figure~\ref{fig:tm-creators}; the
+\texttt{ObjectTypeTMCreator}, \texttt{EnumTMCreator}, and \texttt{DelegateTMCreator} are responsible for creating the corresponding template models from the type data contained within the type registry.
+For example, the \texttt{ObjectTypeTMCreator} converts the \texttt{IObjectTypeData} instance to its template model, named \texttt{ObjectTypeTM}, as shown in Figure~\ref{fig:object-tm-creator-workflow}.
+During the process, all members contained within the type are converted to their template models as well.
+All three creators mentioned above inherit from the \texttt{TypeTMCreator}, which contains the shared functionality, for instance, converting the attributes to their template model representation.
+
+Additionally, there are \texttt{AssemblyTMCreator}, \texttt{NamespaceTMCreator}, \texttt{Search\-ResultTMCreator}, and \texttt{TopMenuDataTMCreator} creators, responsible for creating template models representing assemblies, namespaces, search page results, and top menu data.
+Except for the \texttt{TopMenuDataTMCreator}, all of these classes inherit from the base class, named \texttt{BaseTMCreator}, which defines common logic used in all creators.
+
+First, the \texttt{BaseTMCreator} class is responsible for creating the \texttt{CodeLinkTM} and \texttt{GenericCodeLinkTM} objects from the provided type data.
+To get the URL, the \texttt{TypeUrlResolver} class, which is capable of obtaining the URLs of types contained in the type registry as well as the system types, is called.
+The \texttt{TypeUrlResolver} first tries to find the provided type or member in the type registry.
+If the given type or member is found, the URL of its page is returned. 
+Next, if the type or member belongs to a standard library, the URL pointing to its page in the official .NET documentation is returned.
+This URL can be easily constructed, as all page addresses in the .NET documentation follow the format described in the following Microsoft Learn article~\cite{official_docs_links}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\linewidth]{img/tm-creators.png}
+\caption{Template model creators -- inheritance graph}
+\label{fig:tm-creators}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.45]{img/tm-creators-workflow.png}
+\caption{Creation of \texttt{ObjectTypeTM} template models}
+\label{fig:object-tm-creator-workflow}
+\end{figure}
+
+\subsubsection{Converting the inner XML tags to HTML}
+
+Another task performed by the \texttt{BaseTMCreator} is converting the documentation comments, represented as \texttt{XElement} instances, to their HTML representation, as displayed in Figure~\ref{fig:base-tm-creator}.
+This involves replacing the inner XML tags with the corresponding HTML tags, since the template models store the documentation comments as HTML strings.
+The transformation is handled by the \texttt{DocCommentTransformer} class, which accepts the \texttt{XElement} instance as input and works as follows:
+
+First, a deep copy of the XML element is created, and all modifications are then performed on it.
+Next, the XML tree is recursively searched, and if an inner XML tag is found, it is replaced with the corresponding HTML element.
+The configuration that describes the mapping of inner XML tags to HTML is determined by the \texttt{IDocCommentHtmlConfiguration} interface, which is passed to the \texttt{DocCommentTransformer}.
+This interface defines properties corresponding to the inner XML tags, while the values are the corresponding HTML elements, represented as \texttt{XElement} instances.
+Each value could be a single element or a collection of nested elements.
+
+The default configuration is provided by the \texttt{DocCommentHtmlConfiguration} class, whose visualization is shown in Program~\ref{lst:html-config-visualization}.
+As we can see, each HTML element is assigned a separate CSS class, starting with \textit{"refdocgen"}, which allows for easy styling using CSS.
+Thus, the default configuration itself remains fully independent of any visual style and therefore could be used even in other than the default templates.
+
+\begin{listing}[H]
+\begin{lstlisting}[language=XML]
+<list type="bullet"> => <ul class="refdocgen-bullet-list">
+<list type="number"> => <ol class="refdocgen-number-list">
+<para>               => <div class="refdocgen-paragraph">
+...
+\end{lstlisting}
+\caption{\texttt{DocCommentHtmlConfiguration} -- visualization}
+\label{lst:html-config-visualization}
+\end{listing}
+
+After the corresponding HTML element is obtained, the inner XML tag is replaced by it.
+There is one special case, a \texttt{see} element with the \texttt{cref} attribute, as the type URL needs to be resolved in this case.
+For this purpose, the \texttt{TypeUrlResolver} is used again, and then a link is created.
+If the referenced type or member is not found, instead of a link, a highlighted text is used.
+
+After all inner XML tags are replaced, the resulting HTML is returned as a string.
+Also, we can notice that the tags outside the set of inner XML tags are copied to the HTML as they are.
+Thus, if the documentation contains \texttt{<b>} or \texttt{<br>} elements, these tags are preserved and appear in the HTML as well.
+It is also important to note that the \texttt{DocCommentTransformer} class is also used for converting the \texttt{<seealso>} elements to HTML, even though these belong to the top-level tags.
+This is because they are processed almost identically as the \texttt{<see>} elements.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\linewidth]{img/object-tm-creator.png}
+\caption{Conversion of the inner XML tags to HTML}
+\label{fig:base-tm-creator}
+\end{figure}
+
+\subsubsection{Retrieving language-specific data}
+
+As mentioned earlier, the template models include language-specific data, such as type and member modifiers.
+Thus, the template model creators must be capable of getting such data in all available languages.
+
+In the codebase, each supported language is represented by a class implementing the \texttt{ILanguage\-Configuration} interface, which defines the contract for obtaining all language-specific data.
+More specifically, the interface declares methods for retrieving modifiers for various kinds of types and members, as well as methods for obtaining the type name, language identifier, and other relevant information.
+The returned data are language-dependent; for instance, the modifiers are returned in a string array.
+
+By default, there is only a single supported language -- C\#, as previously explained in Requirement~\ref{req:ui-multiple-langs}.
+Its configuration class, called \texttt{CSharpLanguage\-Configuration}, provides the implementations of the methods mentioned earlier.
+An array of available languages is passed to the \texttt{RazorTemplateProcessor} in its constructor, and then to the template model creators, which call the methods to obtain language-specific data, as illustrated in Figure~\ref{fig:tm-creators-langs}.
+
+However, it is important to remember that the \texttt{ILanguage\-Configuration} and its implementations cover only part of the language-specific data, while the rest (such as printing type and member signature) is defined directly in the templates, as it typically requires various styling.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\linewidth]{img/tm-creators-langs.png}
+\caption{Retrieving language-specific data}
+\label{fig:tm-creators-langs}
+\end{figure}
+
 
 \subsection{Static pages}
-\subsection{Versioning}
-\subsection{Languages}
+
+Another responsibility of the \texttt{RazorTemplateProcessor} is to include user-defined static pages in the documentation.
+Thus, the \texttt{RazorTemplateProcessor} has an optional constructor parameter, representing the path to the directory containing the pages and possibly other files.
+There are two supported page formats: HTML and Markdown.
+
+To obtain the page data, the \texttt{StaticPageProcessor} class is used, as shown in Figure~\ref{fig:static-pages-workflow}.
+This class accepts the path to the static pages directory and recursively searches for files within it.
+First, it locates all files in HTML and Markdown format and then processes them sequentially.
+For HTML pages, the content is loaded as a string, along with the page path, and stored as a \texttt{StaticPage} instance.
+On the other hand, the Markdown pages are first converted to HTML using the \textit{Markdig} library~\cite{markdig} and similarly converted to \texttt{StaticPage} instances.
+Additionally, while creating a \texttt{StaticPage} instance, the page content is browsed, and all links pointing to Markdown files are updated to reference the corresponding HTML file.
+Then, the page data is returned.
+
+Later, the \texttt{RazorTemplateProcessor} puts the content of individual pages into a template, which defines the layout of static pages, and thus generates the resulting HTML.
+Other files contained in the static pages folder (such as images and JavaScript files) are copied as they are to the output folder.
+The structure of the static pages directory is preserved, meaning that each page is stored in a file whose path within the output directory matches the original path in the static pages folder. 
+As a result, the relative links between the static files stay the same. 
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.5\linewidth]{img/static-pages.png}
+\caption{Processing of static pages}
+\label{fig:static-pages-workflow}
+\end{figure}
+
+\subsection{Documentation versioning}
+
+Additionally, the \texttt{RazorTemplateProcessor} handles creating specific versions of the documentation. 
+For this reason, it has an additional optional constructor parameter identifying the version being created.
+When a specific version is created, it is not stored directly in the output directory, but in its subfolder named after the version identifier.
+Hence, the \texttt{v1.0} version gets stored in the \texttt{output/v1.0} directory.
+Additionally, each resulting HTML page stores a list of its available versions.
+As explained in section~\ref{sec:documentation-versioning-three}, the data are stored as a JSON list inside a visually hidden element, whose id is \texttt{version-list}.
+Then, when the page is loaded, the data is handled using JavaScript.
+
+Before the documentation is generated, the \texttt{RazorTemplateProcessor} calls the \texttt{DocVersionManager} class to obtain a list of available versions for the individual pages.
+The data describing individual versions is stored in the \texttt{versions.json} file in the output directory.
+As illustrated in Program~\ref{lst:versions-json}, this file stores the version identifier together with the array of generated pages.
+The \texttt{DocVersion\-Manager} first loads the JSON file and, using its data, the list of available versions for each page is returned.
+
+After the documentation is created, the \texttt{DocVersionManager} is called again. 
+This time, it updates the JSON to include the latest version data.
+Additionally, the corresponding older versions of the documentation must be updated to include the most recent version.
+Thus, the individual HTML pages of older versions are one by one loaded and then, using the \textit{AngleSharp} library~\cite{anglesharp}, the \textit{version-list} HTML element is located and the most recent version identifier is added to the list.
+
+\begin{listing}[H]
+\begin{lstlisting}
+[
+    {
+        "Version": "v1.0",
+        "PageUrls": ["FAQ.html", "index.html"]
+    },
+    {
+        "Version": "v1.1",
+        "PageUrls": ["FAQ.html", "index.html", "intro.html"]
+    }
+]
+\end{lstlisting}
+\caption{Example of the \texttt{versions.json} file}
+\label{lst:versions-json}
+\end{listing}
 
 \section{Templates}
 
+The templates are written in Razor
+
 \subsection{Main templates}
+
+there are 7 top-elvel templates.
+layout in separate component
+
+top menu - 
+bottom menu - versions
+
+assembly page simply shows 
 
 \subsection{Custom templates}
 
 \subsection{Shared variables}
 
+top menu data
+
+languages
+
+versions
+
 \subsection{Language specific templates}
+
+Describe how it works
+
+Describe language switching
+
+\subsection{Design}
+primary, secondary, tertiary color
+
+\subsection{Theme switching}
+
+\subsection{Search}
+
 
 \section{Logging}
 Describe what happens if there are errors.

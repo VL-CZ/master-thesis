@@ -525,6 +525,8 @@ This is also depicted in Figure~\ref{fig:template-processors}, as the objects in
 
 
 \section{Template variables}
+\label{sec:template-variables}
+
 In sections~\ref{sec:member-repr} and~\ref{sec:type-repr}, we introduced custom objects representing the types and members in our codebase, which are intended to be passed into the template processor.
 Next, we must consider what data should be passed into the default Razor templates.
 
@@ -606,6 +608,7 @@ Based on the observations above, Bootstrap seems as an ideal choice, since it be
 It is also crucial to mention that this choice applies only to the default UI, since user-created templates may naturally use a different framework.
 
 \section{Documentation versioning}
+\label{sec:documentation-versioning-three}
 
 As previously mentioned in Requirement~\ref{req:versioning}, the generator should support creating different versions of the documentation.
 The section~\ref{sec:doc-versions} states that this should be achieved by creating a separate folder with documentation for each version.
@@ -632,6 +635,7 @@ Additionally, performance is often not a critical feature of the reference doc g
 Furthermore, if this becomes a bottleneck in the future, this piece of code can easily be parallelized.
 
 \section{Handling inner XML tags}
+\label{sec:inner-xml-to-html}
 
 Next, our program must transform the inner XML tags, listed in section~\ref{sec:inner-tags}, into their corresponding HTML representations.
 For instance, the \texttt{<list ty\-pe="bullet">} tag could be transformed to an HTML \texttt{<ul>} element.
