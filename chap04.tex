@@ -391,6 +391,7 @@ However, it is important to remember that the \texttt{ILanguage\-Configuration} 
 
 
 \subsection{Static pages}
+\label{sec:architecture-static-pages}
 
 Another responsibility of the \texttt{RazorTemplateProcessor} is to include user-defined static pages in the documentation.
 Thus, the \texttt{RazorTemplateProcessor} has an optional constructor parameter, representing the path to the directory containing the pages and possibly other files.
@@ -417,6 +418,7 @@ As a result, the relative links between the static files stay the same.
 \end{figure}
 
 \subsection{Documentation versioning}
+\label{sec:architecture-doc-versions}
 
 Additionally, the \texttt{RazorTemplateProcessor} handles creating specific versions of the documentation. 
 For this reason, it has an additional optional constructor parameter identifying the version being created.
@@ -453,74 +455,262 @@ Thus, the individual HTML pages of older versions are one by one loaded and then
 \label{lst:versions-json}
 \end{listing}
 
-\section{Templates}
+\subsection{Templates}
 
-The templates are written in Razor
+The \texttt{RazorTemplateProcessor} class has eight generic parameters, representing the types of the individual Razor templates, as shown in Figure~\ref{fig:eight-templates}.
+The \textit{Object type template} is intended to display all relevant information about an object type, including its documentation as well as a list of its members with documentation comments.
+Similarly, the \textit{Enum} and \textit{Delegate} templates should display all relevant data of an enum or a delegate, respectively.
+The \textit{Namespace} and \textit{Assembly} templates are expected to display a list of all types contained within a namespace or an assembly, respectively.
+Next, the \textit{API homepage template} should serve as a homepage of the API, showing all types across the provided assemblies.
+Finally, the \textit{Static page template} provides a template for all user-defined static pages, while the \textit{Search page template} is intended to perform searching and display search results.
 
-\subsection{Main templates}
+It is crucial to remember that the \texttt{RazorTemplateProcessor} defines the overall page structure of the documentation; however, the individual templates are not hard-coded and thus, custom templates may be provided.
 
-there are 7 top-elvel templates.
-layout in separate component
+\begin{figure}
+\centering
+\includegraphics[width=0.65\linewidth]{img/eight-templates.png}
+\caption{\texttt{RazorTemplateProcessor} -- templates}
+\label{fig:eight-templates}
+\end{figure}
 
-top menu - 
-bottom menu - versions
+\subsubsection{Template variables}
+\label{sec:architecture-template-vars}
 
-assembly page simply shows 
+To create the resulting HTML pages, the \texttt{RazorTemplateProcessor} needs to pass the individual template models to the corresponding templates.
+Hence, for example, the \texttt{ObjectTypeTM} instances are one by one passed to the \textit{Object type} template.
+This way, a separate HTML page is created for every object type.
+Thus, each of the templates, except the \textit{Static page} template, is expected to have a parameter representing its template model, named \texttt{Model}.
+Additionally, the following variables are passed to all templates (including the \textit{Static page} template):
 
-\subsection{Custom templates}
+\begin{itemize}
+    \item \texttt{TopMenuData} -- specifies the links and folders contained within the top menu.
+    \item \texttt{Languages} -- an array of the available languages.
+    \item \texttt{Versions} -- an array containing the available versions of the page.
+\end{itemize}
 
-\subsection{Shared variables}
+On top of that, three other variables are passed exclusively to the \textit{static page} template:
+\begin{itemize}
+    \item \texttt{CustomStyles} -- path to the custom CSS file, contained in the static pages folder.
+    \item \texttt{NestingLevel} -- the nesting level of the static page.
+    \item \texttt{Contents} -- HTML contents of the static page body.
+\end{itemize}
 
-top menu data
+\subsubsection{Output directory structure}
 
-languages
+The \texttt{RazorTemplateProcessor} stores all \textit{type}, \textit{namespace}, and \textit{assembly} pages to the \texttt{api/} subfolder of the output folder, while the HTML file names match the IDs of the template models.
+For a namespace template model, its ID corresponds to the namespace name; similarly, for assemblies, it matches the assembly name, with the only difference being that it has the suffix \textit{-DLL}.
+The ID of any type template model is almost equivalent to its ID string used in the \texttt{TypeRegistry}; as the only difference is that some characters need to be escaped, which is handled by the \texttt{TemplateId} class.
+Next, the API homepage is stored as \texttt{api/index.html}, while the search page is stored directly in the output directory as \texttt{search.html}.
+Finally, each user-defined static page is stored in a file whose location matches the static page location within the static pages directory, as explained in section~\ref{sec:architecture-static-pages}.
+Additionally, if the folder with Razor templates also contains a directory named \texttt{Static}, this directory gets copied as it is to the output folder.
 
-versions
+The example output directory structure is shown in Listing~\ref{lst:directory-structure-example}.
+There is a single \textit{assembly} page (\texttt{MyLibrary-DLL.html}), two \textit{namespace} pages (\texttt{MyLibrary.html} and \texttt{MyLibrary.Animals.html}), and two \textit{type} pages (\texttt{MyLibrary.User.html} and \texttt{MyLibrary.Animals.Dog.html}).
+Apart from the \textit{search} page and \textit{API homepage}, there are four other pages: \texttt{index.html}, \texttt{contact.html}, \texttt{tutorial/01-installation.html}, and \texttt{tutorial/02-usage.html}, which represent the static pages provided by the user.
+Finally, the \texttt{Static} directory, which contains CSS and JS files, is included as well.
 
-\subsection{Language specific templates}
+\begin{listing}[H]
+\begin{lstlisting}
+out/
+    index.html
+    search.html
+    api/
+        index.html
+        MyLibrary-DLL.html
+        MyLibrary.html
+        MyLibrary.User.html
+        MyLibrary.Animals.html
+        MyLibrary.Animals.Dog.html
+    contact.html
+    FAQ.html
+    tutorial/
+        01-installation.html
+        02-usage.html
+    Static/
+        styles.css
+        script.js
+\end{lstlisting}
+\caption{Example output directory structure}
+\label{lst:directory-structure-example}
+\end{listing}
 
-Describe how it works
+\section{Default templates}
 
-Describe language switching
+The default Razor templates, written in Razor templating language, are stored in the \texttt{src/RefDocGen/TemplateProcessors/Default/Templates} directory.
+There are eight top-level templates, which correspond to the generic parameters of the \texttt{RazorTemplateProcessor} class: \texttt{ObjectTypePage}, \texttt{EnumTypePage}, \texttt{DelegateTypePage}, \texttt{NamespacePage}, \texttt{AssemblyPage}, \texttt{ApiHomePage}, \texttt{StaticPage}, and \texttt{SearchPage}.
+Each of the templates accepts the parameters outlined in section~\ref{sec:architecture-template-vars}; however, only the \texttt{Model} parameter is typically used directly in the template itself.
+Other parameters, such as \texttt{TopMenuData}, are usually passed to descendant components as cascading values, which are further described in the official documentation~\cite{razor_cascading_values}.
+ 
+\subsubsection{Layout}
 
-\subsection{Design}
-primary, secondary, tertiary color
+The layout, which is shared between all pages, is defined in the \texttt{AppLayout} component.
+It defines both top and bottom menus; thus, the individual pages, such as the \texttt{ObjectTypePage}, specify only the content displayed in the page body.
+The cascading values, for instance \texttt{TopMenuData}, are often consumed either by the layout component itself or by its descendant components.
+
+\subsection{Styling}
+
+As explained in section XX, the \textit{Bootstrap} framework~\cite{boostrap} is used for styling.
+For instance, the top menu, as well as the links, are styled using Bootstrap.
+Furthermore, Bootstrap also takes care of the UI responsibility.
+
+On top of the styles provided by \textit{Bootstrap}, there are several custom CSS rules.
+For custom styles, we use Sass, as we want to reuse Bootstrap classes.
+For instance, we define that the links \texttt{.refdocgen-see-cref} extends the bootstrap \textit{link} class.
+
+Additionally, several custom CSS rules are included.
+All of the API pages use the three colors,
+
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{} & \textbf{primary} & \textbf{secondary} & \textbf{tertiary} \\
+\hline
+\textbf{Type pages} & Type + member names & Member + parameter types & modifiers \\
+\hline
+\textbf{Namespace page} & Namespace names & Type names & modifiers \\
+\hline
+\textbf{Assembly + API Homepage} & Assembly + namespace names & Type names & modifiers \\
+\hline
+\end{tabular}
+
+In light mode, the primary color is displayed in dark, and the secondary is gray.
+On the other hand, using dark mode, the primary color is white, while the secondary is yellow.
+In both modes, the tertiary color becomes blue.
+
+The SCSS also styles the custom classes, used for inner XML tags.
+We often inherit from the Bootstrap classes, using the \texttt{@extend} keyword.
+
+After every change, the SCSS must be recompiled manually to create the final CSS.
 
 \subsection{Theme switching}
 
-\subsection{Search}
+The documentation theme can be switched using the corresponding button in the top menu.
+When the button is clicked, a custom JavaScript handler is executed.
+Switching of the theme involves simply setting the \texttt{data-bs-theme} attribute of the \texttt{<html>} element to either \texttt{light} or \texttt{dark} value.
+This attribute is provided by \textit{Bootstrap}, and when set to a given value, all elements in the document are styled accordingly.
+
+The selected theme is then saved to the local storage under the \texttt{refdocgen-theme} key; however, this applies only if the documentation is deployed on a server.
+On the other hand, if the documentation is created locally and thus accessed using the \textit{file} protocol, this does not work, because the local storage has an undefined behavior in such cases, as explained in the documentation~\cite{mdn_localstorage}.
+For that reason, if the documentation is created locally, the selected theme gets stored in the \texttt{theme} URL parameter.
+
+\subsection{Language specific data}
+
+The templates need to display language-specific fragments, for instance, the signatures of the individual methods.
+All language-specific components are stored in the \texttt{LanguageSpecific} folder within the default templates directory.
+The \texttt{LanguageData} component acts as a switch for all language-specific fragments.
+It accepts two parameters: an enum value representing the language-specific component type and its parameter.
+There are 
+Then, the corresponding component for each of the languages is rendered, using the Razor DynamicComponent (ref: https://learn.microsoft.com/en-us/aspnet/core/blazor/components/dynamiccomponent)
+
+For each language-specific fragment, there is a separate component in each language.
+
+The default implementation used only C\#, so only C\# components are there.
+
+Internally, it defines a CSS class for each language, which matches the identifier.
+Thus, if C\# has \textit{csharp-lang} identifier, if it's selected, all elements with this class become visible.
+
+There are 2 major components
+
+\texttt{LanguageSpecificStrings} simply prints the \texttt{LanguageSpecificData<string>} instance in all languages.
+
+\subsubsection{Switching the language}
+The language can be selected using a dropdown. 
+Then, similarly to switching theme, a custom JavaScript handler is executed.
 
 
-\section{Logging}
+\texttt{html[data-language=XX] [data-language=XX]}
+Such rule is defined programmatically, using Razor for each of the available languages.
+
+\subsection{Persisting the selected theme and language}
+
+It is also important to mention that before a page is loaded, the browser executes a custom JavaScript function that checks whether the theme value is stored in local storage or in the URL parameter, based on the protocol used.
+If the theme is not found, the default value is used, and then, the \texttt{data-bs-theme} attribute is set accordingly.
+
+Additionally, a custom JavaScript finds all links in the current document, checks if they are relative, and if yes, the \texttt{theme} parameter is added.
+This way, the theme is kept between various pages.
+
+
+\subsection{Switching documentation versions}
+
+As already described in section~\ref{sec:architecture-doc-versions}, each page contains the \texttt{version-list} HTML element, which is hidden and stores the array of available page versions as JSON.
+Once the page is loaded, custom JavaScript reads this data and populates the version selector dropdown accordingly.
+Each item in the dropdown represents a link to a specific version of the page.
+It is also worth noting that redirecting to a different version of the page is straightforward, as it only requires updating the part of the URL that contains the version identifier.
+
+\subsection{Searching the documentation}
+
+The search functionality is provided on the search page.
+An array of all possible search results -- i.e., all types, members, namespaces, and assemblies is stored as JSON in a hidden element, similarly to the list of page versions.
+Each item contains the name, \textit{summary} documentation (if provided), and additional data.
+It is important to note that in the case of members, only the name is included.
+Specifically, no parameters are displayed, so, as a consequence, if a method has multiple overloads, only one of them is displayed in the search results.
+
+Every time a character is typed into the search box, a JavaScript-based fuzzy search is performed using the \textit{Fuse.js} library~\cite{fuse_js}.
+The search runs on the names of the individual items (i.e., types, members, namespaces, and assemblies), and the matching results are then displayed below.
+
+\section{Error handling}
 Describe what happens if there are errors.
 
 \section{Tests}
+
 Describe the packages used (xUnit, FluentAssertions, NSubstitute) and include snippets.
 
-\subsection{Unit Tests}
-\subsection{Integration Tests}
+For both unit and integration tests, we use xUnit testing framework and Shouldly library for assertions.
+
+\subsection{Integration tests}
+First, there are integration tests, which test whether the documentation looks as expected.
+They create ref doc of a custom library for testing, simply by using the DocGenerator class mentioned in section XX.
+There are two test collections -- versioned and not versioned.
+Versioned creates a documentation with multiple versions, while non-versioned creates simply a single version.
+This is achieved using xUnit test collections, thus the documentation is created before the tests are run, and after they end, it is torn down.
+
+To simplify testing, each interesting HTML element in the default templates is assigned a \textit{data-id} attribute, intended for testing.
+The integration tests in most cases first locate the selected page in the output directory, parse it using the \textit{AngleSharp} library, and select the given element, based on its \textit{data-id}.
+Each element has its data-id, e.g. name, summary-doc.
+Then, the tests verify whether the element content is as expected.
+
+Thus, the test veryfnig remarks documentation of a type could first locate its page, parse the HTML, select the corresponding element (data-id = remarks-doc) and verify that the contents is as expected.
+
+Most of the tests test the type and member signatures, as well as the individual documentation comments.
+Tests verifying the inheritance of documentation comments are included as well.
+Additionally, many of the tests are parametrized, which enables us to test multiple cases while using a single piece of code.
+
+\subsection{Unit tests}
+
+Furthermore, selected pieces of code are tested using unit tests.
+For each tested class, there is a separate class with the same name plus the 'tests' suffix.
+Thus, the tests of the \texttt{TypeUrlResolver} class are contained within a class named \texttt{TypeUrlResolverTests}.
+On top of that, the path to the test class, relative to the project file is that same as path to the original class file.
+
+Unlike in the integration tests, we use mocking in several places.
+More specifically, we mock the type and member interfaces, as explained in Section XX.
 
 \section{Code Quality}
 
-\subsection{.NET Analyzers}
-\begin{itemize}
-    \item Describe .NET analyzers.
-\end{itemize}
+This section describes the conventions and practices that ensure the code quality of our program.
 
-\subsection{Code Style}
-\begin{itemize}
-    \item Describe code style.
-\end{itemize}
+\subsection*{.NET Analyzers}
 
-\subsection{CI/CD}
-\begin{itemize}
-    \item Describe GitHub Actions.
-\end{itemize}
+First, we use the built-in .NET analyzers~\cite{net_analyzers}, via the \textit{Microsoft.CodeAnalysis.NetAnalyzers} NuGet package, while using the recommended level of settings.
+As a result, we receive more warnings related to code quality.
+Additionally, the .NET analyzers are also used to enforce a consistent code style across the codebase, based on the defined code style rules.
+Except for a few exceptions, specified in the \texttt{.editorconfig} file in the root folder, the default code style is used.
+For example, we have configured the system to use type inference when possible, except in cases where the type is one of the built-in types.
 
-\subsection{Workflow}
-\begin{itemize}
-    \item Feature branches, tasks, merge with linear history, etc.
-\end{itemize}
+\subsection*{Workflow}
+The project is hosted in a public GitHub repository at the following URL: https://github.com/VL-CZ/refdocgen.
+When developing, we use the following conventions.
+For each task, we first create a separate branch, named \textit{feature/XX-description}, where \textit{XX} refers to the task ID, and \textit{description} is a brief description of the task, with words separated by hyphens.
+Once the work is completed, we create a pull request, named \textit{[T-XX] description}.
+Similarly to branches, \textit{XX} is the task ID, however, the description is now written in the English language.
+Thus, regarding the task with ID 25, which is about adding support for enums, the branch name could be \textit{feature/25-add-enum-support}, while the PR name would be \textit{[T-25] Add support for enums}.
+
+Before each pull request is merged, we use \textit{GitHub Actions}~\cite{github_actions} to perform continuous integration checks.
+There is a single workflow, configured using the \texttt{.github/workflows/dotnet.yml} file.
+First, the project is built, while all warnings (including those for code quality) are treated as errors.
+Then, both unit and integration tests are executed, and finally, the code style is verified.
+If and only if all of these checks pass, the pull request can be merged to the \textit{master} branch.
+The merge is configured to use squashing, thus, each PR results in a single commit, whose name matches the name of the PR, in the master branch.
+This way, a linear history of the \textit{master} branch is achieved.
 
 \section{Extensibility}
 
