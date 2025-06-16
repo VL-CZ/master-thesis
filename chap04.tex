@@ -323,6 +323,7 @@ This URL can be easily constructed, as all page addresses in the .NET documentat
 \end{figure}
 
 \subsubsection{Converting the inner XML tags to HTML}
+\label{sec:architecture-inner-xml-to-html}
 
 Another task performed by the \texttt{BaseTMCreator} is converting the documentation comments, represented as \texttt{XElement} instances, to their HTML representation, as displayed in Figure~\ref{fig:base-tm-creator}.
 This involves replacing the inner XML tags with the corresponding HTML tags, since the template models store the documentation comments as HTML strings.
@@ -456,6 +457,7 @@ Thus, the individual HTML pages of older versions are one by one loaded and then
 \end{listing}
 
 \subsection{Templates}
+\label{sec:architecture-eight-templates}
 
 The \texttt{RazorTemplateProcessor} class has eight generic parameters, representing the types of the individual Razor templates, as shown in Figure~\ref{fig:eight-templates}.
 The \textit{Object type template} is intended to display all relevant information about an object type, including its documentation as well as a list of its members with documentation comments.
@@ -536,66 +538,102 @@ out/
 
 \section{Default templates}
 
-The default Razor templates, written in Razor templating language, are stored in the \texttt{src/RefDocGen/TemplateProcessors/Default/Templates} directory.
-There are eight top-level templates, which correspond to the generic parameters of the \texttt{RazorTemplateProcessor} class: \texttt{ObjectTypePage}, \texttt{EnumTypePage}, \texttt{DelegateTypePage}, \texttt{NamespacePage}, \texttt{AssemblyPage}, \texttt{ApiHomePage}, \texttt{StaticPage}, and \texttt{SearchPage}.
+The default Razor templates are stored in the \texttt{src/RefDocGen/Template\-Processors/Default/Templates} directory.
+There are eight top-level templates: \texttt{ObjectTypePage}, \texttt{EnumTypePage}, \texttt{DelegateTypePage}, \texttt{NamespacePage}, \texttt{AssemblyPage}, \texttt{ApiHomePage}, \texttt{StaticPage}, and \texttt{SearchPage}, which correspond to the generic parameters of the \texttt{RazorTemplateProcessor} class, described in section~\ref{sec:architecture-eight-templates}.
 Each of the templates accepts the parameters outlined in section~\ref{sec:architecture-template-vars}; however, only the \texttt{Model} parameter is typically used directly in the template itself.
-Other parameters, such as \texttt{TopMenuData}, are usually passed to descendant components as cascading values, which are further described in the official documentation~\cite{razor_cascading_values}.
- 
+Other parameters, such as \texttt{TopMenuData}, are usually passed to descendant components as cascading values, which are explained in further detail in the official documentation~\cite{razor_cascading_values}.
+The entire UI is composed of many reusable components; for example, the documentation of parameters is stored within a separate component, which is then reused by methods, operators, and constructors.
+
 \subsubsection{Layout}
 
 The layout, which is shared between all pages, is defined in the \texttt{AppLayout} component.
-It defines both top and bottom menus; thus, the individual pages, such as the \texttt{ObjectTypePage}, specify only the content displayed in the page body.
-The cascading values, for instance \texttt{TopMenuData}, are often consumed either by the layout component itself or by its descendant components.
+It specifies both top and bottom menus; thus, each of the eight top-level pages defines only the content displayed in the page body.
+The cascading values, for instance \texttt{TopMenuData}, are typically consumed either by the layout itself or by one of its descendant components.
 
-\subsection{Styling}
+\subsection{UI styling}
 
-As explained in section XX, the \textit{Bootstrap} framework~\cite{boostrap} is used for styling.
-For instance, the top menu, as well as the links, are styled using Bootstrap.
-Furthermore, Bootstrap also takes care of the UI responsibility.
+As discussed in section~\ref{sec:tech-analysis-ui-framework}, the components and styles provided by the \textit{Bootstrap} framework~\cite{boostrap} are used for styling the user interface.
+For example, the top menu, as well as the links, make use of the \textit{Bootstrap} classes; furthermore, \textit{Bootstrap} also ensures the responsiveness of the UI.
+In addition to the styles provided by \textit{Bootstrap}, several custom CSS rules are defined in the \texttt{Scss/styles.scss} file.
+As the file name suggests, the styles are written in the \textit{Sass}~\cite{sass} format, rather than plain CSS, which enables us to use additional functionality on top of CSS.
 
-On top of the styles provided by \textit{Bootstrap}, there are several custom CSS rules.
-For custom styles, we use Sass, as we want to reuse Bootstrap classes.
-For instance, we define that the links \texttt{.refdocgen-see-cref} extends the bootstrap \textit{link} class.
+The \texttt{styles.scss} file first loads all \textit{Bootstrap} styles, using the \texttt{@use} rule.
+Then, several custom CSS rules, often extending the \textit{Bootstrap} classes using the \texttt{@extend} rule, are declared.
+This way, several of the transformed inner XML tags, described in section~\ref{sec:architecture-inner-xml-to-html}, are styled.
+For example, the \texttt{.refdocgen-see-cref} class, which is assigned to the transformed \texttt{<see cref="...">} XML tags, is configured to extend the \texttt{link-offset-2} CSS class, provided by \textit{Bootstrap}.
 
-Additionally, several custom CSS rules are included.
-All of the API pages use the three colors,
+After every change, the SCSS must be recompiled manually to create the final CSS using the \texttt{sass Scss/styles.scss Static/styles.css --style=compressed} command executed from the default templates folder.
+This way, both the custom and the \textit{Bootstrap} styles get together stored in the \texttt{Static/styles.css} file, which is then referenced from the templates.
 
-\begin{tabular}{|l|c|c|c|}
+\subsubsection{Text colors}
+\label{sec:ui-text-colors}
+
+Additionally, three custom text color styles, used across the documentation pages, are defined in the \texttt{styles.scss} file.
+The corresponding CSS classes are named: \texttt{refdocgen-text-primary}, \texttt{-secondary} and \texttt{-tertiary}.
+Table~\ref{table:ui-refdocgen-colors} shows the major places in the individual pages where the \texttt{primary} and \texttt{secondary} text colors are used.
+Additionally, the \texttt{tertiary} color is used mostly for modifiers.
+However, it is important to note that this list is not exhaustive, as these colors are also used in various other places throughout the documentation.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|p{4cm}|p{4cm}|p{4cm}|}
 \hline
-\textbf{} & \textbf{primary} & \textbf{secondary} & \textbf{tertiary} \\
+\textbf{} & \textbf{primary} & \textbf{secondary} \\
 \hline
-\textbf{Type pages} & Type + member names & Member + parameter types & modifiers \\
+\textbf{Type pages} & Type, member, and parameter names & Member, parameter and return types \\
 \hline
-\textbf{Namespace page} & Namespace names & Type names & modifiers \\
+\textbf{NamespacePage} & Namespace names & Type names \\
 \hline
-\textbf{Assembly + API Homepage} & Assembly + namespace names & Type names & modifiers \\
+\textbf{AssemblyPage, ApiHomePage} & Assembly and namespace names & Type names \\
 \hline
 \end{tabular}
+\caption{Custom color classes -- usage}
+\label{table:ui-refdocgen-colors}
+\end{table}
 
-In light mode, the primary color is displayed in dark, and the secondary is gray.
-On the other hand, using dark mode, the primary color is white, while the secondary is yellow.
-In both modes, the tertiary color becomes blue.
+Thus, e.g., the field signatures, displayed on the \texttt{ObjectTypePage}, are styled the same way as the example shown in Figure~\ref{lst:ui-example-field-colors}. The actual text colors are defined in the \texttt{styles.scss} file.
 
-The SCSS also styles the custom classes, used for inner XML tags.
-We often inherit from the Bootstrap classes, using the \texttt{@extend} keyword.
+\begin{listing}[H]
+\begin{lstlisting}[language=HTML]
+<span class="refdocgen-text-tertiary">
+    private static
+</span>
+<span class="refdocgen-text-secondary">
+    int
+</span>
+<span class="refdocgen-text-primary">
+    age
+</span>
+\end{lstlisting}
+\caption{Example field signature HTML}
+\label{lst:ui-example-field-colors}
+\end{listing}
 
-After every change, the SCSS must be recompiled manually to create the final CSS.
+\subsection{Documentation themes}
+\label{sec:ui-themes}
 
-\subsection{Theme switching}
+The documentation supports both light and dark themes by using the \texttt{data-bs-theme} attribute, provided by \textit{Bootstrap}.
+This attribute, assigned to the \texttt{<html>} element, can be set to either \texttt{light} or \texttt{dark} value.
+When set to a given value, all elements in the document are automatically styled accordingly.
+Furthermore, the text color classes, mentioned in the previous chapter, change their appearance based on the selected theme, as specified in the \texttt{styles.scss} file.
+For example, any text styled with \texttt{refdocgen-text-primary} class is displayed in black when using the light mode, and in white when the dark mode is used.
 
-The documentation theme can be switched using the corresponding button in the top menu.
-When the button is clicked, a custom JavaScript handler is executed.
-Switching of the theme involves simply setting the \texttt{data-bs-theme} attribute of the \texttt{<html>} element to either \texttt{light} or \texttt{dark} value.
-This attribute is provided by \textit{Bootstrap}, and when set to a given value, all elements in the document are styled accordingly.
+The theme can be switched using the corresponding button in the top menu.
+When the button is clicked, a custom JavaScript handler is executed, which sets the \texttt{data-bs-theme} attribute to the given value.
 
 The selected theme is then saved to the local storage under the \texttt{refdocgen-theme} key; however, this applies only if the documentation is deployed on a server.
 On the other hand, if the documentation is created locally and thus accessed using the \textit{file} protocol, this does not work, because the local storage has an undefined behavior in such cases, as explained in the documentation~\cite{mdn_localstorage}.
 For that reason, if the documentation is created locally, the selected theme gets stored in the \texttt{theme} URL parameter.
 
-\subsection{Language specific data}
+\subsection{Language specific fragments}
 
-The templates need to display language-specific fragments, for instance, the signatures of the individual methods.
-All language-specific components are stored in the \texttt{LanguageSpecific} folder within the default templates directory.
+TODO: dopsat
+
+The templates need to display language-specific fragments, for instance, the signatures of the individual types and members.
+All language-specific components are stored in the \texttt{Components/LanguageSpecific} folder within the default templates directory.
+The \texttt{CSharp} subdirectory contains C\#.
+
+There is a separate component for each language-specific fragment
 The \texttt{LanguageData} component acts as a switch for all language-specific fragments.
 It accepts two parameters: an enum value representing the language-specific component type and its parameter.
 There are 
@@ -612,79 +650,123 @@ There are 2 major components
 
 \texttt{LanguageSpecificStrings} simply prints the \texttt{LanguageSpecificData<string>} instance in all languages.
 
-\subsubsection{Switching the language}
-The language can be selected using a dropdown. 
-Then, similarly to switching theme, a custom JavaScript handler is executed.
-
-
 \texttt{html[data-language=XX] [data-language=XX]}
 Such rule is defined programmatically, using Razor for each of the available languages.
 
+\subsubsection{Switching the language}
+\label{sec:ui-langauge-switching}
+
+The language, in which the language-specific fragments are displayed, can be selected using a dropdown, which gets populated with the \texttt{Languages} data, mentioned in section~\ref{sec:architecture-template-vars}. 
+When a language is selected, a custom JavaScript handler is executed, similarly to when switching themes.
+The selected language identifier is then assigned to the \texttt{data-language} attribute of the \texttt{<html>} element, and thus, the language-specific fragments are displayed in the selected language.
+Additionally, the language is stored either in the local storage under the \texttt{refdocgen-language} key, or in the \texttt{lang} URL parameter, based on where the documentation is deployed.
+The whole process is similar to switching themes.
+
 \subsection{Persisting the selected theme and language}
 
-It is also important to mention that before a page is loaded, the browser executes a custom JavaScript function that checks whether the theme value is stored in local storage or in the URL parameter, based on the protocol used.
-If the theme is not found, the default value is used, and then, the \texttt{data-bs-theme} attribute is set accordingly.
+As mentioned in sections~\ref{sec:ui-themes} and~\ref{sec:ui-langauge-switching}, both the selected theme and language are persisted in the local storage if the documentation is deployed on a server.
+However, since this approach cannot be used if the documentation is created locally, as explained in section~\ref{sec:ui-themes}, both values are stored in URL parameters in this case.
+To ensure persistence of those values, a custom JavaScript function is executed when the page is loaded.
+The function finds all relative links in the document (i.e., the \texttt{<a href="..">} elements) and appends the \texttt{theme} and \texttt{lang} parameters to the target URLs.
 
-Additionally, a custom JavaScript finds all links in the current document, checks if they are relative, and if yes, the \texttt{theme} parameter is added.
-This way, the theme is kept between various pages.
+Next, there is another JavaScript function that is executed before each page is loaded.
+This function checks whether the selected theme and language values are stored in local storage (if the documentation is deployed on a server) or in the URL parameters (if the documentation is created locally).
+If a value is not found, the default option is used, and then, the \texttt{data-bs-theme} and \texttt{data-language} attributes are set accordingly.
+This way, it is ensured that the selected theme and language remain the same when navigating within the documentation.
 
-
-\subsection{Switching documentation versions}
+\subsection{Documentation versioning}
 
 As already described in section~\ref{sec:architecture-doc-versions}, each page contains the \texttt{version-list} HTML element, which is hidden and stores the array of available page versions as JSON.
 Once the page is loaded, custom JavaScript reads this data and populates the version selector dropdown accordingly.
-Each item in the dropdown represents a link to a specific version of the page.
+Each item in the dropdown represents a link to the corresponding version of the page.
 It is also worth noting that redirecting to a different version of the page is straightforward, as it only requires updating the part of the URL that contains the version identifier.
 
 \subsection{Searching the documentation}
 
 The search functionality is provided on the search page.
-An array of all possible search results -- i.e., all types, members, namespaces, and assemblies is stored as JSON in a hidden element, similarly to the list of page versions.
+An array of all possible search results -- i.e., all types, members, namespaces, and assemblies is stored as JSON in a hidden element, similarly to the array of page versions.
 Each item contains the name, \textit{summary} documentation (if provided), and additional data.
-It is important to note that in the case of members, only the name is included.
-Specifically, no parameters are displayed, so, as a consequence, if a method has multiple overloads, only one of them is displayed in the search results.
+It is important to note that in the case of members, only the name is included; specifically, no parameters are contained.
+As a consequence, if a method has multiple overloads, only one of them is included in the search results.
 
 Every time a character is typed into the search box, a JavaScript-based fuzzy search is performed using the \textit{Fuse.js} library~\cite{fuse_js}.
 The search runs on the names of the individual items (i.e., types, members, namespaces, and assemblies), and the matching results are then displayed below.
 
 \section{Error handling}
-Describe what happens if there are errors.
+
+The program detects errors caused by invalid configuration.
+A custom base exception, named \texttt{RefDocGenFatalException}, is used to represent those types of errors.
+Then, there are several custom exceptions inheriting from it; for instance, 
+the \texttt{AssemblyNotFoundException} is thrown if the assembly is not found at the user-provided path.
+Similarly, the \texttt{DuplicateDocVersionNameException} is thrown if the user specifies an already existing documentation version name.
+All of these custom exceptions include descriptive error messages designed to be displayed to the user.
+Finally, all exceptions are caught in the \texttt{Main} method and logged as errors.
+
+The logging is handled by a \textit{Serilog}~\cite{serilog} logger instance, configured to print on the command line.
+However, the logger is passed as an \texttt{ILogger} interface, which is a common logger interface provided by Microsoft, as further explained in the documentation~\cite{net_ilogger}.
+As a result, the classes using the logger depend only on its interface, rather than on the concrete \textit{Serilog} implementation.
 
 \section{Tests}
 
-Describe the packages used (xUnit, FluentAssertions, NSubstitute) and include snippets.
-
-For both unit and integration tests, we use xUnit testing framework and Shouldly library for assertions.
+The project is tested by both integration and unit tests, which are contained in 
+\texttt{RefDocGen.IntegrationTests} and \texttt{RefDocGen.UnitTests} projects.
+Both of them use the \textit{xUnit}~\cite{xunit} testing framework and \textit{Shouldly} library~\cite{shouldly} for assertions.
 
 \subsection{Integration tests}
-First, there are integration tests, which test whether the documentation looks as expected.
-They create ref doc of a custom library for testing, simply by using the DocGenerator class mentioned in section XX.
-There are two test collections -- versioned and not versioned.
-Versioned creates a documentation with multiple versions, while non-versioned creates simply a single version.
-This is achieved using xUnit test collections, thus the documentation is created before the tests are run, and after they end, it is torn down.
+The integration tests check whether the generated documentation looks as expected.
+As shown in Figure~\ref{fig:integration-tests-architecture}, they use the DLL and XML documentation file of the \texttt{RefDocGen.ExampleLibrary}, which is intended purely for integration testing.
+This library is also included in the solution, and its build directory is set to the \texttt{/data} subdirectory of the integration tests project.
 
-To simplify testing, each interesting HTML element in the default templates is assigned a \textit{data-id} attribute, intended for testing.
-The integration tests in most cases first locate the selected page in the output directory, parse it using the \textit{AngleSharp} library, and select the given element, based on its \textit{data-id}.
-Each element has its data-id, e.g. name, summary-doc.
-Then, the tests verify whether the element content is as expected.
+Most of the integration tests are part of the \texttt{DocumentationTestCollection}, which is an \textit{xUnit} collection fixture responsible for creating the reference documentation.
+The \texttt{DocumentationTestCollection} uses the DLL and XML documentation file of the \texttt{ExampleLibrary} and simply calls the \texttt{DocGenerator} class, mentioned in section~\ref{sec:workflow}.
+Thus, before all tests are run, the documentation is generated, and after the tests terminate, the folder with the documentation is deleted.
+There is also the \texttt{VersionedDocumentationTestCollection} collection fixture, which creates documentation with multiple versions and is used by a handful of other tests.
 
-Thus, the test veryfnig remarks documentation of a type could first locate its page, parse the HTML, select the corresponding element (data-id = remarks-doc) and verify that the contents is as expected.
+\begin{figure}
+\centering
+\includegraphics[width=0.85\linewidth]{img/integration-tests.png}
+\caption{Integration tests -- architecture}
+\label{fig:integration-tests-architecture}
+\end{figure}
 
-Most of the tests test the type and member signatures, as well as the individual documentation comments.
-Tests verifying the inheritance of documentation comments are included as well.
-Additionally, many of the tests are parametrized, which enables us to test multiple cases while using a single piece of code.
+To simplify testing, the default templates assign the \texttt{data-id} attribute to each relevant HTML element.
+For instance, all elements containing \textit{remarks} documentation comments have the \texttt{data-id="remarks-doc"} attribute.
+Furthermore, each member on the type page can be located by its \texttt{id} attribute.
+
+Most of the tests verify the type and member declaration strings, as well as the individual documentation comments.
+Additionally, tests checking the inheritance of documentation comments are also included.
+Many of the tests are parametrized, which enables us to test multiple cases with a single piece of code.
+The individual test classes are named after what is being tested; e.g., the class verifying the member documentation is called \texttt{MemberDocCommentTests}.
+Then, the test methods are typically named as follows: \textit{Subject\_ExpectedOutcome}.
+The \textit{Subject} describes what is being tested, while the \textit{ExpectedOutcome} describes what the \textit{Subject} should satisfy.
+Thus, for example, the method responsible for verifying the \textit{remarks} documentation of a member is named \texttt{RemarksDoc\_Matches}.
+
+The test methods, in most cases, first locate the selected page in the output directory, parse it using the \textit{AngleSharp} library, and then select the given element, based on its \texttt{data-id}.
+For instance, the test verifying the remarks documentation of the given member would first locate the page of the containing type, parse the HTML, find the given member (by its \texttt{id}), and then obtain the corresponding \textit{remarks} documentation (i.e., an element with \texttt{data-id="remarks-doc"}).
+Then, it is checked whether the content of the element is as expected.
 
 \subsection{Unit tests}
 
 Furthermore, selected pieces of code are tested using unit tests.
-For each tested class, there is a separate class with the same name plus the 'tests' suffix.
+The unit test classes are mapped one-to-one with the project classes, and additionally, each test class is named the same as the corresponding project class, with the only exception being that it ends with the suffix \textit{Tests}.
 Thus, the tests of the \texttt{TypeUrlResolver} class are contained within a class named \texttt{TypeUrlResolverTests}.
-On top of that, the path to the test class, relative to the project file is that same as path to the original class file.
+Additionally, the folder structure of the unit tests project aligns with the structure of the main project.
+It is also worth noting that the unit tests frequently use mocking, with the help of \textit{NSubstitute} library~\cite{nsub}, as previously discussed in section~\ref{sec:tests-mocking-explanation}.
 
-Unlike in the integration tests, we use mocking in several places.
-More specifically, we mock the type and member interfaces, as explained in Section XX.
+The individual test methods are named using the following convention: \textit{MethodName\_ExpectedOutcome\_Conditions}, where \textit{MethodName} is the name of the method being tested, \textit{ExpectedOutcome} describes the expected outcome, and \textit{Condition} describes any additional conditions.
+Hence, for example, assume that the test method, shown in Listing~\ref{lst:tests-example-test-name}, is defined within the \texttt{TypeUrlResolverTests} class.
+From its name, it is apparent that it tests the \texttt{GetUrlOf} method; specifically, it verifies that for a system type, a URL pointing to its page in the Microsoft documentation is returned.
 
-\section{Code Quality}
+\begin{listing}[H]
+\begin{lstlisting}
+public void GetUrlOf_ReturnsMicrosoftDocumentationUrl_ForSystemType
+  (...)
+\end{lstlisting}
+\caption{Example unit test method}
+\label{lst:tests-example-test-name}
+\end{listing}
+
+\section{Code quality}
 
 This section describes the conventions and practices that ensure the code quality of our program.
 
@@ -695,13 +777,13 @@ As a result, we receive more warnings related to code quality.
 Additionally, the .NET analyzers are also used to enforce a consistent code style across the codebase, based on the defined code style rules.
 Except for a few exceptions, specified in the \texttt{.editorconfig} file in the root folder, the default code style is used.
 For example, we have configured the system to use type inference when possible, except in cases where the type is one of the built-in types.
-
+ 
 \subsection*{Workflow}
 The project is hosted in a public GitHub repository at the following URL: https://github.com/VL-CZ/refdocgen.
 When developing, we use the following conventions.
 For each task, we first create a separate branch, named \textit{feature/XX-description}, where \textit{XX} refers to the task ID, and \textit{description} is a brief description of the task, with words separated by hyphens.
 Once the work is completed, we create a pull request, named \textit{[T-XX] description}.
-Similarly to branches, \textit{XX} is the task ID, however, the description is now written in the English language.
+Similarly to branches, \textit{XX} is the task ID; however, the description is now written in the English language.
 Thus, regarding the task with ID 25, which is about adding support for enums, the branch name could be \textit{feature/25-add-enum-support}, while the PR name would be \textit{[T-25] Add support for enums}.
 
 Before each pull request is merged, we use \textit{GitHub Actions}~\cite{github_actions} to perform continuous integration checks.
@@ -709,7 +791,7 @@ There is a single workflow, configured using the \texttt{.github/workflows/dotne
 First, the project is built, while all warnings (including those for code quality) are treated as errors.
 Then, both unit and integration tests are executed, and finally, the code style is verified.
 If and only if all of these checks pass, the pull request can be merged to the \textit{master} branch.
-The merge is configured to use squashing, thus, each PR results in a single commit, whose name matches the name of the PR, in the master branch.
+The merge is configured to use squashing; thus, each PR results in a single commit, whose name matches the name of the PR, in the \textit{master} branch.
 This way, a linear history of the \textit{master} branch is achieved.
 
 \section{Extensibility}
@@ -719,6 +801,14 @@ Step-by-step guide.
 
 \subsection{Custom Template Generator}
 How to create a custom non-Razor template.
+
+\chapter{Evaluation}
+
+- Describe that we selected a third party package: Newtonsoft.JSON
+
+- describe how we generated the docs for it
+
+- add a link to the resulting HTML
 
 \chapter{User Documentation}
 

@@ -393,7 +393,7 @@ Furthermore, Liquid supports all commonly used comparison operators as well as t
 An example of a Liquid template is shown in Program~\ref{lst:liquid}.
 
 Although the Liquid language itself does not specify support for custom filters, this functionality is typically provided by the libraries processing Liquid templates.
-In .NET, Liquid templates can be processed using the DotLiquid~\cite{dotliquid} library, however, this library directly states that it is looking for maintainers, therefore, its future is unclear.
+In .NET, Liquid templates can be processed using the DotLiquid~\cite{dotliquid} library; however, this library directly states that it is looking for maintainers; therefore, its future is unclear.
 Additionally, there are two other popular .NET libraries: Scriban~\cite{scriban} and Fluid~\cite{fluid}, which use a custom language that is almost identical to Liquid, with a range of extra filters added.
 
 \begin{listing}
@@ -433,7 +433,7 @@ As mentioned before, there could be arbitrary C\# code inside the code block.
 
 An example of a Razor file is shown in Program~\ref{lst:razor}.
 As we can see, the object of type \texttt{Person} is passed to the template.
-The processing of Razor files can be done using the RazorLight library~\cite{razorlight}, however, certain constructs, such as methods, are not supported.
+The processing of Razor files can be done using the RazorLight library~\cite{razorlight}; however, certain constructs, such as methods, are not supported.
 Additionally, even though Razor was originally intended for use in web applications, it is also possible
 to use Razor components and render them in console applications, as mentioned in the official documentation~\cite{razor_console}.
 
@@ -582,6 +582,7 @@ The primary disadvantage of using template models is that we need the conversion
 However, such conversion should not be extra complicated, so taking that into account, we will prefer using template models.
 
 \section{UI framework}
+\label{sec:tech-analysis-ui-framework}
 
 There are many ways to achieve a modern, visually appealing UI, as requested by Requirement~\ref{req:modern-ui}.
 More specifically, the default UI is expected to include the top menu, search bar, dropdowns, links, etc., as mentioned in Requirements~\ref{req:top-menu}, \ref{req:search-bar}, \ref{req:doc-version-dropdown}, and~\ref{req:cross-ref}.
@@ -603,7 +604,7 @@ While \textit{Tailwind} also offers pre-styled UI components, such as dropdowns 
 Additionally, \textit{Bootstrap} natively supports a dark theme, as most of its components have both light and dark theme variants. 
 The switching to dark theme can be done by adding the \texttt{data-bs-theme="dark"} attribute to the \texttt{<html>} element, as described in the official documentation.
 In \textit{Tailwind}, adding a dark theme is slightly more verbose, as we need to define a set of utility classes for the dark style of each component.
-Finally, responsivity is well-supported in both frameworks.
+Finally, responsiveness is well-supported in both frameworks.
 Based on the observations above, Bootstrap seems as an ideal choice, since it beats Tailwind in most of the highlighted aspects.
 It is also crucial to mention that this choice applies only to the default UI, since user-created templates may naturally use a different framework.
 
@@ -624,13 +625,13 @@ This makes it easy to recognize all the older versions of a file.
 The remaining problem is how to update the older version files to allow switching to the newest version.
 The first option is to store the data in an external file (e.g., JSON) and fetch it on the client side using JavaScript. 
 Then, when the page is loaded, the data is fetched, and the dropdown gets populated with the available versions.
-Theoretically, this works well, however, there is a fundamental problem -- CORS, as several browsers, notably Chrome, do not allow requests to URLs of different origins.
+Theoretically, this works well; however, there is a fundamental problem -- CORS, as several browsers, notably Chrome, do not allow requests to URLs of different origins.
 When the documentation is hosted on a website, this may not be a problem; however, when created locally, the browser blocks requests to other local files because it is treated as a cross-origin request.
 This is a major disadvantage, as the documentation versioning does not work properly in a local environment.
 
 An alternative way is to store the information in the HTML of each page, ideally as a hidden element. 
 Hence, when creating a new documentation version, it is necessary to process all of the older versions and add that new version to the list of available versions.
-This approach may seem heavyweight, as it requires processing a lot of pages, however, it is important to remember that the generator also does other potentially time-consuming operations, such as reflection or template processing.
+This approach may seem heavyweight, as it requires processing a lot of pages; however, it is important to remember that the generator also does other potentially time-consuming operations, such as reflection or template processing.
 Additionally, performance is often not a critical feature of the reference doc generators.
 Furthermore, if this becomes a bottleneck in the future, this piece of code can easily be parallelized.
 
@@ -689,11 +690,12 @@ However, as stated on its homepage, it has transitioned to a paid license for co
 While it is still possible to use older versions for free, and more importantly, our generator is by no means intended to become commercial, this decision has negatively affected the reputation of the library.
 
 Therefore, it is a good idea to look for alternatives.
-First, there is a community fork of \textit{Fluent Assertions} called \textit{Awesome Assertions}~\cite{awesome_assertions}, however, the main drawback is that this library is relatively new and not yet widely adopted, making its future uncertain.
+First, there is a community fork of \textit{Fluent Assertions} called \textit{Awesome Assertions}~\cite{awesome_assertions}; however, the main drawback is that this library is relatively new and not yet widely adopted, making its future uncertain.
 Another popular alternative is \textit{Shouldly}~\cite{shouldly}, which offers similar functionality, but unlike \textit{Fluent Assertions}, remains entirely free.
 Given these considerations, we decided to use \textit{Shouldly}.
 
 \subsection*{Mocking}
+\label{sec:tests-mocking-explanation}
 
 Additionally, we want to test various data regarding the type and member objects, described in 
 sections~\ref{sec:member-repr} and \ref{sec:type-repr}.
@@ -712,7 +714,7 @@ However, this approach is also quite cumbersome, as it often requires writing a 
 For example, if an interface contains many methods, its dummy implementation must define all of them, which can result in many lines of code.
 In general, this problem is often solved by using a mocking library that creates these dummy types automatically, which, in conclusion, is also our preferred approach.
 
-The most popular mocking library in .NET is \textit{Moq}~\cite{moq}, however, there have been privacy concerns associated with it.
+The most popular mocking library in .NET is \textit{Moq}~\cite{moq}; however, there have been privacy concerns associated with it.
 More specifically, version 4.20 of \textit{Moq} scanned the local data 
 and sent the hashed email to a cloud service, as documented in the Github issue~\cite{moq_issue}
 and the related Reddit post~\cite{moq_reddit_post}.
