@@ -254,7 +254,7 @@ There is the \texttt{ITemplateProcessor} interface, which represents a contract 
 The default implementation, called \texttt{RazorTemplateProcessor}, uses \textit{Razor} templates.
 However, before the templates are processed, a handful of other tasks are performed, as illustrated in Figure~\ref{fig:razor-template-processor}.
 First, the data from the type registry must be converted to the matching template models, which are then passed to the templates.
-This transformation is executed by classes, called template model creators.
+This transformation is executed by classes called \textit{template model creators}.
 Additionally, all user-defined static pages must be gathered, which is done by the \texttt{StaticPageProcessor} class and then included in the documentation.
 Furthermore, if a specific documentation version is generated, the versioning must be handled with the help of the \texttt{DocVersionManager} class.
 The following sections describe each of these processes in further detail.
@@ -267,6 +267,7 @@ The following sections describe each of these processes in further detail.
 \end{figure}
 
 \subsection{Template models}
+\label{sec:architecture-template-models}
 
 The template models (TMs) are data-only objects that are passed to the templates as variables.
 They correspond to the type and member objects stored in the type registry, as there is a separate template model 
@@ -369,6 +370,7 @@ This is because they are processed almost identically as the \texttt{<see>} elem
 \end{figure}
 
 \subsubsection{Retrieving language-specific data}
+\label{sec:architecture-lang-specifc-data-retrieval}
 
 As mentioned earlier, the template models include language-specific data, such as type and member modifiers.
 Thus, the template model creators must be capable of getting such data in all available languages.
@@ -539,7 +541,7 @@ out/
 \section{Default templates}
 
 The default Razor templates are stored in the \texttt{src/RefDocGen/Template\-Processors/Default/Templates} directory.
-There are eight top-level templates: \texttt{ObjectTypePage}, \texttt{EnumTypePage}, \texttt{DelegateTypePage}, \texttt{NamespacePage}, \texttt{AssemblyPage}, \texttt{ApiHomePage}, \texttt{StaticPage}, and \texttt{SearchPage}, which correspond to the generic parameters of the \texttt{RazorTemplateProcessor} class, described in section~\ref{sec:architecture-eight-templates}.
+There are eight top-level templates: \texttt{ObjectTypePage}, \texttt{EnumTypePage}, \texttt{DelegateTypePage}, \texttt{NamespacePage}, \texttt{Assem\-blyPage}, \texttt{ApiHomePage}, \texttt{StaticPage}, and \texttt{SearchPage}, which correspond to the generic parameters of the \texttt{RazorTemplateProcessor} class, described in section~\ref{sec:architecture-eight-templates}.
 Each of the templates accepts the parameters outlined in section~\ref{sec:architecture-template-vars}; however, only the \texttt{Model} parameter is typically used directly in the template itself.
 Other parameters, such as \texttt{TopMenuData}, are usually passed to descendant components as cascading values, which are explained in further detail in the official documentation~\cite{razor_cascading_values}.
 The entire UI is composed of many reusable components; for example, the documentation of parameters is stored within a separate component, which is then reused by methods, operators, and constructors.
@@ -591,7 +593,7 @@ However, it is important to note that this list is not exhaustive, as these colo
 \label{table:ui-refdocgen-colors}
 \end{table}
 
-Thus, e.g., the field signatures, displayed on the \texttt{ObjectTypePage}, are styled the same way as the example shown in Figure~\ref{lst:ui-example-field-colors}. The actual text colors are defined in the \texttt{styles.scss} file.
+Thus, e.g., the field declarations, displayed on the \texttt{ObjectTypePage}, are styled the same way as the example shown in Figure~\ref{lst:ui-example-field-colors}. The actual text colors are defined in the \texttt{styles.scss} file.
 
 \begin{listing}[H]
 \begin{lstlisting}[language=HTML]
@@ -602,7 +604,7 @@ Thus, e.g., the field signatures, displayed on the \texttt{ObjectTypePage}, are 
     int
 </span>
 <span class="refdocgen-text-primary">
-    age
+    value
 </span>
 \end{lstlisting}
 \caption{Example field signature HTML}
@@ -615,59 +617,77 @@ Thus, e.g., the field signatures, displayed on the \texttt{ObjectTypePage}, are 
 The documentation supports both light and dark themes by using the \texttt{data-bs-theme} attribute, provided by \textit{Bootstrap}.
 This attribute, assigned to the \texttt{<html>} element, can be set to either \texttt{light} or \texttt{dark} value.
 When set to a given value, all elements in the document are automatically styled accordingly.
-Furthermore, the text color classes, mentioned in the previous chapter, change their appearance based on the selected theme, as specified in the \texttt{styles.scss} file.
+Furthermore, the text color classes, mentioned in the previous section, change their appearance based on the selected theme, as specified in the \texttt{styles.scss} file.
 For example, any text styled with \texttt{refdocgen-text-primary} class is displayed in black when using the light mode, and in white when the dark mode is used.
 
 The theme can be switched using the corresponding button in the top menu.
 When the button is clicked, a custom JavaScript handler is executed, which sets the \texttt{data-bs-theme} attribute to the given value.
 
-The selected theme is then saved to the local storage under the \texttt{refdocgen-theme} key; however, this applies only if the documentation is deployed on a server.
-On the other hand, if the documentation is created locally and thus accessed using the \textit{file} protocol, this does not work, because the local storage has an undefined behavior in such cases, as explained in the documentation~\cite{mdn_localstorage}.
-For that reason, if the documentation is created locally, the selected theme gets stored in the \texttt{theme} URL parameter.
+\subsection{Language-specific fragments}
 
-\subsection{Language specific fragments}
+The templates need to display language-specific fragments, for instance, the declarations of the individual types and members, as the syntax differs between various languages.
+Furthermore, unlike the language-specific data described in section~\ref{sec:architecture-lang-specifc-data-retrieval}, these data require various styling; as, for instance, the member modifiers should be displayed in a different color than the member name and type.
+Therefore, each language must define a separate set of \textit{Razor} components that represent these language-specific fragments.
 
-TODO: dopsat
+The components for a given language are stored within a subfolder of the \texttt{Components/LanguageSpecific} folder, whose name is specified in the corresponding language template model.
+For example, the components for C\# are stored within the \texttt{CSharp} folder.
+The project also includes the \texttt{Todo} folder containing empty components, which serve as a starting point when adding support for a new language.
 
-The templates need to display language-specific fragments, for instance, the signatures of the individual types and members.
-All language-specific components are stored in the \texttt{Components/LanguageSpecific} folder within the default templates directory.
-The \texttt{CSharp} subdirectory contains C\#.
+Each folder then contains the language-specific components, each corresponding to one of the 15 values of the \texttt{LanguageSpecificComponent} enum, which describes the places where language-specific data are displayed.
+All of these components have a single parameter, typically the template model, that is to be displayed.
+Additionally, each template must be named after the matching \texttt{LanguageSpecificComponent} value, with the only difference being that it is prefixed with the folder name.
+For instance, the component representing the \texttt{LanguageSpecificComponent.FieldDeclaration} fragment in C\# is named \texttt{CSharpFieldDeclaration}.
+The individual components then display the given data in the selected language; thus, e.g., the \texttt{CSharpFieldDeclaration} displays a field declaration using C\# format.
+As previously described in section~\ref{sec:ui-text-colors}, various colors are often used for various data.
 
-There is a separate component for each language-specific fragment
-The \texttt{LanguageData} component acts as a switch for all language-specific fragments.
-It accepts two parameters: an enum value representing the language-specific component type and its parameter.
-There are 
-Then, the corresponding component for each of the languages is rendered, using the Razor DynamicComponent (ref: https://learn.microsoft.com/en-us/aspnet/core/blazor/components/dynamiccomponent)
+Displaying of all language-specific fragments is handled by the \texttt{Language\-Fragments} component, which has the following two parameters:
 
-For each language-specific fragment, there is a separate component in each language.
+\begin{itemize}
+    \item \texttt{Type} -- a value of the \texttt{LanguageSpecificComponent} enum describing what language-specific fragment should be rendered.
+    \item \texttt{Parameter} -- an object that is passed to the fragment component as a parameter.
+\end{itemize}
 
-The default implementation used only C\#, so only C\# components are there.
+Hence, for example, to render a field declaration, we need to pass the \texttt{Language\-SpecificComponent.FieldDeclaration} value, together with the template model of the field, as displayed in Figure~\ref{fig:lang-fragments}.
+Additionally, the \texttt{LanguageFragments} component also uses the \texttt{Languages} cascading value, introduced in section~\ref{sec:architecture-template-vars}, to obtain all languages.
+Then, it simply renders the given fragment in all available languages.
+The corresponding component for each language is found automatically by its name and rendered as a 
+\textit{DynamicComponent}, which is explained in more detail in the official documentation~\cite{aspnet_dynamic_component}.
 
-Internally, it defines a CSS class for each language, which matches the identifier.
-Thus, if C\# has \textit{csharp-lang} identifier, if it's selected, all elements with this class become visible.
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\linewidth]{img/language-fragments.png}
+\caption{Rendering language-specific fragments}
+\label{fig:lang-fragments}
+\end{figure}
 
-There are 2 major components
+\subsubsection{Displaying the fragments in the selected language}
+All HTML elements representing the language-specific fragments are, by default, hidden and have the \texttt{data-language} attribute set to the corresponding language ID.
+Thus, for example, the C\# fragments are marked with the \texttt{data-language="csharp-lang"} attribute.
+In addition to that, the \texttt{<html>} element also has the \texttt{data-language} attribute, which indicates the currently selected language.
 
-\texttt{LanguageSpecificStrings} simply prints the \texttt{LanguageSpecificData<string>} instance in all languages.
-
-\texttt{html[data-language=XX] [data-language=XX]}
-Such rule is defined programmatically, using Razor for each of the available languages.
+Next, we have defined the following CSS rule, which selects the following elements:
+\texttt{html[data-language=XX] [data-language=XX]}, where \texttt{XX} is the language ID, and makes them visible.
+Such a rule is defined programmatically, using \textit{Razor}, for each of the available languages.
+This way, only the fragments in the currently selected language are displayed.
 
 \subsubsection{Switching the language}
 \label{sec:ui-langauge-switching}
 
-The language, in which the language-specific fragments are displayed, can be selected using a dropdown, which gets populated with the \texttt{Languages} data, mentioned in section~\ref{sec:architecture-template-vars}. 
+The language in which the language-specific fragments are displayed is selected using a dropdown, which gets populated with the \texttt{Languages} data, mentioned in section~\ref{sec:architecture-template-vars}. 
 When a language is selected, a custom JavaScript handler is executed, similarly to when switching themes.
-The selected language identifier is then assigned to the \texttt{data-language} attribute of the \texttt{<html>} element, and thus, the language-specific fragments are displayed in the selected language.
-Additionally, the language is stored either in the local storage under the \texttt{refdocgen-language} key, or in the \texttt{lang} URL parameter, based on where the documentation is deployed.
-The whole process is similar to switching themes.
+The selected language identifier is then assigned to the \texttt{data-language} attribute of the \texttt{<html>} element, which makes the language-specific fragments in this language visible.
 
 \subsection{Persisting the selected theme and language}
 
-As mentioned in sections~\ref{sec:ui-themes} and~\ref{sec:ui-langauge-switching}, both the selected theme and language are persisted in the local storage if the documentation is deployed on a server.
-However, since this approach cannot be used if the documentation is created locally, as explained in section~\ref{sec:ui-themes}, both values are stored in URL parameters in this case.
-To ensure persistence of those values, a custom JavaScript function is executed when the page is loaded.
-The function finds all relative links in the document (i.e., the \texttt{<a href="..">} elements) and appends the \texttt{theme} and \texttt{lang} parameters to the target URLs.
+In section~\ref{sec:ui-themes}, we described that when the theme is switched, the value of the \texttt{data-bs-theme} attribute is updated accordingly by a JavaScript function.
+Since we want to persist this value, the selected theme is also saved to the local storage of the browser under the \texttt{refdocgen-theme} key; however, this applies only if the documentation is deployed on a server.
+On the other hand, if the documentation is created locally and thus accessed using the \textit{file} protocol, this does not work, because the local storage has an undefined behavior in such cases, as explained in the MDN Web documentation~\cite{mdn_localstorage}.
+For that reason, if the documentation is created locally, the selected theme gets stored in the \texttt{theme} URL parameter.
+Similarly, for languages, the selected language identifier is stored either in the local storage under the \texttt{refdocgen-language} key, or in the \texttt{lang} URL parameter, based on where the documentation is deployed.
+
+Additionally, if the documentation is created locally, all links within the documentation must be updated to include the correct URL parameters.
+Thus, a custom JavaScript function, named \texttt{updateRelativeLinks}, is called when a page is loaded.
+This function finds all relative links in the document (i.e., the \texttt{<a href="..">} elements) and appends the \texttt{theme} and \texttt{lang} parameters to the target URLs.
 
 Next, there is another JavaScript function that is executed before each page is loaded.
 This function checks whether the selected theme and language values are stored in local storage (if the documentation is deployed on a server) or in the URL parameters (if the documentation is created locally).
@@ -722,9 +742,9 @@ The \texttt{DocumentationTestCollection} uses the DLL and XML documentation file
 Thus, before all tests are run, the documentation is generated, and after the tests terminate, the folder with the documentation is deleted.
 There is also the \texttt{VersionedDocumentationTestCollection} collection fixture, which creates documentation with multiple versions and is used by a handful of other tests.
 
-\begin{figure}
+\begin{figure}[H]
 \centering
-\includegraphics[width=0.85\linewidth]{img/integration-tests.png}
+\includegraphics[width=0.8\linewidth]{img/integration-tests.png}
 \caption{Integration tests -- architecture}
 \label{fig:integration-tests-architecture}
 \end{figure}
