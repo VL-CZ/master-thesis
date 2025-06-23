@@ -130,7 +130,7 @@ Moreover, when using the \texttt{ITypeRegistry} interface, the types are not ret
 Hence, there is a corresponding interface for each of the type classes; for example, the \texttt{IObjectTypeData} interface is implemented by the \texttt{ObjectTypeData} class.
 The inheritance structure of these interfaces is displayed in Figure~\ref{fig:types-abstract}.
 
-Accordingly, the members within a type are also returned as interfaces, which allow us to only read the data.
+Accordingly, the members within a type are also returned as interfaces, which allow us only to read the data.
 As with types, there is a separate interface for each of the member classes; for example, the \texttt{FieldData} class implements the \texttt{IFieldData} interface.
 In addition, several super-interfaces represent common properties of a selection of members, as shown in Figure~\ref{fig:member-interfaces}.
 Using the \texttt{IParametrizedMemberData} interface, which represents a member that may have parameters (i.e., a constructor, method, or an indexer), it is possible to handle those types in the same way.
@@ -375,7 +375,7 @@ This is because they are processed almost identically as the \texttt{<see>} elem
 As mentioned earlier, the template models include language-specific data, such as type and member modifiers.
 Thus, the template model creators must be capable of getting such data in all available languages.
 
-In the codebase, each supported language is represented by a class implementing the \texttt{ILanguage\-Configuration} interface, which defines the contract for obtaining all language-specific data.
+In the codebase, each supported language is represented by a class implementing the \texttt{ILanguage\-Configuration} interface, which defines the contract for obtaining language-specific data.
 More specifically, the interface declares methods for retrieving modifiers for various kinds of types and members, as well as methods for obtaining the type name, language identifier, and other relevant information.
 The returned data are language-dependent; for instance, the modifiers are returned in a string array.
 
@@ -564,7 +564,7 @@ Then, several custom CSS rules, often extending the \textit{Bootstrap} classes u
 This way, several of the transformed inner XML tags, described in section~\ref{sec:architecture-inner-xml-to-html}, are styled.
 For example, the \texttt{.refdocgen-see-cref} class, which is assigned to the transformed \texttt{<see cref="...">} XML tags, is configured to extend the \texttt{link-offset-2} CSS class, provided by \textit{Bootstrap}.
 
-After every change, the SCSS must be recompiled manually to create the final CSS using the \texttt{sass Scss/styles.scss Static/styles.css --style=compressed} command executed from the default templates folder.
+After every change, the SCSS must be recompiled manually to create the final CSS using the \texttt{sass Scss/styles.scss Static/styles.css --style=com\-pressed} command executed from the default templates folder.
 This way, both the custom and the \textit{Bootstrap} styles get together stored in the \texttt{Static/styles.css} file, which is then referenced from the templates.
 
 \subsubsection{Text colors}
@@ -572,8 +572,8 @@ This way, both the custom and the \textit{Bootstrap} styles get together stored 
 
 Additionally, three custom text color styles, used across the documentation pages, are defined in the \texttt{styles.scss} file.
 The corresponding CSS classes are named: \texttt{refdocgen-text-primary}, \texttt{-secondary} and \texttt{-tertiary}.
-Table~\ref{table:ui-refdocgen-colors} shows the major places in the individual pages where the \texttt{primary} and \texttt{secondary} text colors are used.
-Additionally, the \texttt{tertiary} color is used mostly for modifiers.
+Table~\ref{table:ui-refdocgen-colors} shows the major places in the individual pages where the \texttt{primary} and \texttt{secondary} text colors are used, 
+while the \texttt{tertiary} color is used mainly for modifiers.
 However, it is important to note that this list is not exhaustive, as these colors are also used in various other places throughout the documentation.
 
 \begin{table}[h]
@@ -582,11 +582,11 @@ However, it is important to note that this list is not exhaustive, as these colo
 \hline
 \textbf{} & \textbf{primary} & \textbf{secondary} \\
 \hline
-\textbf{Type pages} & Type, member, and parameter names & Member, parameter and return types \\
+\texttt{ObjectTypePage EnumTypePage DelegateTypePage} & type, member, and parameter names & member, parameter and return types \\
 \hline
-\textbf{NamespacePage} & Namespace names & Type names \\
+\texttt{NamespacePage} & namespace names & type names \\
 \hline
-\textbf{AssemblyPage, ApiHomePage} & Assembly and namespace names & Type names \\
+\texttt{AssemblyPage ApiHomePage} & assembly and namespace names & type names \\
 \hline
 \end{tabular}
 \caption{Custom color classes -- usage}
@@ -607,7 +607,7 @@ Thus, e.g., the field declarations, displayed on the \texttt{ObjectTypePage}, ar
     value
 </span>
 \end{lstlisting}
-\caption{Example field signature HTML}
+\caption{Example field declaration HTML}
 \label{lst:ui-example-field-colors}
 \end{listing}
 
@@ -626,7 +626,7 @@ When the button is clicked, a custom JavaScript handler is executed, which sets 
 \subsection{Language-specific fragments}
 
 The templates need to display language-specific fragments, for instance, the declarations of the individual types and members, as the syntax differs between various languages.
-Furthermore, unlike the language-specific data described in section~\ref{sec:architecture-lang-specifc-data-retrieval}, these data require various styling; as, for instance, the member modifiers should be displayed in a different color than the member name and type.
+Furthermore, unlike the language-specific data described in section~\ref{sec:architecture-lang-specifc-data-retrieval}, these data require various styling, as, for instance, the member modifiers should be displayed in a different color than the member name and type.
 Therefore, each language must define a separate set of \textit{Razor} components that represent these language-specific fragments.
 
 The components for a given language are stored within a subfolder of the \texttt{Components/LanguageSpecific} folder, whose name is specified in the corresponding language template model.
@@ -634,16 +634,16 @@ For example, the components for C\# are stored within the \texttt{CSharp} folder
 The project also includes the \texttt{Todo} folder containing empty components, which serve as a starting point when adding support for a new language.
 
 Each folder then contains the language-specific components, each corresponding to one of the 15 values of the \texttt{LanguageSpecificComponent} enum, which describes the places where language-specific data are displayed.
-All of these components have a single parameter, typically the template model, that is to be displayed.
+All of these components have a single parameter, typically the template model, that is being displayed.
 Additionally, each template must be named after the matching \texttt{LanguageSpecificComponent} value, with the only difference being that it is prefixed with the folder name.
 For instance, the component representing the \texttt{LanguageSpecificComponent.FieldDeclaration} fragment in C\# is named \texttt{CSharpFieldDeclaration}.
-The individual components then display the given data in the selected language; thus, e.g., the \texttt{CSharpFieldDeclaration} displays a field declaration using C\# format.
-As previously described in section~\ref{sec:ui-text-colors}, various colors are often used for various data.
+The individual components then display the given data in the selected language; thus, e.g., the \texttt{CSharpFieldDeclaration} displays a field declaration using C\# syntax.
+As previously described in section~\ref{sec:ui-text-colors}, various colors are often used for different data.
 
 Displaying of all language-specific fragments is handled by the \texttt{Language\-Fragments} component, which has the following two parameters:
 
 \begin{itemize}
-    \item \texttt{Type} -- a value of the \texttt{LanguageSpecificComponent} enum describing what language-specific fragment should be rendered.
+    \item \texttt{Type} -- a value of the \texttt{LanguageSpecificComponent} enum describing which language-specific fragment should be rendered.
     \item \texttt{Parameter} -- an object that is passed to the fragment component as a parameter.
 \end{itemize}
 
@@ -675,7 +675,7 @@ This way, only the fragments in the currently selected language are displayed.
 
 The language in which the language-specific fragments are displayed is selected using a dropdown, which gets populated with the \texttt{Languages} data, mentioned in section~\ref{sec:architecture-template-vars}. 
 When a language is selected, a custom JavaScript handler is executed, similarly to when switching themes.
-The selected language identifier is then assigned to the \texttt{data-language} attribute of the \texttt{<html>} element, which makes the language-specific fragments in this language visible.
+The selected language identifier is then assigned to the \texttt{data-language} attribute of the \texttt{<html>} element, which makes the language-specific fragments in the given language visible.
 
 \subsection{Persisting the selected theme and language}
 
@@ -816,11 +816,212 @@ This way, a linear history of the \textit{master} branch is achieved.
 
 \section{Extensibility}
 
-\subsection{Custom Razor Templates}
-Step-by-step guide
+This section describes how the program can be extended to include additional templates or support a new language.
 
-\subsection{Custom Template Generator}
+\subsection{Custom Razor templates}
+
+It is possible to provide custom \textit{Razor} templates, instead of the default ones.
+In this case, the structure of the documentation remains the same as when the default UI is used.
+Thus, the output folder structure also looks the same, only the content of the individual files differs.
+
+When adding custom \textit{Razor} templates, we first navigate to the \texttt{TemplateProcessors} folder, copy the \texttt{Todo} subfolder, and rename it using a name that matches the description of the templates (such as \texttt{RazorMinimal}).
+Next, we provide the code of each of the 8 \textit{Razor} templates.
+There are several rules that we must follow.
+
+\begin{itemize}
+    \item All template parameters must stay the same.
+    \item The elements representing members at the type page should be marked with id equal to the member id.
+    \item To support versioning, each page must contain an HTML element with id \texttt{version-list}.
+The JSON array of available page version identifiers will be automatically inserted there.
+In order to process it, we may use JavaScript.
+    \item We may provide custom CSS and JS as well, see the Static folder. This folder gets copied as it is into the output directory.
+    \item The templates do not necessarily need to display data in multiple languages. However, in such cases, it should be clear from the folder name -- e.g. \texttt{CSharpRazorMinimal}
+    \item Some of the data, such as field modifiers, are represented as objects of \texttt{LanguageSpecificData<T>} type, 
+which works as a dictionary, indexed by language IDs.
+To access the data in the given language, we need to know the \texttt{LanguageId}, defined in the language configuration.
+If we use, for example, the \texttt{"my-lang"} as the ID, we can access the field modifiers for this language by calling \texttt{field.Modifiers["my-lang"]}
+\end{itemize}
+
+It is possible to take inspiration from the default UI, and use the Layout in a similar way.
+
+Next, provide styles for the inner XML tags.
+There are two options; to reuse the existing configuration or create a custom one.
+
+\subsubsection{Default inner XML tag mapping}
+
+The default configuration (i.e., the \texttt{DocCommentHtmlConfiguration} class) is likely sufficient in most cases.
+The inner XML tags and their corresponding HTML elements are shown in Table~\ref{table:default-xml-config}.
+None of the resulting HTML elements has a hard-coded style; instead, each of them is assigned a custom CSS class, whose name starts with \textit{refdocgen}.
+Thus, the style can be configured using CSS, similarly to what the default UI does, as described in section XX.
+We can also notice that the \texttt{<code>} XML tag is a bit different, as it gets replaced by two HTML elements.
+
+Next, for some tags, their HTML representation differs depending on whether they are contained within a bullet or numbered list, or within a table (i.e., a \texttt{<list type="table">} tag), as displayed in Tables~\ref{table:default-xml-config-inside-list} and~\ref{table:default-xml-config-inside-table}.
+Additionally, for tags with the \texttt{cref} attribute, the output depends on whether the program is able to resolve a link to the referenced type or member.
+If the link is resolved, the HTML elements shown in Table~\ref{table:default-xml-config-cref-found} are applied, while if the link is not found, the elements listed in Table~\ref{table:default-xml-config-cref-not-found} are used instead.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{5cm}|p{8cm}|}
+\hline
+\textbf{XML tag} & \textbf{HTML representation} \\ \hline
+\texttt{<para>} & \texttt{<div class="refdocgen-paragraph">} \\ \hline
+\texttt{<list type="bullet">} & \texttt{<ul class="refdocgen-bullet-list">} \\ \hline
+\texttt{<list type="number">} & \texttt{<ol class="refdocgen-number-list">} \\ \hline
+\texttt{<list type="table">} & \texttt{<table class="refdocgen-table">} \\ \hline
+\texttt{<listheader>} & \texttt{<thead class="refdocgen-table-header">} \\ \hline
+\texttt{<c>} & \texttt{<code class="refdocgen-inline-code">} \\ \hline
+\texttt{<example>} & \texttt{<div class="refdocgen-example">} \\ \hline
+\texttt{<paramref>} & \texttt{<code class="refdocgen-paramref">} \\ \hline
+\texttt{<typeparamref>} & \texttt{<code class="refdocgen-typeparamref">} \\ \hline
+\texttt{<see href="...">} & \texttt{<a href="..." class="refdocgen-see-href">} \\ \hline
+\texttt{<see langword="...">} & \texttt{<code class="refdocgen-see-langword">} \\ \hline
+\texttt{<seealso href="...">} & \texttt{<a href="..." class="refdocgen-seealso-href">} \\ \hline
+\texttt{<code>} & \texttt{<pre><code class="refdocgen-code-block"></code></pre>} \\ \hline
+\end{tabular}
+\caption{Mapping of inner XML tags to HTML}
+\label{table:default-xml-config}
+\end{table}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{5cm}|p{8cm}|}
+\hline
+\textbf{XML tag} & \textbf{HTML representation} \\ \hline
+\texttt{<term>} & \texttt{<span class="refdocgen-list-term">} \\ \hline
+\texttt{<description>} & \texttt{<span class="refdocgen-list-description">} \\ \hline
+\texttt{<item>} & \texttt{<li class="refdocgen-list-item">} \\ \hline
+\end{tabular}
+\caption{Mapping of inner XML tags used within a bullet/number list to HTML}
+\label{table:default-xml-config-inside-list}
+\end{table}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{5cm}|p{8cm}|}
+\hline
+\textbf{XML tag} & \textbf{HTML representation} \\ \hline
+\texttt{<term>} & \texttt{<td class="refdocgen-table-term">} \\ \hline
+\texttt{<description>} & \texttt{<td class="refdocgen-table-element">} \\ \hline
+\texttt{<item>} & \texttt{<tr class="refdocgen-table-item">} \\ \hline
+\end{tabular}
+\caption{Mapping of inner XML tags used within a table to HTML}
+\label{table:default-xml-config-inside-table}
+\end{table}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{5cm}|p{8cm}|}
+\hline
+\textbf{XML tag} & \textbf{HTML representation} \\ \hline
+\texttt{<see cref="...">} & \texttt{<a href="..." class="refdocgen-see-cref">} \\ \hline
+\texttt{<seealso cref="...">} & \texttt{<a href="..." class="refdocgen-seealso-cref">} \\ \hline
+\end{tabular}
+\caption{Custom color classes -- usage}
+\label{table:default-xml-config-cref-found}
+\end{table}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{5cm}|p{8cm}|}
+\hline
+\textbf{XML tag} & \textbf{HTML representation} \\ \hline
+\texttt{<see>} & \texttt{<code class="refdocgen-see-cref-not-found">} \\ \hline
+\texttt{<seealso>} & \texttt{<code class="refdocgen-seealso-cref-not-found">} \\ \hline
+\end{tabular}
+\caption{Custom color classes -- usage}
+\label{table:default-xml-config-cref-not-found}
+\end{table}
+
+The individual CSS classes may be styled using the CSS
+
+\subsubsection{Custom inner XML tag mapping}
+
+We need to create a custom configuration, representing the custom mapping between the inner XML tags and the corresponding HTML elements.
+Create a class named, for instance, \texttt{XX} and store it into \texttt{RazorMinimal} folder.
+Next, implement the \texttt{IDocCommentHtmlConfiguration} interface.
+Each target element could be either a single element or several nested elements inside each other.
+
+href attribute automatically.
+
+Then, 
+
+However, if we want to provide just a couple of HTML elements, and keep the rest as it is in the default configuration, there is a simpler way.
+In this case, instead of implementing \texttt{IDocCommentHtmlConfiguration}, we may just inherit the \texttt{DocCommentHtmlConfiguration} class and override the selected properties.
+
+\begin{listing}[H]
+\begin{lstlisting}
+public XElement InlineCodeElement => new XElement("span",
+                                        new XAttribute("class", "my-class")
+                                     );
+\end{lstlisting}
+\caption{Example unit test method}
+\label{lst:extensibility-custom-html}
+\end{listing}
+
+Then, go to program.cs and set the documentationtemplate enum value.
+Then, instantiate the template processor.
+
+\subsection{Custom template processor}
+
+Another way to create custom output is to use a custom template processor.
+When doing this, we are no longer limited to \textit{Razor} templates, as we may use a templating language of our choice.
 How to create a custom non-Razor template.
+
+First, we need to create a custom \textit{template processor} class, which implements the 
+\texttt{ITemplateProcessor} interface.
+Then, we just need to add its implementation.
+
+It is worth noting that the implementation is not tied to \textit{Razor} templating language in any way; thus, it is possible to use a completely different templating system.
+Similarly, the output may not necessarily be HTML, as we can generate, e.g., the documentation in Markdown format.
+
+\subsection{Adding a new language}
+
+When adding support for a new language to the default UI, we first need to create a configuration class for the language and then provide \textit{Razor} components representing the language-specific fragments in the given language.
+
+\subsubsection{Creating new language configuration}
+
+To create a language configuration, we first need to open the \texttt{RefDocGen} project and navigate to the \texttt{TemplateProcessors/Shared/Languages} directory.
+Next, we create a copy of the \texttt{TodoLanguageConfiguration.cs} file and rename it (including the contained class) to, e.g., \texttt{MyLanguageConfiguration.cs}.
+This class defines methods for obtaining selected language-specific data, such as modifiers, type names, 
+and other relevant information, for the given language, as previously mentioned in section~\ref{sec:architecture-lang-specifc-data-retrieval}.
+
+In the next step, we add the implementation, following the documentation comments provided for each method and property.
+Specifically, when returning the modifiers, we should keep in mind that this is the preferred place to define their order and return them accordingly.
+In case of any doubts, it may be helpful to refer to the default C\# configuration, represented by \texttt{CSharpLanguageConfiguration} class, for guidance.
+
+Finally, the configuration must be added to the collection of supported languages.
+To do this, we need to locate the comment marked with \texttt{\#ADD\_LANGUAGE} in the \texttt{Program.cs} and instantiate the language configuration there, as described in the source code.
+As a result, the \texttt{MyLanguageConfiguration} will be included in the list of available language configurations.
+
+\subsubsection{Creating language-specific components}
+
+Additionally, we need to create \textit{Razor} components representing the language-specific fragments of the default UI, such as field declarations, in the given language.
+It is important to note that this cannot be done in the language configuration itself, as the fragments typically require different styling to display modifiers, member names, etc., in various colors.
+We start by navigating to the \texttt{TemplateProcessors/Default/Templates/Components/LanguageSpecific} directory, which contains a subdirectory with language-specific components for each supported language.
+Next, we copy the \texttt{Todo} directory and rename it, so that its name matches the \texttt{ComponentsFolderName} property of the previously created language configuration.
+Thus, if we set the \texttt{ComponentsFolderName} to \texttt{"MyLang"}, the folder must be named \texttt{MyLang}.
+Moreover, each component inside the folder must be renamed to start with \texttt{MyLang} instead of \texttt{Todo}.
+Hence, for example, the \texttt{TodoFieldDeclaration} component needs to be renamed to \texttt{MyLangFieldDeclaration}.
+
+Following that, we need to add the code to each component, which defines how the corresponding fragment is displayed in the given language.
+There is a comment inside each component, which specifies what should be rendered; it is also possible 
+(and recommended) to get inspiration from the default C\# templates, stored in the \texttt{CSharp} folder.
+Also, a few points should be kept in mind:
+First, the component parameters must remain unchanged, so renaming them or adding new ones is not supported.
+Additionally, the font size and weight are set automatically, as the rendered component is put inside a pre-styled \texttt{<span>} element, which also means that the component content should be inline.
+
+However, the text coloring needs to be defined manually, and
+it is advised to use the same color scheme as the default C\# fragments. 
+Hence, the \texttt{refdocgen-text-primary} CSS class should be used for type and member names, while
+for member, parameter, and return types, as well as for the type parameters, we should use the \texttt{refdocgen-text-secondary} and \texttt{refdocgen-link-secondary} classes (depending on whether the link is found or not).
+Additionally, it is preferred to use the \texttt{refdocgen-text-tertiary} class for displaying modifiers.
+
+Finally, as explained in section~\ref{sec:architecture-template-models}, some of the data, such as field modifiers, are represented as objects of \texttt{LanguageSpecificData<T>} type, 
+which works as a dictionary, indexed by language IDs.
+To access the data in the given language, we need to know the \texttt{LanguageId}, defined in the language configuration.
+If we use, for example, the \texttt{"my-lang"} as the ID, we can access the field modifiers for this language by calling \texttt{field.Modifiers["my-lang"]}.
+
+This way, the language is added to the documentation.
 
 \chapter{Evaluation}
 
