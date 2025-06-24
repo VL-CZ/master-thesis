@@ -291,6 +291,7 @@ Similarly to \texttt{CodeLinkTM}, there is the \texttt{GenericTypeLinkTM} class,
 These template models are used to represent the type of a field, parameter, return type of a method, etc., and thus, creating cross-references in the templates is quite straightforward.
 
 \subsection{Template model creators}
+\label{sec:architecture-tm-creators}
 
 The template model creators (TM creators) are used by the \texttt{RazorTemplate\-Processor} to create the individual template models.
 There are multiple creators, as displayed in Figure~\ref{fig:tm-creators}; the
@@ -500,6 +501,7 @@ On top of that, three other variables are passed exclusively to the \textit{stat
 \end{itemize}
 
 \subsubsection{Output directory structure}
+\label{sec:output-dir-structure}
 
 The \texttt{RazorTemplateProcessor} stores all \textit{type}, \textit{namespace}, and \textit{assembly} pages to the \texttt{api/} subfolder of the output folder, while the HTML file names match the IDs of the template models.
 For a namespace template model, its ID corresponds to the namespace name; similarly, for assemblies, it matches the assembly name, with the only difference being that it has the suffix \textit{-DLL}.
@@ -539,6 +541,7 @@ out/
 \end{listing}
 
 \section{Default templates}
+\label{sec:default-templates-overview}
 
 The default Razor templates are stored in the \texttt{src/RefDocGen/Template\-Processors/Default/Templates} directory.
 There are eight top-level templates: \texttt{ObjectTypePage}, \texttt{EnumTypePage}, \texttt{DelegateTypePage}, \texttt{NamespacePage}, \texttt{Assem\-blyPage}, \texttt{ApiHomePage}, \texttt{StaticPage}, and \texttt{SearchPage}, which correspond to the generic parameters of the \texttt{RazorTemplateProcessor} class, described in section~\ref{sec:architecture-eight-templates}.
@@ -553,6 +556,7 @@ It specifies both top and bottom menus; thus, each of the eight top-level pages 
 The cascading values, for instance \texttt{TopMenuData}, are typically consumed either by the layout itself or by one of its descendant components.
 
 \subsection{UI styling}
+\label{sec:ui-styling}
 
 As discussed in section~\ref{sec:tech-analysis-ui-framework}, the components and styles provided by the \textit{Bootstrap} framework~\cite{boostrap} are used for styling the user interface.
 For example, the top menu, as well as the links, make use of the \textit{Bootstrap} classes; furthermore, \textit{Bootstrap} also ensures the responsiveness of the UI.
@@ -624,6 +628,7 @@ The theme can be switched using the corresponding button in the top menu.
 When the button is clicked, a custom JavaScript handler is executed, which sets the \texttt{data-bs-theme} attribute to the given value.
 
 \subsection{Language-specific fragments}
+\label{sec:ui-language-fragments}
 
 The templates need to display language-specific fragments, for instance, the declarations of the individual types and members, as the syntax differs between various languages.
 Furthermore, unlike the language-specific data described in section~\ref{sec:architecture-lang-specifc-data-retrieval}, these data require various styling, as, for instance, the member modifiers should be displayed in a different color than the member name and type.
@@ -799,7 +804,7 @@ Except for a few exceptions, specified in the \texttt{.editorconfig} file in the
 For example, we have configured the system to use type inference when possible, except in cases where the type is one of the built-in types.
  
 \subsection*{Workflow}
-The project is hosted in a public GitHub repository at the following URL: https://github.com/VL-CZ/refdocgen.
+The project is hosted in a public GitHub repository at the following URL: \url{https://github.com/VL-CZ/refdocgen}.
 When developing, we use the following conventions.
 For each task, we first create a separate branch, named \textit{feature/XX-description}, where \textit{XX} refers to the task ID, and \textit{description} is a brief description of the task, with words separated by hyphens.
 Once the work is completed, we create a pull request, named \textit{[T-XX] description}.
@@ -816,47 +821,52 @@ This way, a linear history of the \textit{master} branch is achieved.
 
 \section{Extensibility}
 
-This section describes how the program can be extended to include additional templates or support a new language.
+This section describes how the program can be extended.
+It is possible to provide custom \textit{Razor} templates as well as a custom template processor.
+Moreover, we can also add support for a new language to the default UI.
 
 \subsection{Custom Razor templates}
+\label{sec:extensibility-custom-razor}
 
-It is possible to provide custom \textit{Razor} templates, instead of the default ones.
-In this case, the structure of the documentation remains the same as when the default UI is used.
-Thus, the output folder structure also looks the same, only the content of the individual files differs.
+It is possible to provide custom \textit{Razor} templates, instead of the default ones, as previously mentioned in section~\ref{sec:architecture-eight-templates}.
+This allows us to declare a custom UI; however, the overall structure of the documentation remains the same as when the default templates are used.
+Likewise, the output folder structure remains as described in section~\ref{sec:output-dir-structure}.
 
-When adding custom \textit{Razor} templates, we first navigate to the \texttt{TemplateProcessors} folder, copy the \texttt{Todo} subfolder, and rename it using a name that matches the description of the templates (such as \texttt{RazorMinimal}).
-Next, we provide the code of each of the 8 \textit{Razor} templates.
-There are several rules that we must follow.
+To add custom \textit{Razor} templates, we first navigate to the \texttt{TemplateProcessors} folder in the \texttt{RefDocGen} project, copy the \texttt{Todo} subfolder, and rename it to reflect the design of the templates (for example, \texttt{RazorMinimal}).
+Next, we provide the implementation of the eight \textit{Razor} templates, located in the \texttt{Templates} subfolder.
+Each template includes a description of its intended usage and parameters.
+We may design the UI arbitrarily and use any UI framework of our choice; however,
+several points should be taken into account:
 
 \begin{itemize}
     \item All template parameters must stay the same.
-    \item The elements representing members at the type page should be marked with id equal to the member id.
-    \item To support versioning, each page must contain an HTML element with id \texttt{version-list}.
-The JSON array of available page version identifiers will be automatically inserted there.
-In order to process it, we may use JavaScript.
-    \item We may provide custom CSS and JS as well, see the Static folder. This folder gets copied as it is into the output directory.
-    \item The templates do not necessarily need to display data in multiple languages. However, in such cases, it should be clear from the folder name -- e.g. \texttt{CSharpRazorMinimal}
+    \item The HTML elements representing members on type pages should have the \texttt{id} equal to the member ID.
+    \item The \texttt{Templates/Static} folder gets copied as it is into the output directory.
+    Thus, if we want to provide custom CSS and JavaScript, we should place them in this folder.
+    For instance, we can use the provided \texttt{styles.css} and \texttt{script.js} files.
+    \item To support versioning, each page must contain an HTML element with the \texttt{id="version-list"}.
+    The JSON array of available version identifiers will be automatically inserted there, as described in section~\ref{sec:architecture-doc-versions}.
+    Then, when the page is loaded, we can process these values using JavaScript, and, for example, insert them into a dropdown, similarly to the default templates. 
     \item Some of the data, such as field modifiers, are represented as objects of \texttt{LanguageSpecificData<T>} type, 
 which works as a dictionary, indexed by language IDs.
-To access the data in the given language, we need to know the \texttt{LanguageId}, defined in the language configuration.
-If we use, for example, the \texttt{"my-lang"} as the ID, we can access the field modifiers for this language by calling \texttt{field.Modifiers["my-lang"]}
+Currently, only the C\# language is supported; thus, to obtain C\# data, we can use the \texttt{LanguageSpecificData<T>.CSharpData} property.
+Optionally, the templates may be designed to be extensible for adding new languages, similarly to the default UI, as described in section~\ref{sec:ui-language-fragments}.
 \end{itemize}
 
-It is possible to take inspiration from the default UI, and use the Layout in a similar way.
+It is recommended, although not mandatory, to get inspiration from the default templates, described in section~\ref{sec:default-templates-overview}, and similarly compose the UI from many reusable components.
+However, it is typically not possible to reuse the components from the default UI, because they already use the \textit{Bootstrap} framework.
+In addition to the templates, it is necessary to configure the style of the inner XML tags transformed to HTML, as explained in section~\ref{sec:architecture-inner-xml-to-html} in greater detail.
+There are two options: to reuse the default configuration or create a custom one.
 
-Next, provide styles for the inner XML tags.
-There are two options; to reuse the existing configuration or create a custom one.
+\subsubsection{Using the default configuration}
 
-\subsubsection{Default inner XML tag mapping}
+The default configuration (i.e., the \texttt{DocCommentHtmlConfiguration} class), which replaces the inner XML tags with the HTML elements listed in Table~\ref{table:default-xml-config}, is probably sufficient in most cases.
+None of the resulting HTML elements has a hard-coded style; instead, each of them is assigned a custom CSS class, whose name starts with \textit{refdocgen}; so, the style can be later configured using CSS.
+It is also worth noting that the \texttt{<code>} XML tag is a special case, as it gets replaced by two nested HTML elements.
+Additionally, we can notice that besides the inner tags, the \texttt{<seealso>} tags are also processed by the configuration.
 
-The default configuration (i.e., the \texttt{DocCommentHtmlConfiguration} class) is likely sufficient in most cases.
-The inner XML tags and their corresponding HTML elements are shown in Table~\ref{table:default-xml-config}.
-None of the resulting HTML elements has a hard-coded style; instead, each of them is assigned a custom CSS class, whose name starts with \textit{refdocgen}.
-Thus, the style can be configured using CSS, similarly to what the default UI does, as described in section XX.
-We can also notice that the \texttt{<code>} XML tag is a bit different, as it gets replaced by two HTML elements.
-
-Next, for some tags, their HTML representation differs depending on whether they are contained within a bullet or numbered list, or within a table (i.e., a \texttt{<list type="table">} tag), as displayed in Tables~\ref{table:default-xml-config-inside-list} and~\ref{table:default-xml-config-inside-table}.
-Additionally, for tags with the \texttt{cref} attribute, the output depends on whether the program is able to resolve a link to the referenced type or member.
+Next, for some tags, their HTML representation differs depending on whether they are contained within a bullet or numbered list, or within a table (i.e., \texttt{<list type="table">}) tag, as displayed in Tables~\ref{table:default-xml-config-inside-list} and~\ref{table:default-xml-config-inside-table}.
+Additionally, for tags with the \texttt{cref} attribute, the resulting HTML depends on whether the program is able to resolve a link to the referenced type or member.
 If the link is resolved, the HTML elements shown in Table~\ref{table:default-xml-config-cref-found} are applied, while if the link is not found, the elements listed in Table~\ref{table:default-xml-config-cref-not-found} are used instead.
 
 \begin{table}[H]
@@ -916,7 +926,7 @@ If the link is resolved, the HTML elements shown in Table~\ref{table:default-xml
 \texttt{<see cref="...">} & \texttt{<a href="..." class="refdocgen-see-cref">} \\ \hline
 \texttt{<seealso cref="...">} & \texttt{<a href="..." class="refdocgen-seealso-cref">} \\ \hline
 \end{tabular}
-\caption{Custom color classes -- usage}
+\caption{Mapping of inner XML tags to HTML -- link resolved}
 \label{table:default-xml-config-cref-found}
 \end{table}
 
@@ -925,54 +935,147 @@ If the link is resolved, the HTML elements shown in Table~\ref{table:default-xml
 \begin{tabular}{|p{5cm}|p{8cm}|}
 \hline
 \textbf{XML tag} & \textbf{HTML representation} \\ \hline
-\texttt{<see>} & \texttt{<code class="refdocgen-see-cref-not-found">} \\ \hline
-\texttt{<seealso>} & \texttt{<code class="refdocgen-seealso-cref-not-found">} \\ \hline
+\texttt{<see cref="...">} & \texttt{<code class="refdocgen-see-cref-not-found">} \\ \hline
+\texttt{<seealso cref="...">} & \texttt{<code class="refdocgen-seealso-cref-not-found">} \\ \hline
 \end{tabular}
-\caption{Custom color classes -- usage}
+\caption{Mapping of inner XML tags to HTML -- link not found}
 \label{table:default-xml-config-cref-not-found}
 \end{table}
 
-The individual CSS classes may be styled using the CSS
-
-\subsubsection{Custom inner XML tag mapping}
-
-We need to create a custom configuration, representing the custom mapping between the inner XML tags and the corresponding HTML elements.
-Create a class named, for instance, \texttt{XX} and store it into \texttt{RazorMinimal} folder.
-Next, implement the \texttt{IDocCommentHtmlConfiguration} interface.
-Each target element could be either a single element or several nested elements inside each other.
-
-href attribute automatically.
-
-Then, 
-
-However, if we want to provide just a couple of HTML elements, and keep the rest as it is in the default configuration, there is a simpler way.
-In this case, instead of implementing \texttt{IDocCommentHtmlConfiguration}, we may just inherit the \texttt{DocCommentHtmlConfiguration} class and override the selected properties.
+All of these classes may then be styled using CSS.
+For instance, the style of the transformed \texttt{<para>} XML tags can be defined in CSS using the \texttt{refdocgen-paragraph} class, as shown in Listing~\ref{lst:extensibility-custom-css}.
+It is also possible to inherit existing CSS classes with the help of a CSS preprocessor, similarly to how the default UI does it, as described in section~\ref{sec:ui-styling}.
 
 \begin{listing}[H]
 \begin{lstlisting}
-public XElement InlineCodeElement => new XElement("span",
-                                        new XAttribute("class", "my-class")
-                                     );
+.refdocgen-paragraph {
+  // add custom styles
+}
 \end{lstlisting}
-\caption{Example unit test method}
+\caption{Styling of the transformed inner XML tags}
+\label{lst:extensibility-custom-css}
+\end{listing}
+
+\subsubsection{Using a custom configuration}
+
+If the default configuration does not suit our use case, we need to create a new configuration that defines a custom mapping between the inner XML tags and the target HTML elements.
+To do this, we first need to create a class named, for instance, \texttt{RazorMinimalConfiguration}, which implements the \texttt{IDocCommentHtmlConfiguration} interface, and place it into the \texttt{RazorMinimal} folder.
+Then, we need to implement the properties defined by the interface.
+The configuration uses a declarative approach, so each property represents the target HTML for the given XML tag.
+Hence, if we want the \texttt{<c>} XML tag, representing inline code, to be replaced by the \texttt{<span class="my-class">} HTML element, we should use the code shown in Listing~\ref{lst:extensibility-custom-html}.
+
+\begin{listing}[H]
+\begin{lstlisting}
+internal class RazorMinimalConfiguration 
+    : IDocCommentHtmlConfiguration
+{
+    public XElement InlineCodeElement => new XElement("span",
+            new XAttribute("class", "my-class")
+         );
+
+     ...
+}
+\end{lstlisting}
+\caption{Custom configuration mapping the XML tags to HTML.}
 \label{lst:extensibility-custom-html}
 \end{listing}
 
-Then, go to program.cs and set the documentationtemplate enum value.
-Then, instantiate the template processor.
+There are several other points we need to keep in mind:
+
+\begin{itemize}
+    \item For the links, it is not mandatory to specify the \texttt{href} attribute in the configuration, as it is added automatically.
+    \item It is generally fine to use concrete CSS classes in the custom configuration, because it is not likely to be reused, unlike the default configuration.
+    \item If we wanted to update a couple of target HTML elements in the default configuration, while keeping the rest as it is, there is another approach we can use.
+    Instead of implementing the interface, we may inherit the \texttt{DocCommentHtmlConfiguration} class and override just the selected properties.
+\end{itemize}
+
+\subsubsection{Registering the custom templates}
+\label{sec:extensibility-register-custom-razor}
+
+To register the custom templates, we first need to open \texttt{Program.cs} and locate the two comments marked with \texttt{\#ADD\_TEMPLATE}.
+As noted in the first comment, we need to add a new \texttt{DocumentationTemplate} enum value representing our templates, for example, \texttt{Minimal}.
+This value will then appear on the command line in the list of available documentation templates.
+
+Then, we should move on to the second comment.
+Here, we instantiate the template processor
+and add it to the dictionary of available documentation templates under the corresponding \texttt{DocumentationTemplate} key (\texttt{Minimal} in our case).
+This can be achieved by calling the \texttt{RazorTemplateProcessor.With} method with the type parameters corresponding to our templates, and passing the selected configuration as the first argument, as shown in the code and in the Listing~\ref{lst:extensibility-register-templates}.
+Now, it is possible to use the \texttt{Minimal} templates when generating the documentation.
+
+\begin{listing}[H]
+\begin{lstlisting}
+RazorTemplateProcessor<
+      CustomObjectTypePage,
+      CustomDelegateTypePage,
+      CustomEnumTypePage,
+      CustomNamespacePage,
+      CustomAssemblyPage,
+      CustomApiHomePage,
+      CustomStaticPage,
+      CustomSearchPage
+  >.With(
+      new DocCommentHtmlConfiguration(), // default configuration 
+      // use a custom one, if provided
+      htmlRenderer,
+      availableLanguages,
+      config.StaticPagesDirectory,
+      config.Version)
+
+\end{lstlisting}
+\caption{Using \texttt{RazorTemplateProcessor} with custom templates}
+\label{lst:extensibility-register-templates}
+\end{listing}
 
 \subsection{Custom template processor}
 
-Another way to create custom output is to use a custom template processor.
-When doing this, we are no longer limited to \textit{Razor} templates, as we may use a templating language of our choice.
-How to create a custom non-Razor template.
+Another way to customize the output is to use a custom template processor.
+When doing this, we are no longer limited to \textit{Razor} templates, as we may use any templating language of our choice.
+Similarly, the output format does not have to be HTML, as we can generate, e.g., the documentation in Markdown format.
 
-First, we need to create a custom \textit{template processor} class, which implements the 
+First, we need to create a custom template processor class, which implements the 
 \texttt{ITemplateProcessor} interface.
-Then, we just need to add its implementation.
+To do this, we open the \texttt{RefDocGen} project, navigate to \texttt{TemplateProcessors} folder and create a new folder, named, e.g., \texttt{Custom}.
+Inside this folder, we create a class, named \texttt{CustomTemplateProcessor}, for instance.
+This class must implement the \texttt{ITemplateProcessor} interface, which has a single method, \texttt{ProcessTemplates}.
 
-It is worth noting that the implementation is not tied to \textit{Razor} templating language in any way; thus, it is possible to use a completely different templating system.
-Similarly, the output may not necessarily be HTML, as we can generate, e.g., the documentation in Markdown format.
+Then, we need to add the implementation, which may be arbitrary; however, it is a good idea to follow these recommendations:
+
+\begin{itemize}
+    \item It is preferred to keep all the related code in the same folder (i.e., \texttt{Custom} in our case) or in its subfolders.
+    \item If the template processor requires additional data, we should pass these in the constructor.
+    \item Optionally, the processor may be designed in a way that allows users to provide custom templates, similarly to the \texttt{RazorTemplateProcessor}.
+    \item If the documentation generation fails, it is recommended to throw an exception with a descriptive message.
+\end{itemize}
+
+\subsubsection{Reusing existing classes}
+
+If the documentation output is HTML, we can reuse the \texttt{StaticPageProcessor} class, described in section~\ref{sec:architecture-static-pages}, to collect the static pages provided by the user.
+Similarly, the \texttt{DocVersionManager} class, introduced in Section~\ref{sec:architecture-doc-versions}, might also be used in the custom template processor.
+The only requirement is that each HTML page in the documentation must contain an element with the
+\texttt{id="version-list"}, where the JSON array of available page versions will
+be automatically placed.
+Moreover, the \texttt{DocCommentTransformer} class, described in section~\ref{sec:architecture-inner-xml-to-html} as well as its default configuration, explained in section~\ref{sec:extensibility-custom-razor}, might be reused too.
+
+Additionally, if the following two conditions hold, it is possible to reuse even the template model creators, described in the section~\ref{sec:architecture-tm-creators}.
+
+\begin{enumerate}
+    \item The default template models, mentioned in section~\ref{sec:architecture-template-models}, suit us well and we would like to use them in the templates.
+    \item The resulting documentation is designed to have the same output structure as the default templates. Thus, each type, namespace, and assembly is represented by a separate page, stored in the \texttt{api} folder. The page URL should be equal to the corresponding template model ID, as previously explained in section~\ref{sec:output-dir-structure}.
+    Additionally, on type pages, each member element should have the \texttt{id} attribute set to the corresponding member ID.
+\end{enumerate}
+
+In this case, the entire process of generating HTML is similar to that of the \texttt{RazorTemplateProcessor}, with the only difference being that another templating language is used.
+For this reason, it is recommended to use the \texttt{RazorTemplate\-Processor} class as a reference.
+Additionally, it is important to remember that the default template models store selected data as language-specific, as noted in the fifth bullet point in section~\ref{sec:extensibility-custom-razor}.
+
+\subsubsection{Registering the template processor}
+
+Next, we need to register the template processor class, which is very similar to registering custom \textit{Razor} templates, described in section~\ref{sec:extensibility-register-custom-razor}.
+In the \texttt{Program.cs}, we locate the comments marked with \texttt{\#ADD\_TEMPLATE\_PROCESSOR}.
+First, we need to add a new \texttt{DocumentationTemplate} enum value, corresponding to the custom template processor.
+Then, we must add the template processor to the set of available documentation templates.
+As stated in the second comment, this is done by adding an instance of the processor to the dictionary of available documentation templates, while the previously selected \texttt{DocumentationTemplate} value should be the key.
+Following that, the template processor is registered and added to the list of available documentation templates, displayed on the command line.
 
 \subsection{Adding a new language}
 
@@ -991,11 +1094,11 @@ In case of any doubts, it may be helpful to refer to the default C\# configurati
 
 Finally, the configuration must be added to the collection of supported languages.
 To do this, we need to locate the comment marked with \texttt{\#ADD\_LANGUAGE} in the \texttt{Program.cs} and instantiate the language configuration there, as described in the source code.
-As a result, the \texttt{MyLanguageConfiguration} will be included in the list of available language configurations.
+As a result, \texttt{MyLanguageConfiguration} will be included in the list of available language configurations.
 
 \subsubsection{Creating language-specific components}
 
-Additionally, we need to create \textit{Razor} components representing the language-specific fragments of the default UI, such as field declarations, in the given language.
+Additionally, we need to create \textit{Razor} components representing the language-specific fragments of the default UI, such as field declarations, displayed in the given language.
 It is important to note that this cannot be done in the language configuration itself, as the fragments typically require different styling to display modifiers, member names, etc., in various colors.
 We start by navigating to the \texttt{TemplateProcessors/Default/Templates/Components/LanguageSpecific} directory, which contains a subdirectory with language-specific components for each supported language.
 Next, we copy the \texttt{Todo} directory and rename it, so that its name matches the \texttt{ComponentsFolderName} property of the previously created language configuration.
@@ -1007,21 +1110,37 @@ Following that, we need to add the code to each component, which defines how the
 There is a comment inside each component, which specifies what should be rendered; it is also possible 
 (and recommended) to get inspiration from the default C\# templates, stored in the \texttt{CSharp} folder.
 Also, a few points should be kept in mind:
-First, the component parameters must remain unchanged, so renaming them or adding new ones is not supported.
-Additionally, the font size and weight are set automatically, as the rendered component is put inside a pre-styled \texttt{<span>} element, which also means that the component content should be inline.
 
-However, the text coloring needs to be defined manually, and
+\begin{itemize}
+    \item The component parameters must remain unchanged.
+    \item The font size and weight are set automatically, as the rendered component is put inside a pre-styled \texttt{<span>} element, which also means that the component content should be inline.
+    \item However, the text coloring needs to be defined manually, and
 it is advised to use the same color scheme as the default C\# fragments. 
 Hence, the \texttt{refdocgen-text-primary} CSS class should be used for type and member names, while
 for member, parameter, and return types, as well as for the type parameters, we should use the \texttt{refdocgen-text-secondary} and \texttt{refdocgen-link-secondary} classes (depending on whether the link is found or not).
 Additionally, it is preferred to use the \texttt{refdocgen-text-tertiary} class for displaying modifiers.
-
-Finally, as explained in section~\ref{sec:architecture-template-models}, some of the data, such as field modifiers, are represented as objects of \texttt{LanguageSpecificData<T>} type, 
+    \item Finally, as explained in section~\ref{sec:architecture-template-models}, some of the data, such as field modifiers, are represented as objects of \texttt{LanguageSpecificData<T>} type, 
 which works as a dictionary, indexed by language IDs.
 To access the data in the given language, we need to know the \texttt{LanguageId}, defined in the language configuration.
 If we use, for example, the \texttt{"my-lang"} as the ID, we can access the field modifiers for this language by calling \texttt{field.Modifiers["my-lang"]}.
+\end{itemize}
 
-This way, the language is added to the documentation.
+This way, the language is added to the default UI.
+
+\chapter{User Documentation}
+
+\section{Installation}
+Nuget, locally
+
+\section{Configuration}
+cmd line configuration, YAML configuration
+Include examples
+
+\section{UI}
+
+Show output structure
+
+Show each page + members
 
 \chapter{Evaluation}
 
@@ -1030,14 +1149,3 @@ This way, the language is added to the documentation.
 - describe how we generated the docs for it
 
 - add a link to the resulting HTML
-
-\chapter{User Documentation}
-
-\section{How to Use}
-Include screenshots of the result.
-
-\section{Configuration}
-\subsection{Option 1}
-\subsection{Option 2}
-
-\section{How to Make a Custom Razor Template}
