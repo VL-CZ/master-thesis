@@ -822,13 +822,12 @@ This way, a linear history of the \textit{master} branch is achieved.
 \section{Extensibility}
 
 This section describes how the program can be extended.
-It is possible to provide custom \textit{Razor} templates as well as a custom template processor.
-Moreover, we can also add support for a new language to the default UI.
+Specifically, users may provide custom \textit{Razor} templates, template processors, or add support for a new language to the default UI.
 
 \subsection{Custom Razor templates}
 \label{sec:extensibility-custom-razor}
 
-It is possible to provide custom \textit{Razor} templates, instead of the default ones, as previously mentioned in section~\ref{sec:architecture-eight-templates}.
+It is possible to use custom \textit{Razor} templates, instead of the default ones, with the \texttt{RazorTemplateProcessor} class, as previously mentioned in section~\ref{sec:architecture-eight-templates}.
 This allows us to declare a custom UI; however, the overall structure of the documentation remains the same as when the default templates are used.
 Likewise, the output folder structure remains as described in section~\ref{sec:output-dir-structure}.
 
@@ -842,18 +841,18 @@ several points should be taken into account:
     \item All template parameters must stay the same.
     \item The HTML elements representing members on type pages should have the \texttt{id} equal to the member ID.
     \item The \texttt{Templates/Static} folder gets copied as it is into the output directory.
-    Thus, if we want to provide custom CSS and JavaScript, we should place them in this folder.
-    For instance, we can use the provided \texttt{styles.css} and \texttt{script.js} files.
+    Thus, if we want to provide custom CSS and JavaScript, we should place them here.
+    Ideally, we should use the provided \texttt{styles.css} and \texttt{script.js} files.
     \item To support versioning, each page must contain an HTML element with the \texttt{id="version-list"}.
     The JSON array of available version identifiers will be automatically inserted there, as described in section~\ref{sec:architecture-doc-versions}.
-    Then, when the page is loaded, we can process these values using JavaScript, and, for example, insert them into a dropdown, similarly to the default templates. 
+    Then, when the page is loaded, we can process these values using JavaScript, and, for example, insert them into a dropdown, similarly to the default UI. 
     \item Some of the data, such as field modifiers, are represented as objects of \texttt{LanguageSpecificData<T>} type, 
 which works as a dictionary, indexed by language IDs.
 Currently, only the C\# language is supported; thus, to obtain C\# data, we can use the \texttt{LanguageSpecificData<T>.CSharpData} property.
 Optionally, the templates may be designed to be extensible for adding new languages, similarly to the default UI, as described in section~\ref{sec:ui-language-fragments}.
 \end{itemize}
 
-It is recommended, although not mandatory, to get inspiration from the default templates, described in section~\ref{sec:default-templates-overview}, and similarly compose the UI from many reusable components.
+It is recommended, although not mandatory, to get inspiration from the default templates, described in section~\ref{sec:default-templates-overview}, and compose the UI of many reusable components as well.
 However, it is typically not possible to reuse the components from the default UI, because they already use the \textit{Bootstrap} framework.
 In addition to the templates, it is necessary to configure the style of the inner XML tags transformed to HTML, as explained in section~\ref{sec:architecture-inner-xml-to-html} in greater detail.
 There are two options: to reuse the default configuration or create a custom one.
@@ -999,7 +998,8 @@ This value will then appear on the command line in the list of available documen
 Then, we should move on to the second comment.
 Here, we instantiate the template processor
 and add it to the dictionary of available documentation templates under the corresponding \texttt{DocumentationTemplate} key (\texttt{Minimal} in our case).
-This can be achieved by calling the \texttt{RazorTemplateProcessor.With} method with the type parameters corresponding to our templates, and passing the selected configuration as the first argument, as shown in the code and in the Listing~\ref{lst:extensibility-register-templates}.
+This can be achieved by calling the \texttt{RazorTemplateProcessor.With} method with the type parameters corresponding to our templates, and passing the selected configuration as the first argument, as shown in the code and Listing~\ref{lst:extensibility-register-templates}.
+The remaining constructor arguments should match those passed to the \texttt{DefaultTemplateProcessor}, as shown in the code.
 Now, it is possible to use the \texttt{Minimal} templates when generating the documentation.
 
 \begin{listing}[H]
@@ -1014,8 +1014,8 @@ RazorTemplateProcessor<
       CustomStaticPage,
       CustomSearchPage
   >.With(
-      new DocCommentHtmlConfiguration(), // default configuration 
-      // use a custom one, if provided
+      new DocCommentHtmlConfiguration(),// the default configuration 
+        // use a custom one, if provided
       htmlRenderer,
       availableLanguages,
       config.StaticPagesDirectory,
@@ -1036,15 +1036,15 @@ First, we need to create a custom template processor class, which implements the
 \texttt{ITemplateProcessor} interface.
 To do this, we open the \texttt{RefDocGen} project, navigate to \texttt{TemplateProcessors} folder and create a new folder, named, e.g., \texttt{Custom}.
 Inside this folder, we create a class, named \texttt{CustomTemplateProcessor}, for instance.
-This class must implement the \texttt{ITemplateProcessor} interface, which has a single method, \texttt{ProcessTemplates}.
+This class must implement the \texttt{ITemplateProcessor} interface, which has a single method, \texttt{ProcessTemplates}, which is expected to create the documentation based on the data provided in the type registry.
 
 Then, we need to add the implementation, which may be arbitrary; however, it is a good idea to follow these recommendations:
 
 \begin{itemize}
     \item It is preferred to keep all the related code in the same folder (i.e., \texttt{Custom} in our case) or in its subfolders.
     \item If the template processor requires additional data, we should pass these in the constructor.
-    \item Optionally, the processor may be designed in a way that allows users to provide custom templates, similarly to the \texttt{RazorTemplateProcessor}.
     \item If the documentation generation fails, it is recommended to throw an exception with a descriptive message.
+    \item Optionally, the processor may be designed in a way that allows users to provide custom templates, similarly to the \texttt{RazorTemplateProcessor}.
 \end{itemize}
 
 \subsubsection{Reusing existing classes}
@@ -1130,22 +1130,171 @@ This way, the language is added to the default UI.
 \chapter{User Documentation}
 
 \section{Installation}
-Nuget, locally
 
-\section{Configuration}
-cmd line configuration, YAML configuration
-Include examples
+There is a single prerequisite: to have .NET 8 (or higher) installed.
+The preferred way to install \textit{RefDocGen} is via NuGet as a global .NET tool, using the following command:
+\texttt{dotnet tool install --global RefDocGen}
+
+This makes the \texttt{refdocgen} command available on command line.
+
+Alternatively, it is also possible to download it from GitHub and run using \textit{dotnet run}, although this is recommended only for development purposes.
+
+\section{Usage}
+
+\begin{listing}[H]
+\begin{lstlisting}[language=HTML]
+INPUT (pos. 0)                     Required. The assembly, project,
+                                   or solution to document.
+
+-o DIR, --output-dir=DIR           (Default: reference-docs)
+                                   The output directory for the
+                                   generated documentation.
+
+-t TEMPLATE, --template=TEMPLATE   (Default: Default)
+                                   The template to use for the
+                                   documentation.
+                                   Valid values: Default
+
+-s DIR, --static-pages-dir=DIR     Directory containing additional
+                                   static pages to include in the
+                                   documentation.
+
+-v, --verbose                      (Default: false)
+                                   Enable verbose output.
+
+-f, --force-create                 (Default: false)
+                                   Forces the creation of the
+                                   documentation. If the output
+                                   directory already exists, it
+                                   will be deleted first.
+
+--doc-version=VERSION              Generate a specific version of
+                                   the documentation.
+
+--min-visibility=VISIBILITY        (Default: Family)
+                                   Minimum visibility level of
+                                   types and members to include in
+                                   the documentation.
+                                   Valid values: Private,
+                                   FamilyAndAssembly, Assembly,
+                                   Family, FamilyOrAssembly, Public
+
+--inherit-members=MODE             (Default: NonObject)
+                                   Specify which inherited members
+                                   to include in the documentation.
+                                   Valid values: None, All,
+                                   NonObject
+
+--exclude-projects=PROJECT         Projects to exclude from the
+    [PROJECT...]                   documentation.
+
+--exclude-namespaces=NAMESPACE     Namespaces to exclude from the
+    [NAMESPACE...]                 documentation.
+\end{lstlisting}
+\caption{}
+\label{lst:cmd-line-reference}
+\end{listing}
+
+\textit{RefDocGen}
+
+\subsection{Configuration}
+
+\subsubsection{Command line}
+
+\subsubsection{Configuration file}
+
+\subsubsection{Examples}
 
 \section{UI}
 
-Show output structure
+\subsection{Documentation structure}
 
-Show each page + members
+There is the API homepage, containing a list of all assemblies, namespaces, and the contained types.
+
+For each assembly, there is a separate assembly page, which looks almost identical to the API homepage, with the only difference being that it shows only the types contained in the given assembly.
+Then, each namespace is represented by a separate namespace page, which shows its types.
+
+\subsubsection{Assembly page}
+
+\subsubsection{Namespace page}
+
+\subsubsection{Type pages}
+
+\subsubsection{Search page}
+
+\subsubsection{Static pages}
+
+\subsubsection{Menu}
+
+\subsubsection{Themes}
+
+\subsubsection{Language}
+
+\subsubsection{Responsiveness}
 
 \chapter{Evaluation}
 
-- Describe that we selected a third party package: Newtonsoft.JSON
+We tested the app on multiple programs.
+First, we used as input the \texttt{RefDocGen.ExampleLibrary}, contained in the solution.
 
-- describe how we generated the docs for it
+To generate its documentation, we ran the following command:
+\texttt{refdocgen PATH\_TO\_DLL --min-visibility Private}
 
-- add a link to the resulting HTML
+Its reference documentation can be viewed here (TODO LINK).
+
+Then, we created the reference documentation of our program.
+
+TODO
+
+Finally, we wanted to test the program on a third-party library, which is ideally popular and well-documented.
+Newtonsoft.JSON meets these criteria well, as it is the most downloaded NuGet package.
+
+To generate its documentation, we first navigated to the corresponding NuGet page (\url{https://www.nuget.org/packages/newtonsoft.json/}).
+Then, we manually downloaded the NuGet package (version 13.0.3) and changed its extension to \textit{.zip}, since NuGet packages are basically \textit{.zip} files, as explained in the documentation~\cite{nuget_zip_docs}.
+Next, we unzipped the package and navigated to the \texttt{lib/net6.0} directory, containing the DLL and XML documentation file.
+
+Finally, we ran our program using the DLL as the parameter, using the command shown in Listing~\ref{lst:demo-newtonsoft}:
+
+\begin{listing}[H]
+\begin{lstlisting}[language=XML]
+refdocgen Newtonsoft.Json.dll --doc-version v-newtonsoft-public 
+    --min-visibility Public -o ~/refdocgen-demo
+\end{lstlisting}
+\caption{}
+\label{lst:demo-newtonsoft}
+\end{listing}
+
+We generated the documentation of both public and private API, which can be accessed at https://vl-cz.github.io/refdocgen-demo/v-newtonsoft-public.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\linewidth]{img/newtonsoft-api.png}
+\caption{Newtonsoft.Json documentation -- API homepage}
+\label{fig:eval-newtonsoft-home}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\linewidth]{img/newtonsoft-class.png}
+\caption{Newtonsoft.Json documentation -- Type detail}
+\label{fig:eval-newtonsoft-type}
+\end{figure}
+
+Following that, using equivalent steps, we also generated the reference documentation for two other packages: YamlDotNet (version 16.3.0) and CommandLineParser (version 2.9.1), 
+as we used both of these libraries when developing, and furthermore, both are well documented.
+The commands are displayed in Listing~\ref{lst:demo-other-two}.
+
+\begin{listing}[H]
+\begin{lstlisting}[language=XML]
+refdocgen YamlDotNet.dll --doc-version v-yamldotnet-public
+    --min-visibility Public -o ~/refdocgen-demo
+
+refdocgen CommandLine.dll --doc-version v-serilog-public 
+    --min-visibility Public -o ~/refdocgen-demo
+\end{lstlisting}
+\caption{}
+\label{lst:demo-other-two}
+\end{listing}
+
+All three versions of documentation are deployed at \url{https://vl-cz.github.io/refdocgen-demo/v-newtonsoft-public}.
+When switching to a different version, go to the API homepage, as this is likely the only page present in all three versions.
