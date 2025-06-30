@@ -1027,6 +1027,7 @@ RazorTemplateProcessor<
 \end{listing}
 
 \subsection{Custom template processor}
+\label{sec:extensibility-custom-template-processor}
 
 Another way to customize the output is to use a custom template processor.
 When doing this, we are no longer limited to \textit{Razor} templates, as we may use any templating language of our choice.
@@ -1129,108 +1130,423 @@ This way, the language is added to the default UI.
 
 \chapter{User Documentation}
 
+This chapter provides the user documentation of our program.
+
 \section{Installation}
 
-There is a single prerequisite: to have .NET 8 (or higher) installed.
-The preferred way to install \textit{RefDocGen} is via NuGet as a global .NET tool, using the following command:
-\texttt{dotnet tool install --global RefDocGen}
-
-This makes the \texttt{refdocgen} command available on command line.
-
-Alternatively, it is also possible to download it from GitHub and run using \textit{dotnet run}, although this is recommended only for development purposes.
+There is a single prerequisite: having .NET 8 (or higher) installed.
+The preferred way to install \textit{RefDocGen} is via NuGet as a global .NET tool~\cite{dotnet_tools}, using the following command:
+\texttt{dotnet tool install --global RefDocGen}.
+This makes the \texttt{refdocgen} command available on the command line.
+Alternatively, it is also possible to clone the project from GitHub and run it using \texttt{dotnet run}, although this is recommended only for development purposes.
 
 \section{Usage}
 
+\textit{RefDocGen} is controlled via a command line, while the available options are displayed in Listing~\ref{lst:cmd-line-reference}.
+The same help screen may be displayed by running \texttt{refdocgen --help}.
+
+The only required value is the \texttt{INPUT} argument. 
+It is possible to pass an assembly, a project, or a solution to document.
+
+Basic usage - we provide the DLL/project/solution
+
 \begin{listing}[H]
 \begin{lstlisting}[language=HTML]
-INPUT (pos. 0)                     Required. The assembly, project,
-                                   or solution to document.
+refdocgen MyLibrary.dll
+refdocgen MyLibrary.csproj
+refdocgen MyLibrary.sln
+refdocgen refdocgen.yaml
+\end{lstlisting}
+\caption{}
+\label{lst:cmd-line-simple-example}
+\end{listing}
 
--o DIR, --output-dir=DIR           (Default: reference-docs)
-                                   The output directory for the
-                                   generated documentation.
+Using the \texttt{-o} flag, we can select the output directory.
+Next, the \texttt{-t} option allows us to select a documentation template. 
+Currently, only the default template is available; however, it is possible to add custom documentation templates, as further described in sections~\ref{sec:extensibility-custom-razor} and~\ref{sec:extensibility-custom-template-processor}.
 
--t TEMPLATE, --template=TEMPLATE   (Default: Default)
-                                   The template to use for the
-                                   documentation.
-                                   Valid values: Default
+When the \texttt{-v} flag is specified, the log level is set to verbose; thus, all log events are displayed.
+Before describing the \texttt{-f} flag, it is important to note that the program intentionally fails
+if the output directory exists and is not empty (and the documentation is not versioned) to prevent users from accidentally overwriting data.
+To override this behavior, and thus delete the output directory before the documentation is generated, the \texttt{-f} flag can be used.
+Next, using the \texttt{-s} flag, the current configuration can be saved to a YAML file, as explained in section~\ref{sec:user-docs-yaml} in more detail.
+Additionally, it is possible to provide custom static pages as well as create a specific version of the documentation 
+by specifying the \texttt{--static-pages-dir} and \texttt{--doc-version} options, respectively, as further described in sections~\ref{sec:user-docs-static-pages} and~\ref{sec:user-docs-versions}.
 
--s DIR, --static-pages-dir=DIR     Directory containing additional
-                                   static pages to include in the
-                                   documentation.
+Next, it is possible to configure which types and members are included in the documentation.
+Using the \texttt{--min-visibility} flag, we can select only the members with the given visibility or higher.
+Additionally, we can select which inherited members should be included by specifying the \texttt{--inherit-members} option.
+When set to \texttt{None}, no inherited members are contained in the documentation, while when using \texttt{All}, the documentation displays all inherited members.
+However, in most cases, we would likely want to include all inherited members, except those inherited from the \texttt{object} type, 
+such as the \texttt{ToString()} method, which can be achieved by using the default value (i.e.,  \texttt{NonObject}).
 
--v, --verbose                      (Default: false)
-                                   Enable verbose output.
+Furthermore, the \texttt{--exclude-projects} option allows us to exclude certain projects from the documentation; thus, any types and members defined in these projects will not be included.
+Naturally, using this option makes sense only if the input is a solution.
+Similarly, we can exclude certain namespaces from the documentation.
+In this case, it is important to remember that any child namespaces will also be excluded.
+Thus, if we choose to exclude the \texttt{MyApp.Tools} namespace, for instance, the \texttt{MyApp.Tools.Text} namespace will be excluded as well.
+Both of these options may have multiple values, separated by spaces.
 
--f, --force-create                 (Default: false)
-                                   Forces the creation of the
-                                   documentation. If the output
-                                   directory already exists, it
-                                   will be deleted first.
+\begin{listing}
+\begin{lstlisting}[language=HTML]
+refdocgen INPUT [OPTIONS]
 
---doc-version=VERSION              Generate a specific version of
-                                   the documentation.
+INPUT (pos. 0)                      Required. The assembly, project,
+                                    or solution to document, or a
+                                    YAML configuration file.
 
---min-visibility=VISIBILITY        (Default: Family)
-                                   Minimum visibility level of
-                                   types and members to include in
-                                   the documentation.
-                                   Valid values: Private,
-                                   FamilyAndAssembly, Assembly,
-                                   Family, FamilyOrAssembly, Public
+-o DIR, --output-dir=DIR            (Default: reference-docs) The
+                                    output directory for the
+                                    generated documentation.
 
---inherit-members=MODE             (Default: NonObject)
-                                   Specify which inherited members
-                                   to include in the documentation.
-                                   Valid values: None, All,
-                                   NonObject
+-t TEMPLATE, --template=TEMPLATE    (Default: Default) The template
+                                    to use for the documentation.
+                                    Valid values: Default
 
---exclude-projects=PROJECT         Projects to exclude from the
-    [PROJECT...]                   documentation.
+-v, --verbose                       (Default: false) Enable verbose
+                                    output.
 
---exclude-namespaces=NAMESPACE     Namespaces to exclude from the
-    [NAMESPACE...]                 documentation.
+-f, --force-create                  (Default: false) Forces the
+                                    creation of the documentation.
+                                    If the output directory already
+                                    exists, it will be deleted
+                                    first.
+
+-s, --save-config                   (Default: false) Save the
+                                    current configuration to a YAML
+                                    file.
+
+--static-pages-dir=DIR              Directory containing additional
+                                    static pages to include in the
+                                    documentation.
+
+--doc-version=VERSION               Generate a specific version of
+                                    the documentation.
+
+--min-visibility=VISIBILITY         (Default: Public) Minimum
+                                    visibility level of types and
+                                    members to include in the
+                                    documentation. Valid values:
+                                    Private, FamilyAndAssembly,
+                                    Assembly, Family,
+                                    FamilyOrAssembly, Public
+
+--inherit-members=MODE              (Default: NonObject) Specify
+                                    which inherited members to
+                                    include in the documentation.
+                                    Valid values: None, All,
+                                    NonObject
+
+--exclude-projects=PROJECT          Projects to exclude from the
+    [PROJECT...]                    documentation.
+
+--exclude-namespaces=NAMESPACE      Namespaces to exclude from the
+    [NAMESPACE...]                  documentation.
 \end{lstlisting}
 \caption{}
 \label{lst:cmd-line-reference}
 \end{listing}
 
-\textit{RefDocGen}
+\subsection{Adding static pages}
+\label{sec:user-docs-static-pages}
 
-\subsection{Configuration}
+Custom static pages, such as \textit{index} or \textit{FAQ} page, can be added to the documentation.
+To do this, we need to create a directory and
+store the pages inside it (or its subdirectories) in either HTML or Markdown format.
+For each page, we should specify only the body content (without the \texttt{<body>} element), as the documentation layout is added automatically.
+Then, when creating the documentation, we need to use the \texttt{--static-pages-dir} option and pass this directory as its value.
+As a result, each of the pages will be included in the reference documentation.
+All relative paths between the files remain unchanged; therefore, we can safely use relative links to navigate to different pages.
 
-\subsubsection{Command line}
+An example static pages directory is shown in Listing~\ref{lst:directory-structure-example}, while
+the individual pages are displayed in Listings~\ref{lst:example-static-page1} and~\ref{lst:example-static-page2}.
 
-\subsubsection{Configuration file}
+\begin{listing}[H]
+\begin{lstlisting}[language=HTML]
+static-pages/
+    index.html
+    FAQ.md
+\end{lstlisting}
+\caption{Example static pages directory}
+\label{lst:directory-structure-example}
+\end{listing}
 
-\subsubsection{Examples}
+\begin{listing}[H]
+\begin{lstlisting}[language=HTML]
+<h1>
+    MyLibrary reference documentation
+</h1>
+<div>
+    This page contains the reference documentation of MyLibrary.
+</div>
+\end{lstlisting}
+\caption{Example static page in HTML}
+\label{lst:example-static-page1}
+\end{listing}
+
+\begin{listing}[H]
+\begin{lstlisting}[language=HTML]
+# FAQ
+
+## Q1: How to install the library?
+Run `dotnet add package MyLibrary.dll`.
+\end{lstlisting}
+\caption{Example static page in Markdown}
+\label{lst:example-static-page2}
+\end{listing}
+
+In addition to pages, we may also include custom JavaScript files, images, or any other resources in the static pages directory, and then reference them from the pages.
+It is also possible to provide custom CSS styles; however, they must be placed in the \texttt{css/styles.css} file.
+In this case, we do not need to reference the CSS file manually, as it is included automatically.
+However, it is important to keep in mind that the template styles are applied to the static pages as well.
+Therefore, we should use custom styles only for minor improvements, rather than completely changing the overall appearance of the page.
+
+\subsection{Documentation versioning}
+\label{sec:user-docs-versions}
+
+We can optionally make the documentation versioned.
+This means the documentation consists of multiple versions, which can be switched between.
+For instance, we can create version \texttt{v1.0} of the documentation, using the \texttt{--doc-version} option, that corresponds to version \texttt{1.0} of a library.
+Then, when version \texttt{1.1} of the library is published, we can add a new documentation version, as
+displayed in Listing~\ref{lst:user-docs-versions1}.
+Naturally, it is mandatory to specify the same output directory.
+
+\begin{listing}[H]
+\begin{lstlisting}[language=bash]
+refdocgen MyLibrary.dll --doc-version v1.0
+
+# after version 1.1 is published
+refdocgen MyLibrary.dll --doc-version v1.1
+\end{lstlisting}
+\caption{Creating various versions of the documentation}
+\label{lst:user-docs-versions1}
+\end{listing}
+
+The documentation versions do not necessarily have to correspond to the library versions.
+For instance, we may create two documentation versions, one showing the public API, and the other including even private members, as displayed in Listing~\ref{lst:user-docs-versions2}.
+
+\begin{listing}[H]
+\begin{lstlisting}[language=bash]
+refdocgen MyLibrary.dll --doc-version v1.0-public
+refdocgen MyLibrary.dll --doc-version v1.0-private 
+    --min-visibility Private
+\end{lstlisting}
+\caption{Creating both public and private API of a library}
+\label{lst:user-docs-versions2}
+\end{listing}
+
+\subsection{YAML configuration}
+\label{sec:user-docs-yaml}
+
+Instead of using command line arguments, it is possible to use a YAML file for configuration.
+The main advantage is that the configuration does not have to be repeated each time and can be easily shared.
+The YAML file can either be generated automatically (when using the \texttt{--save-config} flag) or created manually.
+Although not mandatory, it is recommended to use the \texttt{refdocgen.yaml} filename.
+The structure of YAML and command line configuration is very similar, as the keys in the YAML file correspond to the command-line options, while:
+
+\begin{itemize}
+    \item The \texttt{input} key, which is the only mandatory argument, corresponds to the \texttt{INPUT} command line argument.
+    \item All the other keys have the same name as the matching command line option (without the starting dashes). For instance, the \texttt{output-dir} key corresponds to the \texttt{--output-dir} option. 
+    It is not possible to use the short option names in YAML.
+    \item The \texttt{save-config} option is not supported, as it does not make sense here.
+    \item The default values are the same as in the command line configuration.
+\end{itemize}
+
+Listing~\ref{lst:cmd-save-config} shows an example command line configuration with the \texttt{--save-config} option, which results in the creation of the \texttt{refdocgen.yaml} file displayed in Listing~\ref{lst:cmd-line-yaml}.
+The next time we want to use the same configuration, we do not need to repeat the individual options; instead, we can just run \texttt{refdocgen refdocgen.yaml} and the configuration will be loaded from the YAML.
+
+\begin{listing}[H]
+\begin{lstlisting}[language=bash]
+refdocgen MyLibrary.sln 
+    -o custom-folder
+    --verbose 
+    --force-create 
+    --min-visibility Private 
+    --exclude-projects MyLibrary.Tests 
+    --exclude-namespaces MyLibrary.Internal MyLibrary.Experimental 
+    --save-config
+\end{lstlisting}
+\caption{Example command line configuration}
+\label{lst:cmd-save-config}
+\end{listing}
+
+\begin{listing}[H]
+\begin{lstlisting}[language=bash]
+input: MyLibrary.sln
+output-dir: custom-folder
+template: Default
+verbose: true
+force-create: true
+min-visibility: Private
+inherit-members: NonObject
+exclude-projects:
+  - MyLibrary.Tests
+exclude-namespaces:
+  - MyLibrary.Internal
+  - MyLibrary.Experimental
+\end{lstlisting}
+\caption{Example YAML configuration file}
+\label{lst:cmd-line-yaml}
+\end{listing}
+
+\subsection*{Error reporting}
+
+If the configuration is invalid or the documentation generation fails, a descriptive error message is displayed.
+For instance, if the provided DLL cannot be found, the following error message is printed: \texttt{The assembly at path 'PATH' was not found}.
+When using the \texttt{--verbose} flag, additional details about the error (such as the stack trace) are displayed.
 
 \section{UI}
 
 \subsection{Documentation structure}
 
-There is the API homepage, containing a list of all assemblies, namespaces, and the contained types.
+There is the API homepage, which contains a list of assemblies (A), namespaces (B), and the types contained within them (C), as illustrated in Figure~\ref{fig:refdocgen-api-homepage}.
+For each type, its \textit{summary} documentation is displayed (D), if provided.
+No modifiers are displayed for the individual types.
+Assembly, type, and namespace names are clickable and redirect us to the corresponding page.
 
 For each assembly, there is a separate assembly page, which looks almost identical to the API homepage, with the only difference being that it shows only the types contained in the given assembly.
-Then, each namespace is represented by a separate namespace page, which shows its types.
+Then, there is a separate page for each namespace. 
+This page displays again the types (C) with their documentation (D), similarly to the API homepage.
 
-\subsubsection{Assembly page}
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\linewidth]{img/refdocgen-api-homepage.png}
+\caption{Example API homepage}
+\label{fig:refdocgen-api-homepage}
+\end{figure}
 
-\subsubsection{Namespace page}
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\linewidth]{img/refdocgen-assembly-page.png}
+\caption{Example assembly page}
+\label{fig:refdocgen-assembly-page}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\linewidth]{img/refdocgen-namespace-page.png}
+\caption{Example namespace page}
+\label{fig:refdocgen-ns-page}
+\end{figure}
 
 \subsubsection{Type pages}
 
-\subsubsection{Search page}
+Each type page shows the containing assembly, namespace, base type, and a list of implemented interfaces (E).
+Then, the type signature is shown (F), together with the \textit{summary} documentation (G).
+Below that, there are the following sections (H), while each section is displayed only if it is non-empty: 
 
-\subsubsection{Static pages}
+\begin{itemize}
+  \item Type parameters -- describes the type parameters together with their documentation.
+  \item Attributes -- displays the attributes applied to the type.
+  \item Nested types -- describes the nested types. Similarly to type parameters, the documentation is included as well.
+  \item Remarks -- shows the \textit{remarks} documentation of the type.
+  \item See also -- displays the links corresponding to the provided \texttt{<seealso>} tags.
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\linewidth]{img/refdocgen-type-page.png}
+\caption{Example type page}
+\label{fig:refdocgen-type-page}
+\end{figure}
+
+Below that, there is a list of members together with their documentation:
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\linewidth]{img/refdocgen-type-members.png}
+\caption{Example type page -- members detail}
+\label{fig:refdocgen-type-members1}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\linewidth]{img/refdocgen-type-members2.png}
+\caption{Example type page -- members detail}
+\label{fig:refdocgen-type-members2}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\linewidth]{img/refdocgen-cross-refs.png}
+\caption{Example type page -- cross references}
+\label{fig:refdocgen-cross-refs}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\linewidth]{img/refdocgen-inner-tags.png}
+\caption{Example type page -- styled inner XML tags}
+\label{fig:refdocgen-inner-xml-rendered}
+\end{figure}
 
 \subsubsection{Menu}
 
-\subsubsection{Themes}
+Using the button (X), it is possible to toggle documentation theme (light or dark).
+Similarly, it is possible to select language, in which the language fragments are displayed.
+Currently, only C\# is supported, however, in future, other languages may be added.
 
-\subsubsection{Language}
+The menu contains links, by default only to the API homepage.
+However, if we add custom static pages, these are sorted alphabetically after the API homepage link.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\linewidth]{img/refdocgen-menu.png}
+\caption{UI -- top menu}
+\label{fig:refdocgen-menu-ui}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\linewidth]{img/refdocgen-dark-mode.png}
+\caption{UI -- dark mode}
+\label{fig:refdocgen-dark-mode}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\linewidth]{img/refdocgen-light-mode.png}
+\caption{UI -- light mode}
+\label{fig:refdocgen-light-mode}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\linewidth]{img/refdocgen-versions-ui.png}
+\caption{UI -- version selector}
+\label{fig:refdocgen-version-selector}
+\end{figure}
+
+\subsubsection{Search page}
+
+We can navigate to search page by clicking the input filed in the top menu.
+The search results are displayed below.
+The search is performed within assembly, namespace, type and member names.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\linewidth]{img/refdocgen-search-page.png}
+\caption{UI -- search page}
+\label{fig:refdocgen-search-page}
+\end{figure}
 
 \subsubsection{Responsiveness}
+
+The UI is responsive, as displayed in Figure XX.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\linewidth]{img/refdocgen-dark-mode.png}
+\caption{UI -- desktop view}
+\label{fig:refdocgen-ui-desktop}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\linewidth]{img/refdocgen-ui-mobile.png}
+\caption{UI -- mobile view}
+\label{fig:refdocgen-ui-mobile}
+\end{figure}
 
 \chapter{Evaluation}
 
@@ -1296,5 +1612,7 @@ refdocgen CommandLine.dll --doc-version v-serilog-public
 \label{lst:demo-other-two}
 \end{listing}
 
+During the process, no errors were encountered.
+ 
 All three versions of documentation are deployed at \url{https://vl-cz.github.io/refdocgen-demo/v-newtonsoft-public}.
 When switching to a different version, go to the API homepage, as this is likely the only page present in all three versions.
