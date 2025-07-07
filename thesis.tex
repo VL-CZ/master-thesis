@@ -84,6 +84,7 @@
 \usepackage{algorithm}
 \usepackage{fancyvrb}       % improved verbatim environment
 \usepackage{listings}       % pretty-printer of source code
+\usepackage{dirtree}
 
 % You might want to use cleveref for references
 % \usepackage{cleveref}
@@ -137,15 +138,15 @@
 \include{bibliography}
 
 %%% Figures used in the thesis (consider if this is needed)
-\listoffigures
+% \listoffigures
 
 %%% Tables used in the thesis (consider if this is needed)
 %%% In mathematical theses, it could be better to move the list of tables to the beginning of the thesis.
-\listoftables
+% \listoftables
 
 %%% Abbreviations used in the thesis, if any, including their explanation
 %%% In mathematical theses, it could be better to move the list of abbreviations to the beginning of the thesis.
-\chapwithtoc{List of Abbreviations}
+% \chapwithtoc{List of Abbreviations}
 
 %%% Doctoral theses must contain a list of author's publications
 \ifx\ThesisType\TypePhD
@@ -165,6 +166,25 @@
 \appendix
 \chapter{Attachments}
 
-\section{First Attachment}
+\section{Overview of electronic attachments}
+
+\dirtree{%
+.1 ..
+.2 refdocgen/.
+.3 README.md \DTcomment{\texttt{README} file}.
+.3 RefDocGen.sln \DTcomment{\texttt{RefDocGen} solution}.
+.3 src/.
+.4 RefDocGen/ \DTcomment{\texttt{RefDocGen} project}.
+.3 tests.
+.4 RefDocGen.ExampleLibrary/ \DTcomment{example library (in C\#)}.
+.4 RefDocGen.ExampleFSharpLibrary/ \DTcomment{example library in F\#}.
+.4 RefDocGen.ExampleVbLibrary/ \DTcomment{example library in VB.NET}.
+.4 RefDocGen.IntegrationTests/ \DTcomment{integration tests project}.
+.4 RefDocGen.UnitTests/ \DTcomment{unit tests project}.
+.2 docs/.
+.3 example-library/ \DTcomment{documentation of \texttt{RefDocGen.ExampleLibrary}}.
+.3 refdocgen/ \DTcomment{documentation of \texttt{RefDocGen}}.
+.3 third-party/ \DTcomment{documentation of \texttt{Newtonsoft.JSON}, \texttt{YamlDotNet}, and \texttt{Serilog} packages}.
+}
 
 \end{document}

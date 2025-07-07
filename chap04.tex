@@ -39,7 +39,7 @@ In the following sections, we will describe the individual parts of the codebase
 \label{sec:type-registry}
 
 As mentioned in the previous section, the collection of declared types and members is stored within a \texttt{TypeRegistry} instance and shared between various parts of the application.
-More specifically, the \texttt{TypeRegistry} is used at two places.
+More specifically, the \texttt{TypeRegistry} is used in two places.
 First, it is accessed by the \texttt{DocCommentExtractor} and related classes to assign XML documentation comments to the appropriate types and members.
 After that, the data from the \texttt{TypeRegistry} is used by the template processors (such as the default \texttt{RazorTemplateProcessor}), and based on this data, the resulting documentation is generated.
 
@@ -133,7 +133,7 @@ The inheritance structure of these interfaces is displayed in Figure~\ref{fig:ty
 Accordingly, the members within a type are also returned as interfaces, which allow us only to read the data.
 As with types, there is a separate interface for each of the member classes; for example, the \texttt{FieldData} class implements the \texttt{IFieldData} interface.
 In addition, several super-interfaces represent common properties of a selection of members, as shown in Figure~\ref{fig:member-interfaces}.
-Using the \texttt{IParametrizedMemberData} interface, which represents a member that may have parameters (i.e., a constructor, method, or an indexer), it is possible to handle those types in the same way.
+Using the \texttt{IParametrizedMemberData} interface, which represents a member that may have parameters (i.e., a constructor, method, or indexer), it is possible to handle those types in the same way.
 The same goes for handling members storing a value, represented by \texttt{IValueMemberData} interface, or for \texttt{ICallableMemberData} providing the shared data of properties, methods, and events.
 
 \begin{figure} 
@@ -151,6 +151,7 @@ The same goes for handling members storing a value, represented by \texttt{IValu
 \end{figure}
 
 \section{Extracting the data from an assembly}
+\label{sec:architecture-assembly-analysis}
 
 In the previous section, we described the internal structure of the \texttt{TypeRegistry}, and
 now, we need to explain how the data from the assembly is loaded and the registry is created.
@@ -158,7 +159,7 @@ As mentioned earlier, this task is performed by the \texttt{AssemblyTypeExtracto
 
 It is also important to mention that besides creating the type registry, the \texttt{AssemblyTypeExtractor} is also responsible for filtering the types that will be included in the documentation.
 Thus, if the user chooses to exclude types contained in a given assembly or namespace, as described in requirements~\ref{req:exclude-assemblies} and~\ref{req:exclude-namespaces}, these types are simply ignored.
-The same applies for excluding members with given accessibility, or the inherited ones, as requested in requirements~\ref{req:exclude-accessibility} and~\ref{req:exclude-inherited}.
+The same applies to excluding members with given accessibility, or the inherited ones, as requested in requirements~\ref{req:exclude-accessibility} and~\ref{req:exclude-inherited}.
 The configuration containing this information is provided to the \texttt{AssemblyTypeExtractor} as an \texttt{AssemblyDataConfiguration} instance.
 
 Next, the \texttt{AssemblyTypeExtractor} class converts the loaded types, represented as \texttt{System.Type} instances, to the corresponding \texttt{ObjectTypeData}, \texttt{Enum\-TypeData}, and \texttt{DelegateTypeData} objects.
@@ -216,9 +217,11 @@ Furthermore, the shared functionality related to method-like members is extracte
 \end{figure}
 
 \subsection{Resolution of \texttt{<inheritdoc>} tags}
+\label{sec:architecture-inheritdoc-resolve}
+
 After all documentation comments are assigned, the \texttt{<inheritdoc>} tags are resolved.
 First, it is important to remember that \texttt{<inheritdoc>} comments can be classified into three categories: those with the \texttt{cref} attribute, and those without it, which are further divided based on whether they are applied to a type or a member.
-As explained in section~\ref{sec:inheritdoc-resolve}, the resolution process begins by resolving all \texttt{<inheritdoc>} elements without the \texttt{cref} attribute, and then proceeds with the ones that include it.
+As explained in section~\ref{sec:inheritdoc-resolve}, the resolution process begins by resolving all \texttt{<inheritdoc>} elements without the \texttt{cref} attribute and then proceeds with the ones that include it.
 
 The following three classes handle the resolution, each responsible for resolving the corresponding kind of \texttt{<inheritdoc>} elements: \texttt{TypeInheritDoc\-Resolver}, \texttt{MemberInheritDocResolver}, and \texttt{CrefInheritDocResolver}.
 In each of the three cases, the resolved documentation may again contain \texttt{<inheritdoc>} tags of the same kind, so the resolution must be done recursively.
@@ -230,7 +233,7 @@ The other terminal condition is when the parent node does not contain any docume
 It is important to understand that once we consider the DFS graph, the resolution of all kinds of \texttt{<inheritdoc>} tags is the same, as the only difference is what the nodes represent and how the set of parent nodes is obtained.
 Therefore, the code performing the DFS is stored in the common base class, called \texttt{InheritDocResolver}, which has a single type parameter representing the type of the graph node.
 The DFS results are cached, i.e., the \texttt{<inheritdoc>} elements contained in visited nodes are resolved as well.
-Additionally, the cycle detection is included as well.
+Additionally, cycle detection is included as well.
 
 Then, the \texttt{TypeInheritDocResolver}, \texttt{MemberInheritDocResolver}, and \texttt{Cref\-InheritDocResolver} 
 inherit from the \texttt{InheritDocResolver} class,  as shown in Figure~\ref{fig:inheritdoc-handlers},
@@ -271,7 +274,7 @@ The following sections describe each of these processes in further detail.
 
 The template models (TMs) are data-only objects that are passed to the templates as variables.
 They correspond to the type and member objects stored in the type registry, as there is a separate template model 
-for object type, enum type, delegate type, and for each member (field, property, method, etc).
+for an object type, enum type, delegate type, and for each member (field, property, method, etc).
 Likewise, there are template models for parameters, type parameters, and attributes.
 Additionally, there are multiple other template models, representing namespaces, assemblies, etc.
 
@@ -283,6 +286,7 @@ It is also important to mention that the template models store language-specific
 These data are stored in fields of type \texttt{LanguageSpecificData<T>}, which essentially functions as a dictionary, indexed by language identifiers.
 
 \subsubsection{Cross references}
+\label{sec:architecture-cross-references-tms}
 
 As requested by Requirement~\ref{req:cross-ref}, the generator supports cross-references.
 This is achieved using the \texttt{CodeLinkTM} class, which encapsulates a type or member name, together with a URL to its definition.
@@ -469,7 +473,7 @@ The \textit{Namespace} and \textit{Assembly} templates are expected to display a
 Next, the \textit{API homepage template} should serve as a homepage of the API, showing all types across the provided assemblies.
 Finally, the \textit{Static page template} provides a template for all user-defined static pages, while the \textit{Search page template} is intended to perform searching and display search results.
 
-It is crucial to remember that the \texttt{RazorTemplateProcessor} defines the overall page structure of the documentation; however, the individual templates are not hard-coded and thus, custom templates may be provided.
+It is crucial to remember that the \texttt{RazorTemplateProcessor} defines the overall page structure of the documentation; however, the individual templates are not hard-coded, and thus, custom templates may be provided.
 
 \begin{figure}
 \centering
@@ -553,7 +557,7 @@ The entire UI is composed of many reusable components; for example, the document
 
 The layout, which is shared between all pages, is defined in the \texttt{AppLayout} component.
 It specifies both top and bottom menus; thus, each of the eight top-level pages defines only the content displayed in the page body.
-The cascading values, for instance \texttt{TopMenuData}, are typically consumed either by the layout itself or by one of its descendant components.
+The cascading values, for instance, \texttt{TopMenuData}, are typically consumed either by the layout itself or by one of its descendant components.
 
 \subsection{UI styling}
 \label{sec:ui-styling}
@@ -569,7 +573,7 @@ This way, several of the transformed inner XML tags, described in section~\ref{s
 For example, the \texttt{.refdocgen-see-cref} class, which is assigned to the transformed \texttt{<see cref="...">} XML tags, is configured to extend the \texttt{link-offset-2} CSS class, provided by \textit{Bootstrap}.
 
 After every change, the SCSS must be recompiled manually to create the final CSS using the \texttt{sass Scss/styles.scss Static/styles.css --style=com\-pressed} command executed from the default templates folder.
-This way, both the custom and the \textit{Bootstrap} styles get together stored in the \texttt{Static/styles.css} file, which is then referenced from the templates.
+This way, both the custom and the \textit{Bootstrap} styles get stored in the \texttt{Static/styles.css} file, which is then referenced from the templates.
 
 \subsubsection{Text colors}
 \label{sec:ui-text-colors}
@@ -686,9 +690,9 @@ The selected language identifier is then assigned to the \texttt{data-language} 
 
 In section~\ref{sec:ui-themes}, we described that when the theme is switched, the value of the \texttt{data-bs-theme} attribute is updated accordingly by a JavaScript function.
 Since we want to persist this value, the selected theme is also saved to the local storage of the browser under the \texttt{refdocgen-theme} key; however, this applies only if the documentation is deployed on a server.
-On the other hand, if the documentation is created locally and thus accessed using the \textit{file} protocol, this does not work, because the local storage has an undefined behavior in such cases, as explained in the MDN Web documentation~\cite{mdn_localstorage}.
+On the other hand, if the documentation is created locally and thus accessed using the \textit{file} protocol, this does not work, because the local storage has undefined behavior in such cases, as explained in the MDN Web documentation~\cite{mdn_localstorage}.
 For that reason, if the documentation is created locally, the selected theme gets stored in the \texttt{theme} URL parameter.
-Similarly, for languages, the selected language identifier is stored either in the local storage under the \texttt{refdocgen-language} key, or in the \texttt{lang} URL parameter, based on where the documentation is deployed.
+Similarly, for languages, the selected language identifier is stored either in the local storage under the \texttt{refdocgen-language} key or in the \texttt{lang} URL parameter, based on where the documentation is deployed.
 
 Additionally, if the documentation is created locally, all links within the documentation must be updated to include the correct URL parameters.
 Thus, a custom JavaScript function, named \texttt{updateRelativeLinks}, is called when a page is loaded.
@@ -700,6 +704,7 @@ If a value is not found, the default option is used, and then, the \texttt{data-
 This way, it is ensured that the selected theme and language remain the same when navigating within the documentation.
 
 \subsection{Documentation versioning}
+\label{sec:default-ui-version-dropdown}
 
 As already described in section~\ref{sec:architecture-doc-versions}, each page contains the \texttt{version-list} HTML element, which is hidden and stores the array of available page versions as JSON.
 Once the page is loaded, custom JavaScript reads this data and populates the version selector dropdown accordingly.
@@ -707,6 +712,7 @@ Each item in the dropdown represents a link to the corresponding version of the 
 It is also worth noting that redirecting to a different version of the page is straightforward, as it only requires updating the part of the URL that contains the version identifier.
 
 \subsection{Searching the documentation}
+\label{sec:default-ui-search}
 
 The search functionality is provided on the search page.
 An array of all possible search results -- i.e., all types, members, namespaces, and assemblies is stored as JSON in a hidden element, similarly to the array of page versions.
@@ -716,6 +722,24 @@ As a consequence, if a method has multiple overloads, only one of them is includ
 
 Every time a character is typed into the search box, a JavaScript-based fuzzy search is performed using the \textit{Fuse.js} library~\cite{fuse_js}.
 The search runs on the names of the individual items (i.e., types, members, namespaces, and assemblies), and the matching results are then displayed below.
+
+\section{Program configuration}
+\label{sec:program-configuration}
+
+The program can be configured via command-line arguments or using a YAML file, as requested by Requirement~\ref{subreq:config-yaml}.
+The configurations are represented by \texttt{CommandLineConfiguration} and \texttt{YamlFileConfiguration} classes, both implementing the \texttt{IProgramConfiguration} interface, as illustrated in Figure~\ref{fig:program-conf-types}.
+Command-line arguments are parsed using the \texttt{CommandLineParser} library~\cite{commandlineparser}, while for YAML, the \texttt{YamlDotNet} library~\cite{yamldotnet} is used.
+
+The only mandatory argument is the \texttt{input}, which can refer to an assembly, a project file, or a solution file.
+In the latter two cases, the \texttt{AssemblyLocator} class is used to locate the assemblies.
+Internally, this class uses \texttt{Microsoft.Build}~\cite{msbuild_package} and \texttt{Microsoft.Build.Locator}~\cite{msbuild_locator} packages to obtain the resulting assembly, which is then passed to the \texttt{DocGenerator} class, mentioned in Section~\ref{sec:workflow}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\linewidth]{img/program-configuration.png}
+\caption{Program configuration -- types}
+\label{fig:program-conf-types}
+\end{figure}
 
 \section{Error handling}
 
@@ -858,6 +882,7 @@ In addition to the templates, it is necessary to configure the style of the inne
 There are two options: to reuse the default configuration or create a custom one.
 
 \subsubsection{Using the default configuration}
+\label{sec:extensibility-default-config}
 
 The default configuration (i.e., the \texttt{DocCommentHtmlConfiguration} class), which replaces the inner XML tags with the HTML elements listed in Table~\ref{table:default-xml-config}, is probably sufficient in most cases.
 None of the resulting HTML elements has a hard-coded style; instead, each of them is assigned a custom CSS class, whose name starts with \textit{refdocgen}; so, the style can be later configured using CSS.
@@ -1079,6 +1104,7 @@ As stated in the second comment, this is done by adding an instance of the proce
 Following that, the template processor is registered and added to the list of available documentation templates, displayed on the command line.
 
 \subsection{Adding a new language}
+\label{sec:extensibility-new-lang}
 
 When adding support for a new language to the default UI, we first need to create a configuration class for the language and then provide \textit{Razor} components representing the language-specific fragments in the given language.
 
@@ -1141,6 +1167,7 @@ This makes the \texttt{refdocgen} command available on the command line.
 Alternatively, it is also possible to clone the project from GitHub and run it using \texttt{dotnet run}, although this is recommended only for development purposes.
 
 \section{Usage}
+\label{sec:user-docs-usage}
 
 Before generating the reference documentation, it is necessary to build the project.
 It is important to remember that \textit{RefDocGen} does not support .NET Framework projects. 
@@ -1285,7 +1312,7 @@ Then, when creating the documentation, we need to use the \texttt{--static-pages
 As a result, each of the pages will be included in the reference documentation.
 All relative paths between the files remain unchanged; therefore, we can safely use relative links to navigate to different pages.
 
-An example static pages directory is shown in Listing~\ref{lst:directory-structure-example}, while
+An example static pages directory is shown in Listing~\ref{lst:static-pages-dir-example}, while
 the individual pages are displayed in Listings~\ref{lst:example-static-page1} and~\ref{lst:example-static-page2}.
 
 \begin{listing}[H]
@@ -1295,7 +1322,7 @@ static-pages/
     FAQ.md
 \end{lstlisting}
 \caption{Example static pages directory}
-\label{lst:directory-structure-example}
+\label{lst:static-pages-dir-example}
 \end{listing}
 
 \begin{listing}[H]
@@ -1593,39 +1620,117 @@ The UI is fully responsive, as displayed in Figures~\ref{fig:refdocgen-ui-deskto
 \label{fig:refdocgen-ui-mobile}
 \end{figure}
 
-\chapter{Evaluation}
+\subsection*{Additional notes}
 
-We tested the app on multiple programs.
-First, we used as input the \texttt{RefDocGen.ExampleLibrary}, contained in the solution.
+The tutorials describing how to generate reference documentation of selected projects are contained in Section~\ref{ch:six}.
 
-To generate its documentation, we ran the following command:
-\texttt{refdocgen PATH\_TO\_DLL --min-visibility Private}
+\subsubsection{Supported modifiers}
 
-Its reference documentation can be viewed here (TODO LINK).
+Generally, most of the type, member, and parameter modifiers in C\# are recognized by \textit{RefDocGen}.
+However, selected modifiers are not supported and thus do not appear in the generated documentation, but these are typically implementation details that do not affect the API.
+Specifically, the following modifiers are not supported:
+\texttt{extern}, \texttt{file}, \texttt{managed}, \texttt{partial}, \texttt{record}, \texttt{scoped}, \texttt{unmanaged}, \texttt{unsafe}, and \texttt{volatile}.
+Likewise, the following type parameter constraints are not currently supported:
+\texttt{notnull}, \texttt{unmanaged}, \texttt{default}, and \texttt{allows ref struct}.
 
-Then, we created the reference documentation of our program.
+\chapter{Evaluation of the program}
+\label{ch:six}
 
-TODO command + screenshot
+This chapter presents an evaluation of the program through testing on several projects. 
+It describes the individual steps performed to generate the reference documentation. 
+Additionally, it is important to note that these steps can also serve as tutorials.
 
-Finally, we wanted to test the program on a third-party library, which is ideally popular and well-documented.
-Newtonsoft.JSON meets these criteria well, as it is the most downloaded NuGet package.
+\section{Generating documentation of RefDocGen.ExampleLibrary}
+
+First, we tested the program on the \texttt{RefDocGen.ExampleLibrary}, contained in the solution, which is a library used purely for the integration tests.
+Before generating the documentation, we built the \texttt{RefDocGen.sln} solution in \textit{Debug} mode, as previously described in Section~\ref{sec:user-docs-usage}. 
+Then, we navigated to the \texttt{tests/RefDocGen.ExampleLibrary} directory, and executed \texttt{refdocgen refdoc\-gen.yaml} from the command line.
+This way, the reference documentation of \texttt{RefDocGen.ExampleLibrary} as well as \texttt{RefDocGen.ExampleFSharpLibrary} and \texttt{RefDocGen.ExampleVbLibrary} was generated, using the configuration from YAML.
+No issues occurred during the process.
+The documentation can be viewed by opening the \texttt{reference-docs/index.html} page, and additionally, samples of the documentation are shown in Figures~\ref{fig:eval-example-lib-1} and \ref{fig:eval-example-lib-2}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\linewidth]{img/refdocgen-demo-lib1.png}
+\caption{Example documentation -- API homepage}
+\label{fig:eval-example-lib-1}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\linewidth]{img/refdocgen-demo-lib2.png}
+\caption{Example documentation -- type page}
+\label{fig:eval-example-lib-2}
+\end{figure}
+
+\section{Generating documentation of the project itself}
+\label{sec:evaluation-refdocgen}
+
+Next, we generated reference documentation of our program (i.e., \textit{RefDocGen}),
+as requested by Goal~\ref{goal:third}.
+To achieve this, we first navigated to the \texttt{src/RefDocGen} folder and executed \texttt{refdocgen refdocgen.yaml} from the command line, similarly to the previous case.
+This way, a documentation version, showing members of any visibility, was generated (as specified in the YAML, the \textit{Razor} templates, which get compiled into .NET classes, are excluded).
+Following that, we edited the YAML and set the \texttt{doc-version} to \texttt{v-public}, \texttt{min-visibility} to \texttt{Public}, and ran \texttt{refdocgen refdocgen.yaml} once again.
+This way, we generated another version of the documentation, displaying only the public API.
+
+Again, no problems were encountered, and the resulting documentation is displayed in Figures~\ref{fig:eval-example-refdocgen-1} and \ref{fig:eval-example-refdocgen-2}.
+As we can see, since there are multiple versions available, it is possible to switch between them using the dropdown in the bottom menu.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\linewidth]{img/refdocgen-demo-refdocgen1.png}
+\caption{\textit{RefDocGen} documentation -- API homepage}
+\label{fig:eval-example-refdocgen-1}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\linewidth]{img/refdocgen-demo-refdocgen2.png}
+\caption{\textit{RefDocGen} documentation -- type page}
+\label{fig:eval-example-refdocgen-2}
+\end{figure}
+
+\section{Generating documentation of a third-party library}
+\label{sec:evaluation-third-party}
+
+Finally, as requested by Goal~\ref{goal:fourth}, we tested the program on a third-party library, which is preferably popular and well-documented.
+\textit{Json.NET}~\cite{newtonsoft} (also known as \textit{Newtonsoft.JSON}) meets these criteria well, 
+as it is the most downloaded NuGet package.
 
 To generate its documentation, we first navigated to the corresponding NuGet page (\url{https://www.nuget.org/packages/newtonsoft.json/}).
-Then, we manually downloaded the NuGet package (version 13.0.3) and changed its extension to \textit{.zip}, since NuGet packages are basically \textit{.zip} files, as explained in the documentation~\cite{nuget_zip_docs}.
-Next, we unzipped the package and navigated to the \texttt{lib/net6.0} directory, containing the DLL and XML documentation file.
+Then, we manually downloaded the NuGet package (version 13.0.3) and changed its extension to \textit{.zip}, since NuGet packages are generally \textit{.zip} files, as explained in the documentation~\cite{nuget_zip_docs}.
+Next, we unzipped the package and navigated to the \texttt{lib/net6.0} directory, containing both the DLL and XML documentation file.
+Finally, we generated the reference documentation, while providing the DLL as the parameter, using the command shown in Listing~\ref{lst:demo-newtonsoft}.
+As we can notice, we used the \texttt{--doc-version} option, so a specific version (\textit{v-newtonsoft}) was generated.
 
-Finally, we ran our program using the DLL as the parameter, using the command shown in Listing~\ref{lst:demo-newtonsoft}:
+Following that, using equivalent steps, we also generated the reference documentation of two other libraries: \textit{YamlDotNet}~\cite{yamldotnet} (version 16.3.0) and \textit{Serilog}~\cite{serilog} (version 2.9.1), as we used both of these libraries when developing, and on top of that, both are well-documented.
+The commands we used are displayed in Listing~\ref{lst:demo-other-two}.
 
 \begin{listing}[H]
 \begin{lstlisting}[language=XML]
-refdocgen Newtonsoft.Json.dll --doc-version v-newtonsoft-public 
-    --min-visibility Public -o ~/refdocgen-demo
+refdocgen Newtonsoft.Json.dll --doc-version v-newtonsoft
+    -o ~/refdocgen-demo
 \end{lstlisting}
-\caption{}
+\caption{Generating reference documentation of \textit{Newtonsoft.JSON}}
 \label{lst:demo-newtonsoft}
 \end{listing}
 
-We generated the documentation of both public and private API, which can be accessed at https://vl-cz.github.io/refdocgen-demo/v-newtonsoft-public.
+\begin{listing}[H]
+\begin{lstlisting}[language=XML]
+refdocgen YamlDotNet.dll --doc-version v-yamldotnet
+    -o ~/refdocgen-demo
+ 
+refdocgen Serilog.dll --doc-version v-serilog
+    -o ~/refdocgen-demo
+\end{lstlisting}
+\caption{Generating reference documentation of \textit{YamlDotNet} and \textit{Serilog}}
+\label{lst:demo-other-two}
+\end{listing}
+
+The reference documentation is stored in the \texttt{\~/refdocgen-demo} directory, while again, we did not encounter any errors.
+Additionally, the screenshots displaying the documentation of these libraries are shown in Figures~\ref{fig:eval-newtonsoft-home},
+\ref{fig:eval-newtonsoft-type}, \ref{fig:eval-yaml-home}, \ref{fig:eval-yaml-type}, \ref{fig:eval-serilog-home}, and \ref{fig:eval-serilog-type}.
+When browsing the documentation, it is possible to switch between the versions, which represent the individual libraries, on the API homepage, as this is likely the only page present in all three versions.
 
 \begin{figure}[H]
 \centering
@@ -1637,27 +1742,34 @@ We generated the documentation of both public and private API, which can be acce
 \begin{figure}[H]
 \centering
 \includegraphics[width=1\linewidth]{img/newtonsoft-class.png}
-\caption{Newtonsoft.Json documentation -- Type detail}
+\caption{Newtonsoft.Json documentation -- type page}
 \label{fig:eval-newtonsoft-type}
 \end{figure}
 
-Following that, using equivalent steps, we also generated the reference documentation for two other packages: YamlDotNet (version 16.3.0) and CommandLineParser (version 2.9.1), 
-as we used both of these libraries when developing, and furthermore, both are well documented.
-The commands are displayed in Listing~\ref{lst:demo-other-two}.
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\linewidth]{img/refdocgen-demo-yaml1.png}
+\caption{YamlDotNet documentation -- API homepage}
+\label{fig:eval-yaml-home}
+\end{figure}
 
-\begin{listing}[H]
-\begin{lstlisting}[language=XML]
-refdocgen YamlDotNet.dll --doc-version v-yamldotnet-public
-    --min-visibility Public -o ~/refdocgen-demo
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\linewidth]{img/refdocgen-demo-yaml2.png}
+\caption{YamlDotNet documentation -- type page}
+\label{fig:eval-yaml-type}
+\end{figure}
 
-refdocgen CommandLine.dll --doc-version v-serilog-public 
-    --min-visibility Public -o ~/refdocgen-demo
-\end{lstlisting}
-\caption{}
-\label{lst:demo-other-two}
-\end{listing}
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\linewidth]{img/refdocgen-demo-serilog1.png}
+\caption{Serilog documentation -- API homepage}
+\label{fig:eval-serilog-home}
+\end{figure}
 
-During the process, no errors were encountered.
- 
-All three versions of documentation are deployed at \url{https://vl-cz.github.io/refdocgen-demo/v-newtonsoft-public}.
-When switching to a different version, go to the API homepage, as this is likely the only page present in all three versions.
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\linewidth]{img/refdocgen-demo-serilog2.png}
+\caption{Serilog documentation -- type page}
+\label{fig:eval-serilog-type}
+\end{figure}

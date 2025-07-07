@@ -1,4 +1,6 @@
 \chapter{Analysis}
+\label{ch:second}
+
 In the previous chapter, we outlined the key goals of this thesis, focusing on developing a reference documentation generator. 
 To fulfill the goals, we must first address the fundamental challenges associated with generating documentation for .NET applications.
 
@@ -370,6 +372,7 @@ In other words, the inheritdoc tags are still present in the resulting XML file.
 As a result, the documentation inheritance must be handled by the documentation generator.
 
 \section{Further requirement analysis}
+\label{sec:analysis-further-analysis}
 
 In this section, we will analyze the requirements R1-R7, outlined in the first chapter, in more detail.
 
@@ -416,10 +419,12 @@ Based on the insights above, we can introduce two sub-requirements of Requiremen
 \setcounter{subrequirementcounter}{1}
 \begin{subrequirement}
     Provide reasonable default values for command line arguments.
+    \label{subreq:config-default-values}
 \end{subrequirement}
 
 \begin{subrequirement}
     Support configuration using a YAML file.
+    \label{subreq:config-yaml}
 \end{subrequirement}
 
 \subsection*{Custom templates}
@@ -441,6 +446,7 @@ In practice, this should be done by implementing a corresponding interface.
 
 \begin{subrequirement}
     Support for custom templates written in the same template language as the default UI.
+    \label{subreq:custom-razor-templates}
 \end{subrequirement}
 
 \begin{subrequirement}
@@ -469,10 +475,12 @@ As a result, we can further clarify Requirement~\ref{req:static-pages}:
 
 \begin{subrequirement}
     Provide an option to add a folder containing static files to be included in the documentation. 
+    \label{subreq:static-pages-folder}
 \end{subrequirement}
 
 \begin{subrequirement}
     Support static pages in both HTML and Markdown format.
+    \label{subreq:static-pages-format}
 \end{subrequirement}
 
 \subsection*{Documentation versioning}
@@ -493,6 +501,7 @@ Thus, we can define two sub-requirements:
 
 \begin{subrequirement}
     Option to create a specific version of the documentation.
+    \label{subreq:doc-version-option}
 \end{subrequirement}
 
 \begin{subrequirement}
@@ -504,6 +513,7 @@ We have skipped requirements~\ref{req:lang-ind}, \ref{req:modern-ui}, and~\ref{r
 Furthermore, since we have decided to extract the context data from an assembly, requirement~\ref{req:lang-ind} is automatically satisfied, as discussed earlier.
 
 \section{Existing technologies}
+\label{sec:analysis-existing-tech}
 
 In this chapter, we will briefly examine the other generators, focusing on their core functionality and default UI to define additional requirements.
 For better understanding, we will present it using screenshots.
@@ -761,6 +771,7 @@ If a user tries to search for something, he/she will be redirected to the search
 
 \begin{requirement}
     Search functionality.
+    \label{req:search}
 \end{requirement}
 
 \setcounter{subrequirementcounter}{12}
@@ -780,6 +791,7 @@ Thus, our next requirement is:
 
 \begin{requirement}
     Correctly interpret the inner XML tags.
+    \label{req:inner-xml-tags}
 \end{requirement}
 
 Furthermore, the generator should be capable of replacing \texttt{<inheritdoc />} with the actual documentation, which leads us to the next requirement:
@@ -880,6 +892,7 @@ Considering these points, we can introduce the following two requirements:
 
 \begin{requirement}
     Option for selecting a solution as the input.
+    \label{req:solution-as-input}
 \end{requirement}
 
 \begin{requirement}
@@ -938,4 +951,5 @@ In conclusion, installation as a .NET tool meets all criteria, and thus seems li
 
 \begin{requirement}
     The generator should be distributed as a .NET tool.
+    \label{req:dotnet-tool-dist}
 \end{requirement}

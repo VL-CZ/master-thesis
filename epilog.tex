@@ -1,8 +1,89 @@
 \chapter*{Conclusion}
 \addcontentsline{toc}{chapter}{Conclusion}
 
-- describe how the requirements are fulfilled
+This chapter evaluates the requirements and goals presented in Chapters~\ref{ch:first} and~\ref{ch:second}.
+Additionally, several future enhancements are outlined.
 
-- describe how the goals are fulfilled
+\section*{Requirements evaluation}
+First, as requested by Requirement~\ref{req:dotnet-tool-dist}, the program is distributed as a .NET tool, which is further explained in Section~\ref{sec:user-docs-versions}. 
+Internally, the program works with the assemblies and XML documentation files and runs on .NET 8, so Requirements~\ref{req:lang-ind} and~\ref{req:platf-ind} are satisfied inherently.
 
-- future work
+\subsection*{Configuration}
+
+The only mandatory argument of the program is the input, which can be an assembly, project, solution, or a YAML configuration file, as further described in Section~\ref{sec:program-configuration}; so Requirements~\ref{subreq:config-default-values}, \ref{subreq:config-yaml}, and \ref{req:solution-as-input} are met.
+
+The program allows users to include a folder with static pages, either in HTML or Markdown format, which is further described in Section~\ref{sec:architecture-static-pages}.
+Next, as mentioned in Section~\ref{sec:architecture-doc-versions}, users can also choose to create a specific documentation version.
+Additionally, the configuration allows users to exclude types with the given (or lower) visibility, as well as inherited members, as described in Section~\ref{sec:architecture-assembly-analysis}. Similarly, it is possible to exclude certain assemblies and namespaces.
+To sum up, Requirements~\ref{subreq:static-pages-folder}, \ref{subreq:static-pages-format},
+\ref{subreq:doc-version-option}, and \ref{req:exclude-assemblies} - \ref{req:exclude-inherited} are also satisfied.
+
+\subsection*{UI}
+
+The documentation consists of the API homepage and dedicated pages for each assembly and namespace, showing the contained types, as presented in Section~\ref{sec:architecture-eight-templates}.
+Then, there is a separate page for each type, displaying its signature, documentation, and a list of declared members together with their documentation.
+Additionally, the search functionality is provided on the \textit{search} page, while the search itself is further described in Section~\ref{sec:default-ui-search}.
+As a result, we can see that Requirements~\ref{req:index-page}, \ref{req:namespace-page}, \ref{req:type-page}, and \ref{req:search} (including their subrequirements) are met.
+
+All standard inner XML tags within documentation comments are supported and converted to the equivalent HTML elements, as discussed in Sections~\ref{sec:architecture-inner-xml-to-html} and~\ref{sec:extensibility-custom-razor}.
+Furthermore, as described in Section~\ref{sec:architecture-inheritdoc-resolve}, the \texttt{<inheritdoc>} tags are replaced by the actual documentation.
+The program also supports cross-references, as mentioned in Section~\ref{sec:architecture-cross-references-tms}.
+In conclusion, Requirements~\ref{req:inner-xml-tags}, \ref{req:inheritdoc}, and \ref{req:cross-ref} are met.
+
+Finally, the UI is built using the \textit{Bootstrap} framework, is responsive, and supports both light and dark mode, which is further described in Sections~\ref{sec:ui-styling} and~\ref{sec:ui-themes}. 
+Next, all pages use the same layout, which includes the top menu.
+In addition to that, if the documentation is versioned, the version can be selected using a dropdown, as outlined in Section~\ref{sec:default-ui-version-dropdown}.
+Thus, Requirements~\ref{req:doc-version-dropdown}, \ref{req:modern-ui}, \ref{req:top-menu}, \ref{req:dark-theme} and \ref{req:responsive} are fulfilled as well.
+
+\subsection*{Extensibility}
+
+The program can be extended in multiple ways.
+Users may add a custom \textit{Razor} documentation template or a template processor, as explained in Sections~\ref{sec:extensibility-custom-razor} and~\ref{sec:extensibility-custom-template-processor}.
+Additionally, it is possible to add support for a new language to the default UI, as described in Section~\ref{sec:extensibility-new-lang}.
+As a result, Requirements~\ref{subreq:custom-razor-templates}, \ref{subreq:custom-template-lang} 
+and~\ref{req:ui-multiple-langs} are met.
+
+\section*{Goals evaluation}
+The goals of this thesis were presented in Section~\ref{sec:intro-goals}.
+The following list summarizes how each of the goals is fulfilled.
+
+\begin{itemize}
+    \item \ref{goal:first} -- the initial requirements are further analyzed in Sections~\ref{sec:analysis-further-analysis} and \ref{sec:analysis-existing-tech}.
+    \item \ref{goal:second} -- the program meets all requirements, as explained in the previous section.
+    \item \ref{goal:third} -- we generated the reference documentation of \textit{RefDocGen}, as described in Section~\ref{sec:evaluation-refdocgen}.
+    \item \ref{goal:fourth} -- the program was tested on the following third-party libraries: \textit{Newtonsoft.JSON}, \textit{YamlDotNet}, and \textit{Serilog}, as explained in Section~\ref{sec:evaluation-third-party}.
+\end{itemize}
+
+In conclusion, as we can see, all goals and requirements are satisfied.
+
+\section*{Future work}
+
+This section outlines several improvements that could be later added to the project.
+
+\subsection*{Other documentation templates}
+
+We may add a different documentation template by creating custom \textit{Razor} templates. 
+Alternatively, it is possible to provide templates in a different templating language together with a custom template processor.
+Both processes are thoroughly described in Sections~\ref{sec:extensibility-custom-razor} and~\ref{sec:extensibility-custom-template-processor}.
+
+\subsection*{Adding a new language to the default UI}
+
+Currently, the default UI displays type and member signatures only in C\# syntax.
+In the future, we might add support for other languages, such as F\#, as described in the step-by-step guide in Section~\ref{sec:extensibility-new-lang}.
+
+\subsection*{Processing XML documentation files of third-party libraries}
+
+By default, \textit{RefDocGen} uses only the XML documentation files located in the same directory as the assemblies.
+As a result, if a member inherits the documentation from a third-party library, \textit{RefDocGen} fails to inherit the documentation.
+
+While this is not a particularly common scenario, it could be addressed in the following way.
+First, it would be necessary to locate the XML documentation file of the library, which is typically stored in the global packages folder along with the library DLL.
+Then, this file would be passed to the \texttt{DocCommentExtractor} class.
+Finally, we would have to modify the \texttt{InheritDocResolver} class to look for the original documentation in these files as well.
+
+\subsection*{Adding support for nullable reference types}
+Newer versions of .NET differentiate between nullable and non-nullable reference types if the nullable aware context is enabled.
+For instance, in C\#, a nullable string type is denoted as \texttt{string?}.
+However, \textit{RefDocGen} currently does not differentiate between nullability in the context of reference types.
+If we wanted to add support later, we would need to slightly modify the \texttt{TypeNameData} class and add a new field describing whether the type is nullable or not.
+In addition to that, it would be required to update the \texttt{CSharpTypeName.Of} method to add a question mark after the type name, if the type is nullable.
