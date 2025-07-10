@@ -1156,7 +1156,8 @@ This way, the language is added to the default UI.
 
 \chapter{User Documentation}
 
-This chapter provides the user documentation of our program.
+This chapter provides the user documentation of our program, covering its installation, usage, and UI.
+The tutorials describing how to generate reference documentation for selected projects are contained in Section~\ref{ch:six}.
 
 \section{Installation}
 
@@ -1620,11 +1621,8 @@ The UI is fully responsive, as displayed in Figures~\ref{fig:refdocgen-ui-deskto
 \label{fig:refdocgen-ui-mobile}
 \end{figure}
 
-\subsection*{Additional notes}
 
-The tutorials describing how to generate reference documentation of selected projects are contained in Section~\ref{ch:six}.
-
-\subsubsection{Supported modifiers}
+\subsection*{Supported modifiers}
 
 Generally, most of the type, member, and parameter modifiers in C\# are recognized by \textit{RefDocGen}.
 However, selected modifiers are not supported and thus do not appear in the generated documentation, but these are typically implementation details that do not affect the API.
@@ -1641,6 +1639,7 @@ It describes the individual steps performed to generate the reference documentat
 Additionally, it is important to note that these steps can also serve as tutorials.
 
 \section{Generating documentation of RefDocGen.ExampleLibrary}
+\label{sec:evaluation-example-library}
 
 First, we tested the program on the \texttt{RefDocGen.ExampleLibrary}, contained in the solution, which is a library used purely for the integration tests.
 Before generating the documentation, we built the \texttt{RefDocGen.sln} solution in \textit{Debug} mode, as previously described in Section~\ref{sec:user-docs-usage}. 
@@ -1773,3 +1772,23 @@ When browsing the documentation, it is possible to switch between the versions, 
 \caption{Serilog documentation -- type page}
 \label{fig:eval-serilog-type}
 \end{figure}
+
+\section*{Evaluation summary}
+No errors were encountered while creating the reference documentations, following the guides described in Sections~\ref{sec:evaluation-example-library}, \ref{sec:evaluation-refdocgen}, and \ref{sec:evaluation-third-party}.
+The program was tested on both \textit{Windows} and \textit{Linux} operating systems.
+Additionally, the UI was tested in \textit{Chrome}, \textit{Mozilla Firefox}, and \textit{Microsoft Edge} browsers.
+All three created documentations are also contained in the following attachment folders:
+
+\begin{itemize}
+    \item \texttt{docs/example-library/} -- documentation of \textit{RefDocGen.ExampleLibrary}
+    \item \texttt{docs/refdocgen/} -- documentation of \textit{RefDocGen}
+    \item \texttt{docs/third-party/} -- documentation of the \textit{Newtonsoft.JSON}, \textit{Serilog} and \textit{YamlDotNet}
+\end{itemize}
+
+In addition to that, these documentations can be accessed at the following URLs:
+
+\begin{itemize}
+    \item \url{https://vl-cz.github.io/refdocgen-demo/index.html}
+    \item \url{https://vl-cz.github.io/refdocgen-demo-refdocgen/index.html}
+    \item \url{https://vl-cz.github.io/refdocgen-demo-third-party/index.html}
+\end{itemize}
