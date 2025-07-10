@@ -1,4 +1,4 @@
-\chapter{Technical Analysis}
+\chapter{Technical analysis}
 
 In the previous chapter, we formulated several requirements that the documentation generator should adhere to.
 This chapter presents a thorough analysis of the solution, examining its structure and addressing numerous challenges to ensure these requirements are met.
@@ -6,25 +6,22 @@ This chapter presents a thorough analysis of the solution, examining its structu
 \section{Member representation}
 \label{sec:member-repr}
 
-First, we can notice that we must somehow represent type members in our codebase.
-That is because we need to know their names and various data concerning them. 
+First, we can notice that we must somehow represent type members in our codebase, because we need to know their names and various data concerning them. 
 For instance, it is mandatory to know whether a member is static, public, etc., as this information needs to be included in the reference documentation.
 Additionally, we need to display the corresponding documentation comments.
 
 \subsection*{Using the types provided by reflection}
 The first idea is to use the objects provided by reflection, such as \texttt{FieldInfo} and \texttt{MethodInfo}, which provide the data we need to display.
-For instance, it is possible to obtain the name of a member, in addition to that 
+For instance, it is possible to obtain the name of a member; in addition to that, 
 these types contain properties such as \texttt{IsStatic}, \texttt{IsPublic}, etc.
-
 However, as explained earlier, the documentation comments are not part of the assembly. 
 Therefore, these types do not contain any data regarding the documentation comments.
 Since we need to somehow extract the comments, we can conclude that using the types provided by reflection alone is not sufficient.
 
 The first option is to simply pass the XML documentation file along with the members.
-When obtaining the documentation comment, we would call e.g. \texttt{xmlDocFile.GetDocComment(memberName)}.
+For obtaining the documentation comment, we would call a custom method, named e.g., \texttt{xmlDocFile.GetDocComment(memberName)}.
 However, there are multiple issues with this approach.
-
-As described in the Requirement~\ref{req:templates}, the generator should be designed in an extensible way.
+As described in Requirement~\ref{req:templates}, the generator should be designed in an extensible way.
 Thus, in the future, this API may be used by other developers, and therefore it should be as intuitive as possible.
 Unfortunately, the approach above does not create a particularly intuitive interface. 
 The main problem is that the concerns are mixed, as the data regarding the member is stored within the type, while the documentation needs to be extracted separately.
@@ -32,22 +29,22 @@ The main problem is that the concerns are mixed, as the data regarding the membe
 \subsection*{Using a tuple}
 
 This leads us to an alternative approach: representing members as a tuple containing the reflection object and the corresponding documentation comment.
-By doing so, we address some of the issues outlined above; specifically, we achieve better cohesion by storing the documentation alongside the reflection object itself.
+By doing so, we address some of the issues outlined above; specifically, we achieve better cohesion by storing the documentation alongside the reflection object.
 
 However, several problems persist.
-The user still needs to parse the documentation in order to obtain the individual top-level tags, because those typically should be displayed in a different way.
-Furthermore, that API is still quite messy, since it contains, e.g., a method setting a field's value, and additional methods irrelevant to documentation generation.
+The user still needs to parse the documentation in order to obtain the individual top-level tags, because these tags should typically be displayed in a different way.
+Furthermore, the API is still quite messy, since it contains, e.g., a method for setting the value of a field, and additional methods irrelevant to documentation generation.
 
 In addition to that, handling different kinds of members (e.g., properties and methods) in the program in a common way can be complicated.
-That is caused by the design of the .NET Reflection API, as e.g., there is no common superclass or interface for properties and methods, other than \texttt{MemberInfo}.
+That is caused by the design of the .NET Reflection API, as, e.g., there is no common superclass or interface for properties and methods, other than \texttt{MemberInfo}.
 However, this class provides only a handful of information about a member, specifically, it is not possible to determine whether the member is static or its accessibility level.
 
 \subsection*{Using custom types}
 
 Instead of the reflection types, we can use custom types for the member representation.
 Ideally, those types could be simply wrappers around the built-in reflection types, providing extra information, such as the documentation comments.
-Moreover, the fields and methods not relevant to documentation generation do not need to be included in the API, as we want to keep the interface as clean as possible.
-This way, we can achieve a user-friendly object model, where all member types can have the following structure:
+Moreover, the fields and methods not relevant to documentation generation should not be included in the API, as we want to keep the interface as clean as possible.
+This way, we can achieve a user-friendly object model, where all member types have the following structure:
 
 \begin{itemize}
     \item name
@@ -59,7 +56,7 @@ This way, we can achieve a user-friendly object model, where all member types ca
     \item + other documentation-related information
 \end{itemize}
 
-Furthermore, we can create custom interfaces or supertypes for a certain set of members that share common functionality. As an example, there could be a common interface for properties and methods, which allows us
+Furthermore, we can create custom interfaces or superclasses for a certain set of members that share common functionality. As an example, there could be a common interface for properties and methods, which allows us
 to process those in a common way in other parts of our code base.
 Based on the insights above, we will prefer this approach.
 
@@ -90,9 +87,9 @@ Thus, it would be preferred to create custom types representing the types, with 
 
 We have already described how to represent types and members in our codebase.
 However, we have not yet explained how to assign the documentation to the corresponding types or members.
-As explained in Section~\ref{section:xml-doc}, the documentation comments are stored inside the XML documentation file, whose format was already presented in Program~\ref{lst:ex-xml-output}.
+As explained in Section~\ref{section:xml-doc}, the documentation comments are stored inside the XML documentation file, whose format was already presented in Listing~\ref{lst:ex-xml-output}.
 We have also noted that the \texttt{name} attribute uniquely identifies the type or member to which the documentation belongs.
-An example of the ID string is shown in Program~\ref{lst:ex-xml-string}.
+An example of the ID string is shown in Listing~\ref{lst:ex-xml-string}.
 
 The format of the string is thoroughly described in the documentation~\cite{csharp_xml_docs}.
 Generally, it consists of two parts, separated by a colon. 
@@ -100,11 +97,11 @@ The first part identifies the kind of the type or member, for example, \textit{T
 Additionally, the second part represents a fully qualified name of the type or member.
 In the case of a member, the name consists of the containing type name followed by the member name.
 If there are any parameters, they are enclosed in parentheses and identified by their type names.
-Thus, the string shown in Program~\ref{lst:ex-xml-string} identifies a method \texttt{CalculateRectangleArea}, 
-which is contained within the type \texttt{MyApp.MyClass} and takes two parameters of type \texttt{System.Double}.
+Thus, the string shown in Listing~\ref{lst:ex-xml-string} identifies the \texttt{CalculateRectangleArea} method, 
+which is contained within the \texttt{MyApp.MyClass} type and takes two parameters of type \texttt{System.Double}.
 This way, we can find the corresponding type or member for the comment.
 
-Thus, the generator can process the XML file, find all documentation comments, and assign them to the corresponding types or members, one by one.
+In conclusion, the generator can process the XML file, find all documentation comments, and assign them to the corresponding types or members, one by one.
 
 \begin{listing}[H]
 \begin{lstlisting}[language=XML]
@@ -117,17 +114,17 @@ Thus, the generator can process the XML file, find all documentation comments, a
 
 \newpage
 
-\section{Resolving \texttt{inheritdoc} tags}
+\section{Resolving \texttt{<inheritdoc>} tags}
 \label{sec:inheritdoc-resolve}
 
-As mentioned in Requirement~\ref{req:inheritdoc}, our generator must be capable of resolving \texttt{<inheritdoc/>} tags.
-The key observation is that they may be used recursively, i.e., the resolved documentation may again contain \texttt{<inheritdoc/>} tags.
-Program~\ref{lst:ex-doc-classes} shows an example class hierarchy with inherited documentation comments.
+As mentioned in Requirement~\ref{req:inheritdoc}, our generator must be capable of resolving \texttt{<inheritdoc>} tags.
+The key observation is that they may be used recursively, i.e., the resolved documentation may again contain \texttt{<inheritdoc>} tags.
+Listing~\ref{lst:ex-doc-classes} shows an example class hierarchy with inherited documentation comments.
 As we can see, \texttt{ChildChild} class inherits its documentation from \texttt{Child} class, 
 which inherits it from \texttt{Parent} class.
 Thus, after resolution, all three classes should have the same documentation comment -- \textit{"Parent class."}.
 Hence, the resolution may be done using depth-first search.
-Moreover, Program~\ref{lst:ex-doc-classes} shows that \texttt{ChildChild.Handle} method inherits the documentation from \texttt{Child.Handle} method, 
+Moreover, Listing~\ref{lst:ex-doc-classes} shows that \texttt{ChildChild.Handle} method inherits the documentation from \texttt{Child.Handle} method, 
 while \texttt{Child.Handle} uses the documentation provided to \texttt{Console.WriteLine} method.
 
 \begin{listing}[H]
@@ -163,32 +160,32 @@ public class ChildChild : Child
     }
 }
 \end{lstlisting}
-\caption{Example class hierarchy with inheritdoc tags}
+\caption{Example class hierarchy with \texttt{<inheritdoc>} tags}
 \label{lst:ex-doc-classes}
 \end{listing}
 
-As mentioned before, the \texttt{<inheritdoc/>} tag may be applied to both types and members, and may contain \texttt{cref} attribute.
+As mentioned before, the \texttt{<inheritdoc>} tag may be applied to both types and members, and may contain \texttt{cref} attribute.
 Therefore, we can identify the following three cases, whose resolution fundamentally differs:
 
 \begin{itemize}
-    \item \texttt{<inheritdoc/>} applied to a type (without \texttt{cref} attribute)
-    \item \texttt{<inheritdoc/>} applied to a member (without \texttt{cref} attribute)
-    \item \texttt{<inheritdoc/>} with \texttt{cref} attribute
+    \item \texttt{<inheritdoc>} applied to a type (without \texttt{cref} attribute)
+    \item \texttt{<inheritdoc>} applied to a member (without \texttt{cref} attribute)
+    \item \texttt{<inheritdoc>} with \texttt{cref} attribute
 \end{itemize}
 
-The resolution rules were already described in section~\ref{sec:reusing-docs}, however, we briefly recapitulate them here for convenience.
+The resolution rules were already described in Section~\ref{sec:reusing-docs}; however, we briefly recapitulate them here for convenience.
 In the first case, we must locate the base type and all implemented interfaces,
 while the second case requires identifying all equivalent definitions of the member in those types.
 Finally, in the last case, we need to find the corresponding type or member by its ID string contained in the \texttt{cref} attribute.
 
 Next, consider a method inheriting documentation from its base definition, where that base definition itself inherits the documentation using \texttt{cref} attribute. 
-This is exactly the case of \texttt{ChildChild.Handle} and \texttt{Child.Handle} methods shown in Program~\ref{lst:ex-doc-classes}.
+This is exactly the case of \texttt{ChildChild.Handle} and \texttt{Child.Handle} methods shown in Listing~\ref{lst:ex-doc-classes}.
 This situation complicates the resolution process, as we first need to identify the correct case out of the three before proceeding.
 
 A simple observation is that we can first resolve the tags without the \texttt{cref} attribute. 
-During this process, we can possibly copy some of the \texttt{<inheritdoc/>} tags with \texttt{cref}, however, this is not a problem, as these point to a fixed target.
+During this process, we can possibly copy some of the \texttt{<inheritdoc>} tags with \texttt{cref} value; however, this is not a problem, as these point to a fixed target.
 Then, in the second phase, we can resolve all tags with the \texttt{cref} attribute.
-This simplifies the process a little bit, as at one time we need to handle only one kind of \texttt{<inheritdoc/>} tags.
+This simplifies the process a little bit, as at one time we need to handle only one kind of \texttt{<inheritdoc>} tags.
 
 \section{Templating language choice}
 
@@ -207,27 +204,26 @@ In order to generate the resulting file, the variables must be provided, along w
 This process is accomplished using a template processor, which takes both the template and variables as its input and creates the resulting file.
 Template processors are often distributed as software libraries, so processing a template can typically be achieved simply by calling a method.
 
-It is also important to note that variables in templating languages can have different types.
+It is also important to note that variables in templating languages might have different types.
 While the set of supported types varies depending on the language, most templating languages support at least strings, booleans, and lists.
 Furthermore, structured objects are typically supported as well.
 
-Arguably, the main advantage of using such a templating language is that users can easily generate files with the same structure but different content.
-For instance, we can create a template representing a type page, as requested in Requirement~\ref{req:type-page}.
+Arguably, the main advantage of using a templating language is that users can easily generate files with the same structure but different content.
+For instance, we can create a template representing a type page, as requested by Requirement~\ref{req:type-page}.
 Then, we can create many such pages simply by providing the corresponding variables, such as the type name, its members, etc.
 
 \subsection*{Key templating language features}
 
 Next, before we move on to the individual templating languages, it is necessary to establish several essential features that a language must provide in order to be considered suitable.
 First, we require conditional rendering because some text should be rendered only if a certain condition is met.
-As an example, consider a \textit{Remarks} section, which should be displayed only if a \texttt{<remarks>} tag is present.
+As an example, consider a \textit{Remarks} section, which should be displayed only if the corresponding \texttt{<remarks>} tag is present.
 Therefore, the templating language must support conditions.
 In addition, support for iteration is also mandatory, as we will need to list all fields, methods, etc., contained in a type.
-Thus, the language should provide loops as well.
 
 \label{sec:templating-language-importing}
 Another key observation is that certain parts of the UI might be reused in multiple places.
 Consider, e.g., the \textit{Type parameters} section, displaying type parameters and their documentation, which can be present at both method and type definition.
-The same idea can be applied in many other places, for instance, each member and type can possibly contain the \textit{Remarks} and \textit{See also} sections.
+The same idea can be applied in many other places, for instance, each member and type can possibly contain  \textit{Remarks} and \textit{See also} sections.
 Furthermore, the top menu, mentioned in Requirement~\ref{req:top-menu}, should be displayed on each page.
 The natural solution is to extract the common code (e.g., the \textit{Type parameters} section) into a separate template and then import it.
 On top of that, certain data usually needs to be passed into the imported templates. 
@@ -236,16 +232,16 @@ Hence, the templating language must support importing other templates, which is,
 
 \subsection{Mustache}
 
-Mustache~\cite{mustache} is a simple templating language that allows users to replace certain parts of the file with variable contents, enclosed in double curly braces.
+\textit{Mustache}~\cite{mustache} is a simple templating language that allows users to replace certain parts of the file with variable contents, enclosed in double curly braces.
 For instance, the \texttt{\{\{name\}\}} placeholder is, during template processing, replaced by the value of the \texttt{name} variable.
 
-The fundamental idea behind Mustache is that the templates should contain as little logic as possible.
+The fundamental idea behind \textit{Mustache} is that the templates should contain as little logic as possible.
 Instead, the logic should be done in the code, and the templates should be used purely for rendering.
 That is why it does not support, for instance, comparing a value to a constant. 
-For instance, we cannot check if a person is an adult by comparing his/her age to 18, as this is not allowed in mustache templates.
+For instance, we cannot check if a person is an adult by comparing his/her age to 18, as this is not allowed in \textit{Mustache} templates.
 Instead, we should declare a variable named, e.g., \texttt{isAdult} in the code and pass it into the template.
 
-While \textit{mustache} directly does not support conditions or loops, it is possible to achieve similar behaviour using a special language construct -- sections.
+While \textit{Mustache} directly does not support conditions or loops, it is possible to achieve similar behaviour using a special language construct -- sections.
 A section requires a variable and is rendered zero or more times, depending on the variable value, as stated in the documentation~\cite{mustache}. 
 If the variable is \texttt{false} or an empty list, the section is not rendered at all.
 On the other hand, if the variable is a non-empty list, the section contents will be displayed once for each item.
@@ -256,7 +252,7 @@ For example, \texttt{\{\{\#person\}\}} begins a \textit{person} section while \t
 There can be arbitrary content inside the section.
 Additionally, inside the section, the current item can be referenced by using \texttt{\{\{.\}\}} tag.
 
-Program~\ref{lst:mustache} shows an example of a mustache template, which displays the provided name and age.
+Listing~\ref{lst:mustache} shows an example of a \textit{Mustache} template, which displays the provided name and age.
 Then, if the \texttt{isAdult} property is not false, the template should also include the information that the person is an adult.
 Finally, all owned items (i.e., all items contained in \texttt{itemsOwned} list) are shown as an unordered list.
 
@@ -289,11 +285,11 @@ Finally, all owned items (i.e., all items contained in \texttt{itemsOwned} list)
     </div>
 </p>
 \end{lstlisting}
-\caption{Example mustache template}
+\caption{Example \textit{Mustache} template}
 \label{lst:mustache}
 \end{listing}
 
-When provided with the data below, the template processor produces the HTML shown in Program~\ref{lst:mustache-result}.
+When provided with the data below, the template processor produces the HTML shown in Listing~\ref{lst:mustache-result}.
 
 \begin{itemize}
   \item \texttt{name: "John Doe"}
@@ -325,28 +321,28 @@ When provided with the data below, the template processor produces the HTML show
     </div>
 </p>
 \end{lstlisting}
-\caption{Example mustache template output}
+\caption{Example \textit{Mustache} template output}
 \label{lst:mustache-result}
 \end{listing}
 
-In .NET, multiple libraries can be used for mustache template processing, notably Stubble.NET~\cite{stubble} and Nustache~\cite{nustache}.
-However, the support for Nustache is questionable, since the library has not been updated since 2019.
+In .NET, multiple libraries can be used for mustache template processing, notably \textit{Stubble.NET}~\cite{stubble} and \textit{Nustache}~\cite{nustache}.
+However, the support for \textit{Nustache} is questionable, since the library has not been updated since 2019.
 
 \subsection{Handlebars}
 
-Handlebars~\cite{handlebars} is another widely used templating language.
-Its syntax is very similar to Mustache and covers almost all of its functionality.
-However, it introduces slightly different syntax for conditions and loops, using the \textit{if} and \textit{each} keywords.
+\textit{Handlebars}~\cite{handlebars} is another widely used templating language.
+Its syntax is very similar to \textit{Mustache} and covers almost all of its functionality.
+However, it introduces slightly different syntax for conditions and loops, using the \texttt{if} and \texttt{each} keywords.
 Moreover, the conditions can be evaluated only against true/false, so it is not possible to check, e.g., whether a number is greater than a given value.
-On the other hand, unlike mustache, it is possible to add extra functionality through the use of custom helpers.
+On the other hand, unlike \textit{Mustache}, it is possible to add extra functionality through the use of custom helpers.
 A helper is simply a function written by a user in a given programming language that is registered and then evaluated during template processing.
 For instance, we can write a custom helper that compares two numbers or converts a string to uppercase.
 
-An example of a Handlebars template is displayed in Program~\ref{lst:handlebars}.
+An example of a \textit{Handlebars} template is displayed in Listing~\ref{lst:handlebars}.
 We can also notice that a custom helper -- \texttt{geq} is used to check whether a person is an adult.
 Additionally, before the template is processed, we need to register the helper by providing its code.
 As a result, unlike mustache, declaring the \texttt{isAdult} variable is unnecessary.
-Though Handlebars templates are primarily intended for JavaScript, .NET is also supported using the Handlebars.NET library~\cite{handlebars_net}.
+Though \textit{Handlebars} templates are primarily intended for JavaScript, .NET is also supported using the \textit{Handlebars.NET} library~\cite{handlebars_net}.
 
 \begin{listing}[H]
 \begin{lstlisting}[language=HTML]
@@ -377,24 +373,24 @@ Though Handlebars templates are primarily intended for JavaScript, .NET is also 
     </div>
 </p>
 \end{lstlisting}
-\caption{Example Handlebars template}
+\caption{Example \textit{Handlebars} template}
 \label{lst:handlebars}
 \end{listing}
 
 \subsection{Liquid}
 
-Another, more complex templating language is Liquid~\cite{liquid}.
-Again, its syntax and functionality are quite similar to Mustache and Handlebars.
+Another, more complex templating language is \textit{Liquid}~\cite{liquid}.
+Again, its syntax and functionality are quite similar to \textit{Mustache} and \textit{Handlebars}.
 However, unlike them, it supports a wide range of filters that can be used for output customization.
 Filters are functions used to change the output of a variable; for instance, the \texttt{upcase} filter converts the input string into uppercase. 
 Syntactically, filters are separated by a pipe character.
 Thus, we can, e.g., print the name of a person in uppercase by the following code: \texttt{\{\{ name | upcase \}\}}.
-Furthermore, Liquid supports all commonly used comparison operators as well as the \textit{and} and \textit{or} boolean operators, and using custom variables.
-An example of a Liquid template is shown in Program~\ref{lst:liquid}.
+Furthermore, \textit{Liquid} supports all commonly used comparison operators as well as the \texttt{and} and \texttt{or} boolean operators, and using custom variables.
+An example of a \textit{Liquid} template is shown in Listing~\ref{lst:liquid}.
 
-Although the Liquid language itself does not specify support for custom filters, this functionality is typically provided by the libraries processing Liquid templates.
-In .NET, Liquid templates can be processed using the DotLiquid~\cite{dotliquid} library; however, this library directly states that it is looking for maintainers; therefore, its future is unclear.
-Additionally, there are two other popular .NET libraries: Scriban~\cite{scriban} and Fluid~\cite{fluid}, which use a custom language that is almost identical to Liquid, with a range of extra filters added.
+Although the \textit{Liquid} language itself does not specify support for custom filters, this functionality is typically provided by the libraries processing \textit{Liquid} templates.
+In .NET, \textit{Liquid} templates can be processed using the \textit{DotLiquid}~\cite{dotliquid} library; however, this library directly states that it is looking for maintainers; therefore, its future is unclear.
+Additionally, there are two other popular .NET libraries: \textit{Scriban}~\cite{scriban} and \textit{Fluid}~\cite{fluid}, which use a custom language that is almost identical to \textit{Liquid}, with a range of extra filters added.
 
 \begin{listing}
 \begin{lstlisting}[language=HTML]
@@ -418,22 +414,22 @@ Additionally, there are two other popular .NET libraries: Scriban~\cite{scriban}
     </div>
 </p>
 \end{lstlisting}
-\caption{Example Liquid template}
+\caption{Example \textit{Liquid} template}
 \label{lst:liquid}
 \end{listing}
 
 \subsection{Razor}
 
-Finally, it is also possible to use Razor markup language~\cite{razor}.
-The major difference between Razor and other previously mentioned templating languages is that Razor allows embedding fragments of C\# code.
+Finally, it is also possible to use \textit{Razor} markup language~\cite{razor}.
+The major difference between Razor and other previously mentioned templating languages is that \textit{Razor} allows embedding fragments of C\# code.
 As a consequence, it naturally supports C\# language constructs, such as conditions, loops, functions, etc.
 The transition to C\# is done using the at sign; thus, the expression \texttt{@name} renders the value of the variable \texttt{name}.
 Furthermore, it is also possible to include whole blocks of C\# code, enclosed in \texttt{@\{} and \texttt{\}}.
 As mentioned before, there could be arbitrary C\# code inside the code block.
 
-An example of a Razor file is shown in Program~\ref{lst:razor}.
+An example of a \textit{Razor} file is shown in Listing~\ref{lst:razor}.
 As we can see, the object of type \texttt{Person} is passed to the template.
-The processing of Razor files can be done using the RazorLight library~\cite{razorlight}; however, certain constructs, such as methods, are not supported.
+The processing of Razor files can be done using the \textit{RazorLight} library~\cite{razorlight}; however, certain constructs, such as methods, are not supported.
 Additionally, even though Razor was originally intended for use in web applications, it is also possible
 to use Razor components and render them in console applications, as mentioned in the official documentation~\cite{razor_console}.
 
@@ -469,18 +465,18 @@ to use Razor components and render them in console applications, as mentioned in
     public Person Person { get; set; }
 }
 \end{lstlisting}
-\caption{Example Razor template}
+\caption{Example \textit{Razor} template}
 \label{lst:razor}
 \end{listing}
 
 \subsection*{Evaluation of templating languages}
 
 We have presented several templating languages, ranging from the simplest to the most powerful.
-As previously discussed, all of them support using conditions and loops; however, in Mustache, the support for conditions is very basic.
-Thus, if we decided to use Mustache, adding several conditional boolean fields to the data would likely be inevitable.
+As previously discussed, all of them support using conditions and loops; however, in \textit{Mustache}, the support for conditions is very basic.
+Thus, if we decided to use \textit{Mustache}, adding several conditional boolean fields to the data would likely be inevitable.
 Consequently, it is important to note that all of the languages mentioned support importing templates. 
 On top of that, most languages also support passing parameters to them.
-The only exception is Mustache, where the imported template inherits the variables of the calling one.
+The only exception is \textit{Mustache}, where the imported template inherits the variables of the calling one.
 Although this is sufficient in many cases, it may become a limiting factor.
 
 For instance, consider the cross-reference links mentioned in Requirement~\ref{req:cross-ref}.
@@ -490,30 +486,30 @@ Next, assume that inside the template, we refer to the variable denoting type as
 This means that in the context of a field object, its type must be stored in a \texttt{type} variable, which seems natural.
 However, the same goes for a method and its return type, as it also needs to be stored in a \texttt{type} variable in the context of a method object.
 More specifically, the natural name \texttt{returnType} for denoting the return type of a method cannot be used, as in the cross-reference link template, the variable is called \texttt{type}.
-This is a considerable disadvantage, as the variables passed to the template need to have a certain structure because of Mustache.
+This is a considerable disadvantage, as the variables passed to the template need to have a certain structure because of \textit{Mustache}.
 On the other hand, in the remaining languages, which allow us to pass parameters, we could still refer to the return type of a method as \texttt{returnType}.
 Then, when importing the cross-reference link template, we would just pass this value to the \texttt{type} parameter.
-To sum up, these drawbacks suggest that Mustache is not an ideal choice.
+To sum up, these drawbacks suggest that \textit{Mustache} is not an ideal choice.
 
-Next, while Handlebars, Liquid, and Razor are all suitable options, Razor has a huge advantage by using static typing.
-This stems from the fact that when using Razor, we need to specify the types of the variables passed to the template.
+Next, while \textit{Handlebars}, \textit{Liquid}, and \textit{Razor} are all suitable options, \textit{Razor} has a huge advantage by using static typing.
+This stems from the fact that when using \textit{Razor}, we need to specify the types of the variables passed to the template.
 As a result, many errors, such as a mistyped variable name or type, can be detected at compile time, which significantly simplifies the development process, especially as the UI is expected to consist of many templates.
 Without static typing, we would need to include a variety of tests covering all conditions in the template to ensure that the output is as expected.
-This leads us to the conclusion that Razor is the most suitable choice.
-Additionally, we will prefer using Razor components over the RazorLight library due to the limitations of RazorLight discussed in the previous section.
+This leads us to the conclusion that \textit{Razor} is the most suitable choice.
+Additionally, we will prefer using \textit{Razor} components over the \textit{RazorLight} library due to the limitations of \textit{RazorLight} discussed in the previous section.
 
 \subsection*{Extensibility}
 
 \label{sec:template-extensibility}
 
-It is also crucial to remember that even though the default UI will use Razor, the documentation generator should not be tied to a certain templating language.
+It is also crucial to remember that even though the default UI will use \textit{Razor}, the documentation generator should not be tied to a certain templating language.
 In other words, it should be easily possible to add support for other templating languages by adding a set of templates and the code that processes them, as requested by Requirement~\ref{subreq:custom-template-lang}.
 Ideally, the generator should contain a common interface, called \texttt{ITemplateProcessor}, 
 which represents a contract for accepting the type and member data, and creating the final documentation, as illustrated in Figure~\ref{fig:template-processors}.
 Then, there should be a separate template processor class for each supported templating language, implementing that interface.
-Hence, if a user decides to write templates in, e.g., Liquid language, he/she must provide the code processing the Liquid templates (\texttt{LiquidTemplateProcessor} class) in addition to the templates.
+Hence, if a user decides to provide templates in, e.g., \textit{Liquid} language, he/she must provide the code processing the \textit{Liquid} templates (\texttt{LiquidTemplateProcessor} class) in addition to the templates.
 Notice that the processing itself can be easily achieved by using a proper library.
-Once the template processor for Liquid is added, other users can reuse it and possibly create custom Liquid templates.
+Once the template processor for \textit{Liquid} is added, other users can reuse it and possibly create custom Liquid templates.
 This is also depicted in Figure~\ref{fig:template-processors}, as the objects included in the generator by default are highlighted in green, while the objects that could be added in the future, possibly by other users, have an orange background. 
 
 \begin{figure}[H]
@@ -527,16 +523,16 @@ This is also depicted in Figure~\ref{fig:template-processors}, as the objects in
 \section{Template variables}
 \label{sec:template-variables}
 
-In sections~\ref{sec:member-repr} and~\ref{sec:type-repr}, we introduced custom objects representing the types and members in our codebase, which are intended to be passed into the template processor.
-Next, we must consider what data should be passed into the default Razor templates.
+In Sections~\ref{sec:member-repr} and~\ref{sec:type-repr}, we introduced custom objects representing the types and members in our codebase, which are intended to be passed into the template processor.
+Next, we must consider what data should be passed into the default \textit{Razor} templates.
 
 A straightforward way is to use those objects again.
 We should remember that the documentation should display, e.g., whether a method is static, virtual, abstract, etc.
 Similarly, certain modifiers need to be shown for fields and properties.
-The member objects contain all this information, stored in boolean fields called \textit{IsStatic}, \textit{IsAbstract}, and so on; therefore, using those objects is a viable option.
+The member objects contain all this information, stored in boolean fields called \texttt{IsStatic}, \texttt{IsAbstract}, and so on; therefore, using those objects is a viable option.
 However, the templates must include logic checking whether a method is static to determine whether the \textit{static} keyword should be included in its definition.
-The same applies to other modifiers, such as \textit{abstract}, \textit{virtual}, etc.
-Hence, the template would end up containing many conditions checking for various keywords, as illustrated in Program~\ref{lst:modifiers-ifs}.
+The same applies to other modifiers, such as \texttt{abstract}, \texttt{virtual}, etc.
+Hence, the template would end up containing many conditions checking for various keywords, as illustrated in Listing~\ref{lst:modifiers-ifs}.
 Moreover, if a user creates a custom template, as described in Requirement~\ref{req:templates}, the logic must be duplicated there.
 
 \begin{listing}[H]
@@ -552,7 +548,7 @@ Moreover, if a user creates a custom template, as described in Requirement~\ref{
 }
 ...
 \end{lstlisting}
-\caption{Razor template fragment displaying method modifiers}
+\caption{\textit{Razor} template fragment displaying method modifiers}
 \label{lst:modifiers-ifs}
 \end{listing}
 
@@ -605,14 +601,14 @@ Additionally, \textit{Bootstrap} natively supports a dark theme, as most of its 
 The switching to dark theme can be done by adding the \texttt{data-bs-theme="dark"} attribute to the \texttt{<html>} element, as described in the official documentation.
 In \textit{Tailwind}, adding a dark theme is slightly more verbose, as we need to define a set of utility classes for the dark style of each component.
 Finally, responsiveness is well-supported in both frameworks.
-Based on the observations above, Bootstrap seems as an ideal choice, since it beats Tailwind in most of the highlighted aspects.
+Based on the observations above, \textit{Bootstrap} seems as an ideal choice, since it beats \textit{Tailwind} in most of the highlighted aspects.
 It is also crucial to mention that this choice applies only to the default UI, since user-created templates may naturally use a different framework.
 
 \section{Documentation versioning}
 \label{sec:documentation-versioning-three}
 
 As previously mentioned in Requirement~\ref{req:versioning}, the generator should support creating different versions of the documentation.
-The section~\ref{sec:doc-versions} states that this should be achieved by creating a separate folder with documentation for each version.
+The Section~\ref{sec:doc-versions} states that this should be achieved by creating a separate folder with documentation for each version.
 Additionally, as described in Requirement~\ref{req:doc-version-dropdown}, there should be a dropdown menu in the UI.
 This brings us to two problems.
 First, we need to ensure that the newly generated documentation version dropdowns include all of the older versions.
@@ -625,20 +621,20 @@ This makes it easy to recognize all the older versions of a file.
 The remaining problem is how to update the older version files to allow switching to the newest version.
 The first option is to store the data in an external file (e.g., JSON) and fetch it on the client side using JavaScript. 
 Then, when the page is loaded, the data is fetched, and the dropdown gets populated with the available versions.
-Theoretically, this works well; however, there is a fundamental problem -- CORS, as several browsers, notably Chrome, do not allow requests to URLs of different origins.
+Theoretically, this works well; however, there is a fundamental problem -- same-origin policy, as most browsers do not allow requests to URLs of different origins.
 When the documentation is hosted on a website, this may not be a problem; however, when created locally, the browser blocks requests to other local files because it is treated as a cross-origin request.
-This is a major disadvantage, as the documentation versioning does not work properly in a local environment.
+This is a major disadvantage, as the documentation versioning does not work properly in the local environment.
 
 An alternative way is to store the information in the HTML of each page, ideally as a hidden element. 
 Hence, when creating a new documentation version, it is necessary to process all of the older versions and add that new version to the list of available versions.
 This approach may seem heavyweight, as it requires processing a lot of pages; however, it is important to remember that the generator also does other potentially time-consuming operations, such as reflection or template processing.
-Additionally, performance is often not a critical feature of the reference doc generators.
+Additionally, performance is often not a critical feature of the reference documentation generators.
 Furthermore, if this becomes a bottleneck in the future, this piece of code can easily be parallelized.
 
 \section{Handling inner XML tags}
 \label{sec:inner-xml-to-html}
 
-Next, our program must transform the inner XML tags, listed in section~\ref{sec:inner-tags}, into their corresponding HTML representations.
+Next, our program must transform the inner XML tags, listed in Section~\ref{sec:inner-tags}, into their corresponding HTML representations.
 For instance, the \texttt{<list ty\-pe="bullet">} tag could be transformed to an HTML \texttt{<ul>} element.
 The mapping between XML tags and HTML elements must be defined somewhere in the program.
 A key observation is that customization must be supported, as different templates may require different styles for the HTML elements.
@@ -667,7 +663,7 @@ First, it is important to mention that we will use the \textit{xUnit framework}~
 
 While we can use the assertion methods provided by \textit{xUnit}, using a separate assertion library often brings additional benefits.
 The main advantage of such libraries is that they typically use fluent syntax, which makes the assertions easier to read, as they correspond to sentences in the English language.
-An example comparing equivalent assertions using \textit{xUnit} and an assertion library is displayed in Program~\ref{lst:fluent-syntax}.
+An example comparing equivalent assertions using \textit{xUnit} and an assertion library is displayed in Listing~\ref{lst:fluent-syntax}.
 Moreover, assertion libraries typically provide much more detailed error messages compared to testing frameworks, which is another considerable advantage.
 It is also important to keep in mind that these libraries are usually compatible with all major .NET testing frameworks, including \textit{xUnit}.
 

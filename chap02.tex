@@ -12,9 +12,9 @@ Instead, the official documentation~\cite{csharp_xml_docs} provides a set of rec
 As a result, any XML tag is valid and can be used in the documentation comments 
 (although in this case, it may not be correctly interpreted).
 
-An example of a C\# method with XML documentation is shown in Program~\ref{lst:ex-cs-xml}; 
-notice that both parameters and the return value are documented as well (using the \texttt{param} and \texttt{returns} tags, respectively).
-Program~\ref{lst:ex-vb-xml} displays an analogous method in VB.NET.
+An example of a C\# method with XML documentation is shown in Listing~\ref{lst:ex-cs-xml}; 
+we can notice that both parameters and the return value are documented as well (using the \texttt{param} and \texttt{returns} tags, respectively).
+Listing~\ref{lst:ex-vb-xml} displays an analogous method in VB.NET.
 We can see that VB.NET uses a different symbol for denoting documentation comments: a triple single-quote mark.
 However, the format of the comments remains the same, which is crucial because the comments can be processed similarly, regardless of the language.
 
@@ -26,7 +26,7 @@ On the other hand, the documentation comments lack the context, such as:
     \item modifiers (\texttt{public}, \texttt{static}, etc.)
 \end{itemize}
 
-As shown in Program~\ref{lst:ex-cs-xml}, none of this information is present in the XML, even though it is essential for the reference documentation.
+As shown in Listing~\ref{lst:ex-cs-xml}, none of this information is present in the XML, even though it is essential for the reference documentation.
 Thus, we can conclude that the documentation comments alone are insufficient for creating the reference docs. 
 
 \begin{listing}
@@ -71,49 +71,48 @@ A straightforward technique applicable to any programming language is to parse t
 
 \subsection*{Using a custom language parser}
 
-One way to achieve the parsing is by creating and using a custom language parser, which is the approach used by e.g. \texttt{Doxygen}. 
-Although creating a language parser is often seen as a complex task, it could be partially simplified for our purposes, because we can skip the method bodies and parse solely the signatures.
+One way to achieve the parsing is by creating and using a custom language parser, which is the approach used by e.g. \textit{Doxygen}. 
+Although creating a language parser is often seen as a complex task, it could be partially simplified for our purposes because we can skip the method bodies and parse solely the signatures.
 However, there are also numerous other challenges related to this approach.
 
-We will illustrate the first one using a simple example. Consider a method that returns an instance of \texttt{Point} class.
+We will illustrate the first one using a simple example. Consider a method that returns an instance of the \texttt{Point} class.
 The parser can recognize the name of the return type, but it is not easy to discover any other information about the type, such as its namespace.
 This is a problem because in the reference documentation, we typically want to uniquely identify the type by providing a link to its definition or showing its fully qualified name, so the type name alone is insufficient.
 Moreover, multiple types with the same name may be declared in different namespaces.
 
 One possible solution would be to browse all files within the namespaces used by the current file and search for the given type.
 Nevertheless, this technique fails if the type is declared in an external library, as the source code is not part of the library distribution.
-
 It is worth noting that a similar issue applies to, for instance, base types. 
 Without properly resolving the base type, it becomes difficult to obtain the inherited members, and therefore, they cannot be included in the resulting documentation.
 
 Another drawback is that a custom parser is not fully language-independent, because each language has a different syntax. 
-Therefore, to satisfy the requirement R5, we would need either a separate parser for each language or a shared one capable of handling all languages.
+Therefore, to satisfy Requirement~\ref{req:lang-ind}, we would need either a separate parser for each language or a shared one capable of handling all languages.
 However, this would significantly complicate the process, since we would need to resolve many edge cases for each language.
 Furthermore, such a parser would need updates for every new language feature, which also adds a bit of complexity.
 
 \subsection*{Using an existing parser}
 
-Another, much simpler option is to use an existing language parser, as \texttt{DocFX} does internally. 
-The most popular tool for this purpose is the C\# compiler, \texttt{Roslyn}, which, among its other capabilities, can parse the source code.
+Another, much simpler option is to use an existing language parser, as \textit{DocFX} does internally. 
+The most popular tool for this purpose is the C\# compiler, \textit{Roslyn}~\cite{roslyn}, which, among its other capabilities, can parse the source code.
 With Roslyn, we can easily inspect the syntax tree and perform semantic analysis using the semantic model, as described in the documentation~\cite{roslyn}.
-This way, we can easily obtain all types, type members, and all relevant data.
+This way, we can easily obtain all types, type members, and other relevant data.
 The semantic model is essential because it resolves the issues with type identification discussed in the previous chapter.
 Furthermore, the API of the semantic model is quite easy to use; for instance, a method is represented by the \texttt{IMethodSymbol} interface, which provides access to various data concerning the method.
 For example, if we want to check whether a method is static, we can simply use the \texttt{IMethodSymbol.IsStatic} property. 
 The interface also offers many other properties and methods; notably, there is a method for retrieving the corresponding documentation comment.
 
-The disadvantage of \texttt{Roslyn} is that it is limited only to 2 languages: C\# and VB.NET.
-There is an analogous library for parsing \texttt{F\#} code: \texttt{FSharp.Compi\-ler.Service}~\cite{fsharp_compiler_service}; 
+The disadvantage of \textit{Roslyn} is that it is limited only to 2 languages: C\# and VB.NET.
+There is an analogous library for parsing \texttt{F\#} code: \textit{FSharp.Compi\-ler.Service}~\cite{fsharp_compiler_service}; 
 however, it has a fundamentally different API, designed for F\# usage.
 The main difference is that since F\# is primarily a functional programming language, the API heavily uses functional constructs, which makes its usage from C\# quite inconvenient.
-Moreover, the objects representing F\# types and members are completely unrelated to the ones used by \texttt{Roslyn}, i.e., they do not share any common superclasses (except \texttt{object}) or interfaces.
-As a result, integrating these two libraries would be complicated, as we would probably end up with two completely separate codebases: one using \texttt{Roslyn} and one using \texttt{FSharp.Compiler.Service}.
+Moreover, the objects representing F\# types and members are completely unrelated to the ones used by \textit{Roslyn}, i.e., they do not share any common superclasses (except \texttt{object}) or interfaces.
+As a result, integrating these two libraries would be complicated, as we would probably end up with two completely separate codebases: one using \textit{Roslyn} and one using \textit{FSharp.Compiler.Service}.
 
 \subsection*{Using an assembly as the input}
 
 Fortunately, the context information necessary for reference documentation is also contained within an assembly. 
 This brings us to the idea of creating a generator that uses the assembly as its input and extracts the relevant data using reflection.
-The key advantage of such generators, like \texttt{SHFB}, is that they are naturally language-independent, meaning they automatically satisfy the requirement R5.
+The key advantage of such generators, like \textit{SHFB}, is that they are naturally language-independent, meaning they automatically satisfy Requirement~\ref{req:lang-ind}.
 Before we dive into further details, we need to explain the compilation process in more depth.
 
 \section{Compilation process in .NET}
@@ -123,7 +122,7 @@ into the common intermediate language (CIL), which is a CPU-independent set of i
 During program execution, CIL is converted to CPU-specific code, typically by a just-in-time (JIT) compiler.
 
 In addition to CIL, the compiler also produces metadata, which describes the types in the code, including the definition of each type, the signatures of its members, and other data that the runtime uses at execution time, according to~\cite{dotnet_execution_model}.
-The CIL and metadata are contained in a .NET assembly, which is typically stored as a dynamic link library (\texttt{.dll}).
+The CIL and metadata are contained in a .NET assembly, which is typically stored as a dynamic link library (\textit{.dll}).
 
 \begin{figure}
 \centering
@@ -138,8 +137,8 @@ The CIL and metadata are contained in a .NET assembly, which is typically stored
 One important observation is that the documentation comments are not part of the assembly.
 Instead, the compiler can optionally create an XML file containing the documentation of the declared types and their members, 
 which is typically done by setting the \texttt{GenerateDocumentationFile} or \texttt{DocumentationFile} 
-option, as mentioned in the MSBuild documentation~\cite{msbuild_docs}.
-Program~\ref{lst:ex-xml-output} shows the resulting XML file containing the documentation of the method shown in Program~\ref{lst:ex-cs-xml}.
+option, as mentioned in the \textit{MSBuild} documentation~\cite{msbuild_docs}.
+Listing~\ref{lst:ex-xml-output} shows the resulting XML file containing the documentation of the method shown in Listing~\ref{lst:ex-cs-xml}.
 As we can see, the comments are stored inside a \texttt{member} element, which has a \texttt{name} attribute that uniquely identifies the corresponding type or type member.
 The value of the \texttt{name} attribute is prefixed with an \textit{M} and a colon, which indicates that the documentation belongs to a method.
 
@@ -178,7 +177,6 @@ The value of the \texttt{name} attribute is prefixed with an \textit{M} and a co
 \section*{Evaluation of approaches}
 
 In the previous sections, we have explained why creating a custom language parser or using an existing one may not be ideal.
-
 On the other hand, using assembly as an input seems to be a reasonable choice.
 Additionally, the development of such a generator is quite straightforward; we just need to extract the relevant data from the assembly metadata and combine it with the documentation comments retrieved from the XML documentation file.
 However, this approach also has a downside: the need for program compilation, i.e., the project must be built before the documentation is generated.
@@ -201,12 +199,12 @@ As mentioned earlier, the set of XML documentation tags is not explicitly define
 Instead, the recommended tags are typically described in the documentation of each .NET language.
 It is also important to keep in mind that aside from the recommended tags, any XML tag is valid; in this case, it is simply copied to the XML documentation file.
 
-The recommended tags slightly differ for each language, however, they can be classified into two categories, based on their usage.
+The recommended tags slightly differ for each language; however, they can be classified into two categories, based on their usage.
 
 \subsection{Top-level tags}
 
 Top-level tags are present directly at the type or member definition, meaning they are not contained inside another tag.
-The most common tag is \texttt{<summary>}, which describes a type or member, as previously illustrated in Program~\ref{lst:ex-cs-xml}. 
+The most common tag is \texttt{<summary>}, which describes a type or member, as previously illustrated in Listing~\ref{lst:ex-cs-xml}. 
 However, there are numerous other commonly used top-level tags, as shown in Table~\ref{table:top-level-tags}.
 
 \begin{table}[h]
@@ -233,7 +231,7 @@ However, there are numerous other commonly used top-level tags, as shown in Tabl
 \hline
 \texttt{<seealso href="...">} & Specifies a link to a related URL, identified by the \texttt{href} attribute. \\
 \hline
-\texttt{<example>} & Example of how to use the type or member. \\
+\texttt{<example>} & Shows an example of how to use the type or member. \\
 \hline
 \end{tabular}
 \caption{Top-level XML tags}
@@ -242,15 +240,12 @@ However, there are numerous other commonly used top-level tags, as shown in Tabl
 
 The documentation is then stored inside those elements.
 The only exception is the \texttt{<seealso cref="..." /> } tag, which is unpaired and thus does not have any content.
-
 Additionally, several tags, notably \texttt{<param>}, \texttt{<typeparam>}, \texttt{<exception>}, and \texttt{<seealso>} may be present multiple times in the definition.
 For instance, if a method has 3 parameters, there could be up to 3 \texttt{<param>} tags (one for each parameter).
 
 \subsubsection*{Cref attribute}
-As shown in Table~\ref{table:top-level-tags}, several tags have a \texttt{cref} attribute.
-This attribute specifies that the tag references a code element, i.e., a type or a member. 
-
-For instance, if there is a method somehow related to \texttt{Console.WriteLine}, we can include the following tag in its documentation: \texttt{<seealso cref="Console.WriteLine" />}.
+As shown in Table~\ref{table:top-level-tags}, several tags have the \texttt{cref} attribute, which specifies that the tag references a code element, i.e., a type or a member.
+For instance, if a method is somehow related to \texttt{Console.WriteLine}, we can include the following tag in its documentation: \texttt{<seealso cref="Console.WriteLine" />}.
 The link to the \texttt{Console.WriteLine} should then be displayed in the resulting documentation of the given method.
 
 However, in the XML documentation file, the attribute value is stored in a slightly different format.
@@ -271,15 +266,15 @@ The other top-level tags are typically intended only for a selection of types or
 \hline
 \textbf{Tag} & \textbf{Applicable to} \\
 \hline
-\texttt{<param name="...">} & Methods and constructors \\
+\texttt{<param name="...">} & methods and constructors \\
 \hline
-\texttt{<typeparam name="...">} & Generic types and methods \\
+\texttt{<typeparam name="...">} & generic types and methods \\
 \hline
-\texttt{<returns>} & Methods \\
+\texttt{<returns>} & methods \\
 \hline
-\texttt{<value>} & Properties \\
+\texttt{<value>} & properties \\
 \hline
-\texttt{<exception cref="...">} & Methods, properties and events \\
+\texttt{<exception cref="...">} & methods, properties and events \\
 \hline
 \end{tabular}
 \caption{Top-level XML tags -- usage}
@@ -293,9 +288,9 @@ The other top-level tags are typically intended only for a selection of types or
 
 The documentation inside top-level tags may contain, in addition to text, other XML tags, so-called inner tags.
 Typically, they affect how the text is rendered, i.e., they may specify a list of items, a paragraph, etc.
-The Table~\ref{table:inner-tags} shows a list of commonly recognized inner tags. 
-Except for the \texttt{<paramref>}, \texttt{<see langword="...">} and \texttt{<typeparamref>} tags, all of the other elements may contain text and other tags inside them.
-Additionally, we can see that the \texttt{<example>} tag can appear both as a top-level and an inner tag, as the official documentation includes examples in both contexts.
+Table~\ref{table:inner-tags} shows a list of commonly recognized inner tags. 
+Except for the \texttt{<paramref>}, \texttt{<see langword="...">}, and \texttt{<typeparamref>} tags, all of the other elements may contain text and other tags inside them.
+Additionally, we can notice that the \texttt{<example>} tag can appear both as a top-level and an inner tag, as the official documentation includes examples in both contexts.
 
 \begin{table}[h]
 \centering
@@ -303,29 +298,29 @@ Additionally, we can see that the \texttt{<example>} tag can appear both as a to
 \hline
 \textbf{Tag} & \textbf{Meaning} \\
 \hline
-\texttt{<c>} & Inline code. \\
+\texttt{<c>} & inline code \\
 \hline
-\texttt{<code>} & Block of code. \\
+\texttt{<code>} & block of code \\
 \hline
-\texttt{<example>} & Example of how to use the type or member. \\
+\texttt{<example>} & example of how to use the type or member \\
 \hline
-\texttt{<list type="bullet">} & Bullet list. \\
+\texttt{<list type="bullet">} & bullet list \\
 \hline
-\texttt{<list type="number">} & Numbered list. \\
+\texttt{<list type="number">} & numbered list \\
 \hline
-\texttt{<list type="table">} & Table. \\
+\texttt{<list type="table">} & table \\
 \hline
-\texttt{<para>} & Paragraph. \\
+\texttt{<para>} & paragraph \\
 \hline
-\texttt{<paramref name="name"/>} & Reference to a parameter. \\
+\texttt{<paramref name="..."/>} & reference to a parameter \\
 \hline
-\texttt{<see cref="...">} & Reference to a type or member. \\
+\texttt{<see cref="...">} & reference to a type or member \\
 \hline
-\texttt{<see href="...">} & Reference to an URL. \\
+\texttt{<see href="...">} & reference to an URL \\
 \hline
-\texttt{<see langword="..."/>} & Reference to a language keyword. \\
+\texttt{<see langword="..."/>} & reference to a language keyword \\
 \hline
-\texttt{<typeparamref name="name"/>} & Reference to a type parameter. \\
+\texttt{<typeparamref name="..."/>} & reference to a type parameter \\
 \hline
 \end{tabular}
 \caption{Inner XML tags}
@@ -336,24 +331,22 @@ The only special tag is \texttt{<list>}, because it allows extra tags as its con
 The \texttt{<item>} tag can be used inside any list item and specifies an item of the list.
 Additionally, the \texttt{<term>} tag contains a definition of a term, while the \texttt{<description>} tag contains its explanation.
 Both of these tags can be used inside the \texttt{<item>} tag.
-
 In the case of a table-style list, \texttt{<item>} tag represents a row, while \texttt{<term>} and \texttt{<description>} tags represent individual cells.
 Moreover, it is also possible to define a heading row of a table, using the \texttt{<listheader>} tag.
 
 \subsection{Reusing the documentation}
 \label{sec:reusing-docs}
 
-There are two more commonly used tags -- \texttt{<include>} and \texttt{<inheritdoc>}, both top-level and unpaired.
-
+There are two other commonly used tags -- \texttt{<include>} and \texttt{<inheritdoc>}, both top-level and unpaired.
 The \texttt{<include>} tag allows us to import the documentation from an external XML file by specifying the file path and the path to the element to include.
 Note that this tag is unsupported in some languages, such as F\#.
 When creating the XML documentation file, the compiler replaces the \texttt{<include>} tags with the actual documentation.
 Thus, the \texttt{<include>} elements are not present in the resulting documentation file, meaning that we do not need to process them in any way.
 
-The \texttt{inheritdoc} tag can be applied to any type and member and allows users to inherit the documentation.
+The \texttt{<inheritdoc>} tag can be applied to any type and member and allows users to inherit the documentation.
 When applied to a type, the documentation is inherited from the base type or an implemented interface.
 The official documentation~\cite{csharp_xml_docs} does not specify what happens if, e.g., both the base type and implemented interface are documented.
-When the \texttt{inheritdoc} is applied to a member, the documentation is taken from the base definition of the member.
+When the \texttt{<inheritdoc>} is applied to a member, the documentation is taken from the base definition of the member.
 This means the identical member in the base type or an implemented interface.
 Again, the documentation does not specify any precedence.
 
@@ -364,21 +357,21 @@ The \texttt{<inheritdoc>} supports 2 optional arguments: \texttt{cref} and \text
     This is handy, for instance, if we have two equivalent methods -- one synchronous and the other asynchronous.
     In this case, we can avoid repeating the documentation by using \texttt{<inheritdoc>} with the \texttt{cref} attribute.
     \item The \texttt{path} attribute allows us to inherit only selected XML nodes, which is configured by providing an XPath query.
-    Then, only the matching nodes are inherited; in other words, we may specify to inherit only the \texttt{summary} tag.
+    Then, only the matching nodes are inherited; in other words, we may specify to inherit only the \texttt{summary} tag, for instance.
 \end{itemize}
 
 Unlike the \texttt{<include>} element, the \texttt{<inheritdoc>} is not resolved by a compiler.
-In other words, the inheritdoc tags are still present in the resulting XML file.
+In other words, the \texttt{<inheritdoc>} tags are still present in the XML documentation file.
 As a result, the documentation inheritance must be handled by the documentation generator.
 
 \section{Further requirement analysis}
 \label{sec:analysis-further-analysis}
 
-In this section, we will analyze the requirements R1-R7, outlined in the first chapter, in more detail.
+In this section, we will analyze Requirements \ref{req:zero-conf}--\ref{req:platf-ind}, outlined in the first chapter, in more detail.
 
 \subsection*{Zero configuration build}
 
-As discussed earlier, the Requirement~\ref{req:zero-conf} states that the generator should be easy 
+As discussed earlier, Requirement~\ref{req:zero-conf} states that the generator should be easy 
 to use, as the only mandatory argument should be the input.
 On the other hand, the generator naturally should also offer several optional arguments, such as the output folder.
 However, these options should have reasonable default values.
@@ -393,10 +386,10 @@ Various file formats are used for configuration.
 The easiest solution would be to store the options in the same format as on the command line, 
 allowing users to copy the configuration into a file. 
 However, this approach brings multiple drawbacks.
-First, this file format is not standardized or widely recognized, so the text editor would not be capable of any text highlighting.
+First, this file format is not standardized or widely recognized, so text editors would not be capable of any text highlighting.
 Another disadvantage, stemming from the lack of standardization, is that there is no easy way to recognize comments in the file.
 Furthermore, we cannot use the command-line symbol for denoting comments, as it differs between various shells, which would cause inconsistency.
-It is important to note that adding comments is a useful feature of the configuration file, because it is often beneficial to explain the rationale behind setting a certain option to a specific value.
+It is important to note that adding comments is a useful feature of the configuration file because it is often beneficial to explain the rationale behind setting a certain option to a specific value.
 In conclusion, the command line option format does not seem ideal.
 
 \subsubsection*{Selection of the configuration format}
@@ -405,9 +398,9 @@ The alternative way is to use a widely recognized configuration format, such as 
 Using this approach, the disadvantages outlined above are typically resolved.
 On the other hand, we lose the ability to simply copy-paste the options from the command line, although the conversion to the given format should not be complicated.
 
-One option is to use a key-value configuration format, such as \textit{.ini} file, as the configuration is not expected to have a hierarchical structure.
-While the \textit{.ini} format is not fully standardized, the \textit{TOML} format has a formal specification and is almost identical in structure.
-However, the main downside of those formats is that they are not as widely adopted, especially compared to  XML, JSON, and YAML.
+One option is to use a key-value configuration format, such as INI, as the configuration is not expected to have a hierarchical structure.
+While the INI format is not fully standardized, the TOML format has a formal specification and is almost identical in structure.
+However, the main downside of these formats is that they are not as widely adopted, especially compared to  XML, JSON, and YAML.
 This is a disadvantage, as we should strive to use a format understood by a large share of users.
 
 Another option is to use XML for configuration. While it is a powerful format, it often tends to be verbose, which makes it less ideal for our purposes.
@@ -429,11 +422,11 @@ Based on the insights above, we can introduce two sub-requirements of Requiremen
 
 \subsection*{Custom templates}
 
-Next, the generator should be designed to be extensible, as described in the Requirement~\ref{req:templates}.
+Next, the generator should be designed to be extensible, as described in Requirement~\ref{req:templates}.
 The documentation pages will naturally be generated from templates, written in an unspecified templating language, which get populated with data while the documentation is generated.
 
-Firstly, it should be easy to use the same template system as the default UI.
-If the user wanted to generate the documentation using the same template system and data, it should be sufficient to provide the equivalent templates.
+First, it should be easy to use the same templating language as the default UI does.
+If the user wanted to generate the documentation using the same templating language and data, it should be sufficient to provide the equivalent templates.
 In other words, if the generator had 2 templates representing type and namespace pages, providing a custom version of those two should be sufficient.
 
 Furthermore, the users should be able to write their own templates using a template engine of their choice,
@@ -456,11 +449,11 @@ In practice, this should be done by implementing a corresponding interface.
 
 \subsection*{Custom static pages}
 
-The Requirement~\ref{req:static-pages} mentions support for user-specified static pages.
+Requirement~\ref{req:static-pages} mentions support for user-specified static pages.
 As discussed before, the goal is not to create a full-fledged SSG; instead, a convention-based approach with no configuration is preferred.
 
 A simple yet effective approach would be to give the user an option to include a folder containing static pages.
-The generator should then recursively copy the files in the folder into the output directory, thus including the pages in the documentation.
+The generator should then recursively copy the files from the folder into the output directory, thus including the pages in the documentation.
 Also, note that the relative paths between files stay the same because the directory structure is preserved.
 As a result, the links between files can stay intact, which is a huge advantage of this approach.
 
@@ -486,9 +479,9 @@ As a result, we can further clarify Requirement~\ref{req:static-pages}:
 \subsection*{Documentation versioning}
 \label{sec:doc-versions}
 
-The Requirement~\ref{req:versioning} focuses on documentation versioning.
-The generator should support an option (both on the command line and in the configuration file) for creating a specific version of the documentation, e.g. \texttt{v1.2}. 
-The resulting documentation should then be stored not in the output folder, but in its subfolder identified by the version number (\texttt{v1.2} in our case).
+Requirement~\ref{req:versioning} focuses on documentation versioning.
+The generator should support an option (both on the command line and in the configuration file) for creating a specific version of the documentation, e.g. \textit{v1.2}. 
+The resulting documentation should then be stored not in the output folder, but in its subfolder identified by the version number (\textit{v1.2} in our case).
 This way, the output folder may contain multiple versions of the documentation.
 
 Additionally, the default UI should allow users to switch between different versions.
@@ -509,54 +502,54 @@ Thus, we can define two sub-requirements:
     \label{req:doc-version-dropdown}
 \end{subrequirement}
 
-We have skipped requirements~\ref{req:lang-ind}, \ref{req:modern-ui}, and~\ref{req:platf-ind}, as they remain unchanged.
-Furthermore, since we have decided to extract the context data from an assembly, requirement~\ref{req:lang-ind} is automatically satisfied, as discussed earlier.
+We have skipped Requirements~\ref{req:lang-ind}, \ref{req:modern-ui}, and~\ref{req:platf-ind}, as they remain unchanged.
+Furthermore, since we have decided to extract the context data from an assembly, Requirement~\ref{req:lang-ind} is automatically satisfied, as discussed earlier.
 
 \section{Existing technologies}
 \label{sec:analysis-existing-tech}
 
-In this chapter, we will briefly examine the other generators, focusing on their core functionality and default UI to define additional requirements.
+In this chapter, we will examine the other generators, focusing on their core functionality and default UI to define additional requirements.
 For better understanding, we will present it using screenshots.
 We will also include the official .NET documentation, as it is arguably the most frequently used documentation in the .NET world.
 
-As we can see in Figures~\ref{fig:docfx-ns}, \ref{fig:doxygen-ns}, and~\ref{fig:shfb-ns}, DocFX, Doxygen, and SHFB generate a separate page for each namespace,
-displaying all the contained types \textit{(A)}. 
+As we can see in Figures~\ref{fig:docfx-ns}, \ref{fig:doxygen-ns}, and~\ref{fig:shfb-ns}, \textit{DocFX}, \textit{Doxygen}, and \textit{SHFB} generate a separate page for each namespace,
+displaying all the contained types (A). 
 The same applies to the official .NET documentation, as displayed in Figure~\ref{fig:off-ns}.
-Then, each type has its own page, as shown in Figures~\ref{fig:off-t1}, \ref{fig:off-t2}, \ref{fig:docfx-t}, \ref{fig:docfx-t2}, \ref{fig:doxygen-t} and~\ref{fig:shfb-t} displaying its documentation \textit{(B)} as well as the list of declared members \textit{(C)}.
-In Figures~\ref{fig:docfx-m} and~\ref{fig:doxygen-m}, we can notice that while DocFX and Doxygen show the members with their documentation \textit{(D)} at the bottom of the type page,
-SHFB and official .NET documentation use a different approach -- using a separate page for each member \textit{(E)}, as displayed in Figures~\ref{fig:off-m1} and \ref{fig:shfb-m}.
+Then, each type has its dedicated page, as shown in Figures~\ref{fig:off-t1}, \ref{fig:off-t2}, \ref{fig:docfx-t}, \ref{fig:docfx-t2}, \ref{fig:doxygen-t} and~\ref{fig:shfb-t} displaying its documentation (B) as well as the list of declared members (C).
+In Figures~\ref{fig:docfx-m} and~\ref{fig:doxygen-m}, we can notice that while \textit{DocFX} and \textit{Doxygen} show the members with their documentation (D) at the bottom of the type page,
+\textit{SHFB} and official .NET documentation use a different approach -- having a separate page for each member (E), as displayed in Figures~\ref{fig:off-m1} and \ref{fig:shfb-m}.
 
-Furthermore, as depicted in Figures~\ref{fig:doxygen-nsl}, \ref{fig:shfb-nsl}, and~\ref{fig:official-nsl}, all generators except DocFX create a page containing a list of namespaces \textit{(F)}; the same applies to the official .NET documentation.
-The default UI of DocFX does not contain any such page; instead, the data regarding namespaces is shown in a side menu \textit{(G)}.
-Additionally, we can notice that all generated documentations have a search bar at the top of the page \textit{(H)}.
+Furthermore, as depicted in Figures~\ref{fig:doxygen-nsl}, \ref{fig:shfb-nsl}, and~\ref{fig:official-nsl}, all generators except \textit{DocFX} create a page containing a list of namespaces (F); the same applies to the official .NET documentation.
+The default UI of \textit{DocFX} does not contain any such page; instead, the data regarding namespaces is shown in a side menu (G).
+Additionally, we can notice that all generated documentations have a search bar at the top of the page (H).
 This knowledge helps us formulate the following requirements regarding the UI, so we do not miss any basic functionality.
 
 \begin{figure}
 \centering
-\includegraphics[width=1\linewidth]{img/official-namespace.png}
-\caption{Official .NET documentation -- namespace detail}
-\label{fig:off-ns}
-\end{figure}
-
-\begin{figure}
-\centering
 \includegraphics[width=1\linewidth]{img/docfx-namespace.png}
-\caption{Documentation generated by DocFX -- namespace detail}
+\caption{Documentation generated by \textit{DocFX} -- namespace detail}
 \label{fig:docfx-ns}
 \end{figure}
 
 \begin{figure}
 \centering
 \includegraphics[width=1\linewidth]{img/doxygen-namespace.png}
-\caption{Documentation generated by Doxygen -- namespace detail}
+\caption{Documentation generated by \textit{Doxygen} -- namespace detail}
 \label{fig:doxygen-ns}
 \end{figure}
 
 \begin{figure}
 \centering
 \includegraphics[width=1\linewidth]{img/shfb-namespace.png}
-\caption{Documentation generated by SHFB -- namespace detail}
+\caption{Documentation generated by \textit{SHFB} -- namespace detail}
 \label{fig:shfb-ns}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics[width=1\linewidth]{img/official-namespace.png}
+\caption{Official .NET documentation -- namespace detail}
+\label{fig:off-ns}
 \end{figure}
 
 % -- type detail
@@ -578,28 +571,28 @@ This knowledge helps us formulate the following requirements regarding the UI, s
 \begin{figure}
 \centering
 \includegraphics[width=1\linewidth]{img/docfx-type.png}
-\caption{Documentation generated by DocFX -- type detail, part 1}
+\caption{Documentation generated by \textit{DocFX} -- type detail, part 1}
 \label{fig:docfx-t}
 \end{figure}
 
 \begin{figure}
 \centering
 \includegraphics[width=1\linewidth]{img/docfx-type2.png}
-\caption{Documentation generated by DocFX -- type detail, part 2}
+\caption{Documentation generated by \textit{DocFX} -- type detail, part 2}
 \label{fig:docfx-t2}
 \end{figure}
 
 \begin{figure}
 \centering
 \includegraphics[width=1\linewidth]{img/doxygen-type.png}
-\caption{Documentation generated by Doxygen -- type detail}
+\caption{Documentation generated by \textit{Doxygen} -- type detail}
 \label{fig:doxygen-t}
 \end{figure}
 
 \begin{figure}
 \centering
 \includegraphics[width=1\linewidth]{img/shfb-type.png}
-\caption{Documentation generated by SHFB -- type detail}
+\caption{Documentation generated by \textit{SHFB} -- type detail}
 \label{fig:shfb-t}
 \end{figure}
 
@@ -615,21 +608,21 @@ This knowledge helps us formulate the following requirements regarding the UI, s
 \begin{figure}
 \centering
 \includegraphics[width=1\linewidth]{img/docfx-method.png}
-\caption{Documentation generated by DocFX -- members detail}
+\caption{Documentation generated by \textit{DocFX} -- members detail}
 \label{fig:docfx-m}
 \end{figure}
 
 \begin{figure}
 \centering
 \includegraphics[width=1\linewidth]{img/doxygen-method.png}
-\caption{Documentation generated by Doxygen -- members detail}
+\caption{Documentation generated by \textit{Doxygen} -- members detail}
 \label{fig:doxygen-m}
 \end{figure}
 
 \begin{figure}
 \centering
 \includegraphics[width=1\linewidth]{img/shfb-method.png}
-\caption{Documentation generated by SHFB -- method detail}
+\caption{Documentation generated by \textit{SHFB} -- method detail}
 \label{fig:shfb-m}
 \end{figure}
 
@@ -645,14 +638,14 @@ This knowledge helps us formulate the following requirements regarding the UI, s
 \begin{figure}
 \centering
 \includegraphics[width=1\linewidth]{img/doxygen-namespace-list.png}
-\caption{Documentation generated by Doxygen -- namespace list}
+\caption{Documentation generated by \textit{Doxygen} -- namespace list}
 \label{fig:doxygen-nsl}
 \end{figure}
 
 \begin{figure}
 \centering
 \includegraphics[width=1\linewidth]{img/shfb-namespace-list.png}
-\caption{Documentation generated by SHFB -- namespace list}
+\caption{Documentation generated by \textit{SHFB} -- namespace list}
 \label{fig:shfb-nsl}
 \end{figure}
 
@@ -669,14 +662,14 @@ Thus, our eighth requirement is:
 \setcounter{subrequirement}{0}
 
 \begin{subrequirement}
-    Show the list of namespaces.
+    Show a list of namespaces.
 \end{subrequirement}
 
 \begin{subrequirement}
     Show a list of types declared in each namespace.
 \end{subrequirement}
 
-Furthermore, there should be a page for each namespace, displaying all of the types contained.
+Next, there should be a page for each namespace, displaying all the contained types.
 For each type, there should be a link to its definition and its documentation, which leads us to the following requirement:
 
 \begin{requirement}
@@ -699,22 +692,23 @@ So, the documentation can contain those sections (the section should be displaye
 \begin{itemize}
     \item Summary (corresponding to the \texttt{<summary>} tag)
     \item Remarks (corresponding to the \texttt{<remarks>} tag)
+    \item Example (corresponding to the \texttt{<example>} tag)
     \item Type parameters (corresponding to the \texttt{<typeparam>} tags)
-    \item See Also (corresponding to the \texttt{<seealso>} tags)
+    \item See also (corresponding to the \texttt{<seealso>} tags)
     \item Attributes
 \end{itemize}
 
-Then, we have two options: show the list of members on the type page, as DocFX and Doxygen do, or have a separate page for each member, similar to the official .NET documentation and SHFB.
+Then, we have two options: show the list of members on the type page, as \textit{DocFX} and \textit{Doxygen} do, or have a separate page for each member, similar to the official .NET documentation and SHFB.
 Since we aim to generate reference documentation for third-party libraries, which are usually not as extensively documented as the .NET API, 
 having a separate page per member would likely be unnecessarily complex.
-Thus, there should be a list of declared members below the type definition, grouped
-into categories based on the member kind (field, property, method, etc.), similar to \texttt{SHFB}.
-Each member should again display the signature and the documentation, again corresponding to the XML tags, along with the section displaying attributes.
-So, potentially, the documentation can contain the following sections:
+Thus, the list of declared members should be displayed below the type definition. The members should be grouped into categories based on their kind (field, property, method, etc.), similar to \textit{SHFB}.
+Each member should again display the signature and the documentation, corresponding to the XML tags, along with the section displaying attributes.
+So, potentially, the member documentation can contain the following sections:
 
 \begin{itemize}
     \item Summary (corresponding to the \texttt{<summary>} tag)
     \item Remarks (corresponding to the \texttt{<remarks>} tag)
+    \item Example (corresponding to the \texttt{<example>} tag)
     \item See Also (corresponding to the \texttt{<seealso>} tags)
     \item Type parameters (corresponding to the \texttt{<typeparam>} tags)
     \item Returns (corresponding to the \texttt{<returns>} tag)
@@ -749,14 +743,7 @@ This gives us another requirement:
     Show documentation of all members, divided into sections corresponding to XML tags.
 \end{subrequirement}
 
-Next, there should be a menu at the top of each page.
-The following items should be included:
-
-\begin{itemize}
-    \item The API index page
-    \item All pages stored in the user-specified folder with static files
-\end{itemize}
-
+Next, there should be a menu at the top of each page, which should include links to the API index page and all pages stored in the user-specified folder with static files.
 On top of that, each subfolder of the static files folder should be represented by a dropdown menu, displaying the pages stored directly within the subfolder.
 Static pages located 3 or more levels deep will not be included in the menu.
 In conclusion, we can formulate the requirement as follows:
@@ -794,18 +781,17 @@ Thus, our next requirement is:
     \label{req:inner-xml-tags}
 \end{requirement}
 
-Furthermore, the generator should be capable of replacing \texttt{<inheritdoc />} with the actual documentation, which leads us to the next requirement:
+Furthermore, the generator should be capable of replacing \texttt{<inheritdoc>} with the actual documentation, which leads us to the next requirement:
 
 \begin{requirement}
-    Resolve \texttt{<inheritdoc />} tags.
+    Resolve \texttt{<inheritdoc>} tags.
     \label{req:inheritdoc}
 \end{requirement}
 
 All of the generators also have support for cross-references.
 This means that member, parameter, and return types contain a link to their definition, if possible.
-The same applies to the types and members referenced in documentation comments using \texttt{<see>} of \texttt{<seealso>} tags.
-Support for the types declared in the same project is mandatory. 
-Optionally, we can also add links for standard library types.
+The same applies to the types and members referenced in documentation comments using \texttt{<see>} or \texttt{<seealso>} tags with the \texttt{cref} attribute.
+Support for the types declared in the same project is mandatory, and optionally, we can also add links to standard library types.
 This gives us another requirement:
 
 \begin{requirement}
@@ -814,15 +800,15 @@ This gives us another requirement:
 \end{requirement}
 
 Additionally, we should consider that some users prefer a light theme, while others may favor a dark one.
-In the official .NET documentation, users can seamlessly switch between themes using a dropdown, as shown in Figure~\ref{fig:official-themes} \textit{(A)}.
+In the official .NET documentation, users can switch between themes using a dropdown, as shown in Figure~\ref{fig:official-themes} (A).
 The Figures~\ref{fig:official-light} and~\ref{fig:official-dark} display the same page in both light and dark themes.
 
 Among the generators, the support for a dark theme varies.
-Doxygen has a built-in dark mode that can be toggled using a button; however, this functionality must be explicitly enabled by setting a corresponding option.
-The default UI of DocFX does not support dark mode; however, DocFX offers a variety of templates, such as the \textit{modern} template, which supports both light and dark modes. 
-Again, it is possible to switch between them using a button.
-Moreover, multiple DocFX templates are exclusively dark-themed.
-Finally, SHFB has neither built-in support for dark mode in the default UI nor a dark-themed template.
+\textit{Doxygen} has a built-in dark mode that can be toggled using a button; however, this functionality must be explicitly enabled by setting a corresponding option.
+The default UI of \textit{DocFX} does not support dark mode; however, \textit{DocFX} offers a variety of templates, such as the \textit{modern} template, which supports both light and dark modes. 
+Again, it is possible to switch between themes using a button.
+Moreover, multiple \textit{DocFX} templates are exclusively dark-themed.
+Finally, \textit{SHFB} has neither built-in support for dark mode in the default UI nor a dark-themed template.
 In conclusion, our generator should support both light and dark themes, with an option to easily switch between them, which is our next requirement:
 
 \begin{figure}
@@ -851,7 +837,7 @@ In conclusion, our generator should support both light and dark themes, with an 
     \label{req:dark-theme}
 \end{requirement}
 
-Next, although reference documentation is primarily accessed on laptops and desktops, there are cases where users may browse it on tablets or mobile phones. 
+Next, although reference documentation is primarily viewed on laptops and desktops, there are cases where users may browse it on tablets or mobile phones. 
 This means the UI should be reasonably responsive to accommodate this usage. 
 The default UIs of all generators are responsive as well, which leads us to the following requirement:
 
@@ -861,8 +847,7 @@ The default UIs of all generators are responsive as well, which leads us to the 
 \end{requirement}
 
 Another thing to consider is that the official .NET documentation, as well as the other generators, support displaying the reference documentation in various other .NET languages, such as F\# and VB.NET.
-As a result, the displayed type and member signatures may change based on the selected language.
-The language can typically be selected using a dropdown.
+As a result, the displayed type and member signatures may change based on the selected language, while the language itself can typically be selected using a dropdown.
 We do not aim to include support for languages other than C\# in the default UI, as previously explained in Requirement~\ref{req:lang-ind}; however, the default UI should be designed with extensibility in mind so that support for additional languages can be added in the future without major restructuring.
 Moreover, the same applies to the generator itself.
 Thus, the next requirement can be stated as follows:
@@ -876,16 +861,15 @@ It is also worth noting that the official .NET documentation can be browsed in v
 While localization may be helpful in official documentation, particularly for beginner developers who are less fluent in English, it is generally unnecessary for reference documentation of software libraries.
 This is because most developers are expected to understand English, especially as the API of the library is typically not localized either.
 Furthermore, seeing technical terms in a local language might be confusing for many developers, as English is the primary language of computer science.
-Therefore, we do not plan to support localization, similarly to DocFX, Doxygen, and SHFB.
+Therefore, we do not plan to support localization, similarly to \textit{DocFX}, \textit{Doxygen}, and \textit{SHFB}.
 
 \section*{Other requirements}
-In previous sections, we thoroughly described the requirements R1-R7 introduced in the first chapter. 
+In previous sections, we thoroughly described Requirements \ref{req:zero-conf}--\ref{req:platf-ind} introduced in the first chapter. 
 Next, we stated multiple other requirements based on the analysis of existing documentation generators and the official .NET documentation.
 In this section, we will present the remaining requirements, based on various use cases.
 
 The first important observation is that the program to be documented may consist of multiple projects, contained in a solution. 
-In this case, users typically want to include those projects in the documentation.
-
+In this case, users typically want to include these projects in the documentation.
 However, not all projects in the solution need to be included; for instance, users often prefer to exclude the ones containing tests. 
 Thus, there should be a way to exclude selected projects from the resulting documentation.
 Considering these points, we can introduce the following two requirements:
@@ -904,11 +888,11 @@ Additionally, the project itself may contain certain types we would like to excl
 For instance, consider an app that includes Razor templates, which get compiled into .NET classes.
 As a result, they would normally appear in the documentation, which is usually undesirable.
 
-One option would be to use an extra XML tag (for instance \texttt{<ignore />}), allowing the developers to mark types that should be excluded from the documentation. 
+One option would be to use an extra XML tag (for instance \texttt{<ignore>}), allowing the developers to mark types that should be excluded from the documentation. 
 However, this approach brings a significant disadvantage, as it creates a coupling between the program and the generator.
 In other words, the program developers must be aware of the documentation generator.
 
-An alternative solution is to support an option that allows users to exclude types based on their namespaces, as in most cases, these types are contained within a single namespace.
+An alternative solution is to support an option that allows users to exclude types based on their namespaces, as in most cases, these types are contained within the same namespace.
 This approach eliminates the dependency between the code and the generator.
 Thus, we can formulate the subsequent requirement:
 
@@ -917,7 +901,7 @@ Thus, we can formulate the subsequent requirement:
     \label{req:exclude-namespaces}
 \end{requirement}
 
-As discussed in section~\ref{section:context}, reference documentation is primarily intended for developers using a library or maintainers of the library.
+As discussed in Section~\ref{section:context}, reference documentation is primarily intended for developers using a library or maintainers of the library.
 In the first case, only the public API is relevant, so public members alone are enough, while in the second case, it often makes sense to include non-public members as well.
 This gives us another requirement:
 
@@ -937,15 +921,14 @@ As a result, we can formulate the following requirement:
 
 Last but not least, we should consider the program installation.
 Ideally, the installation method should be cross-platform and allow for easy updates.
-
 The first option is to install the generator as a standard executable app. 
 However, this approach has multiple disadvantages; for instance, the installation typically needs to be done manually.
 In addition to that, the same applies to updates.
 
 Fortunately, there is an alternative option: install the generator as a .NET tool.
-As described in the documentation~\cite{dotnet_tools}, a .NET tool is a special NuGet package that contains a console application.
+As described in the documentation~\cite{dotnet_tools}, a .NET tool is a special type of a NuGet package, containing a console application.
 .NET tools can be installed from the command line by running \texttt{dotnet tool install} and then invoked from the command line as well.
-Updates are also easy, as the app can be updated simply by running the \texttt{dotnet tool update} command.
+Updates are also easy, as the tool can be updated simply by running the \texttt{dotnet tool update} command.
 
 In conclusion, installation as a .NET tool meets all criteria, and thus seems like a reasonable choice, leading us to the last requirement:
 
