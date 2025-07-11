@@ -1,14 +1,15 @@
 \chapter{Architecture}
 
 This chapter describes the architecture of our app.
-The main project is stored in \texttt{src/RefDocGen} folder and further divided into the following four folders:
+The main project is stored in \texttt{refdocgen/src/RefDocGen} folder and further divided into the following folders:
 
 \begin{itemize}
     \item \texttt{AssemblyAnalysis} -- contains types responsible for extracting the relevant data from an assembly.
     \item \texttt{CodeElements} -- contains objects representing the types and members, introduced in sections~\ref{sec:member-repr} and \ref{sec:type-repr}.
-    \item \texttt{DocExtraction} -- contains types responsible for extracting the documentation from the XML documentation file and assigning it to the corresponding type or member.
+    \item \texttt{Config} -- contains all types related to program configuration.
+    \item \texttt{DocExtraction} -- contains types responsible for extracting the documentation from the XML file and assigning it to the corresponding types or members.
     \item \texttt{TemplateProcessors} -- contains types responsible for generating the reference documentation from the type and member objects.
-    This folder also includes Razor templates, representing individual fragments of the UI.
+    This folder also includes \textit{Razor} templates, representing individual fragments of the UI.
 \end{itemize}
 
 Additionally, the project also contains a \texttt{Tools} folder, containing additional tools shared between multiple parts of the project.
@@ -24,7 +25,7 @@ Hence, the \texttt{TypeRegistry} now contains documentation as well.
 Next, the registry is passed to the \texttt{ITemplateProcessor} interface, which represents the base interface for processing various types of templates, as described in section~\ref{sec:template-extensibility}.
 The default implementation, called \texttt{RazorTemplateProcessor}, uses \textit{Razor} templates, processes them with the provided data, and thus creates the reference documentation.
 
-The entire process is coordinated by the \texttt{DocGenerator.GenerateDoc} method, which gets called directly from the \texttt{Main} method.
+The entire process is coordinated by the \texttt{DocGenerator.GenerateDoc} method, which gets called directly from the \texttt{Program} class.
 In the following sections, we will describe the individual parts of the codebase in more detail.
 
 \begin{figure}[H]
@@ -46,7 +47,7 @@ After that, the data from the \texttt{TypeRegistry} is used by the template proc
 For now, we will consider only the usage by the \texttt{DocCommentExtractor} and return to the second case later.
 Internally, the \texttt{TypeRegistry} organizes the types into the following three categories: enums, delegates, and the remaining types (classes, structures, and interfaces), which we will refer to as the \textit{object types}.
 Each of these categories of types is stored in a dictionary, indexed by the ID string, which is equal to the ID string used in the XML documentation file. 
-The format of the string is further described in section~\ref{sec:id-string} and the official .NET documentation~\cite{csharp_xml_docs}.
+The format of the string is further described in Section~\ref{sec:id-string} and the official .NET documentation~\cite{csharp_xml_docs}.
 
 \subsection{Types}
 
@@ -75,14 +76,14 @@ This is necessary because the documentation comments are assigned after the memb
 \end{figure}
 
 Additionally, the \texttt{ObjectTypeData} stores its members in dictionaries, indexed by the member IDs, similar to how the types are stored in the \texttt{TypeRegistry}.
-The member ID corresponds to its identifier in the XML documentation file, the only difference is that in our case, the type name is not part of the ID.
+The member ID corresponds to its identifier in the XML documentation file; the only difference is that, in our case, the type name is not part of the ID.
 The members are stored according to their kind; therefore, the \texttt{ObjectTypeData} class declares seven distinct dictionaries, containing fields, properties, indexers, methods, operators, constructors, and events.
-This is illustrated in Figure~\ref{fig:objecttype-structure}, which shows a simplified internal structure of an \texttt{ObjectTypeData} instance with two fields, \texttt{name} and \texttt{age}, and two properties, named \texttt{IsAdult} and \texttt{IsAdmin}.
+This is illustrated in Figure~\ref{fig:objecttype-structure}, which shows a simplified internal structure of an \texttt{ObjectTypeData} instance, containing relevant data of its two fields, \texttt{name} and \texttt{age}, and two properties, named \texttt{IsAdult} and \texttt{IsAdmin}.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.6\linewidth]{img/registry-diagram.png}
-\caption{ObjectTypeData instance -- simplified structure}
+\caption{\texttt{ObjectTypeData} instance -- simplified structure}
 \label{fig:objecttype-structure}
 \end{figure}
 
@@ -97,7 +98,7 @@ The functionality shared between \texttt{TypeNameData} and \texttt{TypeDeclarati
 
 \subsection{Members}
 
-Similarly to types, the members are represented by custom objects, as outlined in section~\ref{sec:member-repr}.
+Similarly to types, the members are represented by custom objects, as outlined in Section~\ref{sec:member-repr}.
 There is a separate class for each kind of member, such as field, method, and property, as illustrated in Figure~\ref{fig:members-concrete}.
 Essentially, these objects wrap the types provided by reflection (such as \texttt{FieldInfo} and \texttt{MethodInfo}) and provide all the necessary information about the member, as well as its documentation comments.
 Hence, for instance, the \texttt{FieldData} class wraps a \texttt{FieldInfo} instance.
@@ -136,7 +137,7 @@ In addition, several super-interfaces represent common properties of a selection
 Using the \texttt{IParametrizedMemberData} interface, which represents a member that may have parameters (i.e., a constructor, method, or indexer), it is possible to handle those types in the same way.
 The same goes for handling members storing a value, represented by \texttt{IValueMemberData} interface, or for \texttt{ICallableMemberData} providing the shared data of properties, methods, and events.
 
-\begin{figure} 
+\begin{figure}[H] 
 \centering
 \includegraphics[width=0.85\linewidth]{img/types-abstract.png}
 \caption{Type interfaces -- inheritance graph}
@@ -155,11 +156,12 @@ The same goes for handling members storing a value, represented by \texttt{IValu
 
 In the previous section, we described the internal structure of the \texttt{TypeRegistry}, and
 now, we need to explain how the data from the assembly is loaded and the registry is created.
-As mentioned earlier, this task is performed by the \texttt{AssemblyTypeExtractor} class, which uses reflection to load the assembly and obtain the declared types.
+As mentioned earlier, this task is managed by the \texttt{AssemblyTypeExtractor} class, which uses reflection to load the assembly and obtain the declared types.
+Individual assemblies are loaded using the \texttt{Assembly\-DependencyLoadContext} class.
 
-It is also important to mention that besides creating the type registry, the \texttt{AssemblyTypeExtractor} is also responsible for filtering the types that will be included in the documentation.
-Thus, if the user chooses to exclude types contained in a given assembly or namespace, as described in requirements~\ref{req:exclude-assemblies} and~\ref{req:exclude-namespaces}, these types are simply ignored.
-The same applies to excluding members with given accessibility, or the inherited ones, as requested in requirements~\ref{req:exclude-accessibility} and~\ref{req:exclude-inherited}.
+It is also important to mention that besides creating the type registry, the \texttt{AssemblyTypeExtractor} class is also responsible for filtering the types that will be included in the documentation.
+Thus, if the user chooses to exclude types contained in a given assembly or namespace, as described in Requirements~\ref{req:exclude-assemblies} and~\ref{req:exclude-namespaces}, these types are simply ignored.
+The same applies to excluding members with given accessibility, or the inherited ones, as requested in Requirements~\ref{req:exclude-accessibility} and~\ref{req:exclude-inherited}.
 The configuration containing this information is provided to the \texttt{AssemblyTypeExtractor} as an \texttt{AssemblyDataConfiguration} instance.
 
 Next, the \texttt{AssemblyTypeExtractor} class converts the loaded types, represented as \texttt{System.Type} instances, to the corresponding \texttt{ObjectTypeData}, \texttt{Enum\-TypeData}, and \texttt{DelegateTypeData} objects.
@@ -171,7 +173,7 @@ This task is performed by dedicated creator classes, with a separate class for e
 These classes are named \texttt{FieldDataCreator}, \texttt{MethodDataCreator}, etc., and called from within the \texttt{ObjectTypeDataBuilder}. 
 Additionally, many of those creator classes use the \texttt{MemberCreatorHelper} class, which contains shared functionality, such as the creation of \texttt{ParameterData} instances from the corresponding \texttt{ParameterInfo} objects.
 
-For constructing other type classes (namely \texttt{EnumTypeData} and \texttt{DelegateType\-Data}), no builder pattern is used, as these classes are significantly less complex.
+For constructing other type classes (namely \texttt{EnumTypeData} and \texttt{DelegateType\-Data}), no builder pattern is used, as these objects are significantly less complex.
 Instead, this task is performed directly by the corresponding methods of the \texttt{AssemblyTypeExtractor} class.
 After all the custom type objects are created, a \texttt{TypeRegistry} instance is initialized with this data and returned.
 
@@ -186,12 +188,12 @@ After all the custom type objects are created, a \texttt{TypeRegistry} instance 
 
 Now that we understand the internal structure of the \texttt{TypeRegistry} instance and how it is created, the next step is to add the documentation comments.
 The whole process is managed by the \texttt{DocCommentExtractor} class, which loads the XML documentation file and processes the XML comments one by one.
-As mentioned in section~\ref{sec:workflow}, this class accesses the \texttt{TypeRegistry} instance and adds the documentation to the corresponding types and members.
+As mentioned in Section~\ref{sec:workflow}, this class accesses the \texttt{TypeRegistry} instance and adds the documentation to the corresponding types and members.
 Additionally, all \texttt{<inheritdoc>} tags are resolved and replaced with the actual documentation.
 
 \subsection{Assignment of the documentation comments}
 
-Each comment is identified by an ID that determines the corresponding type or member, as previously explained in section~\ref{sec:type-registry}.
+Each comment is identified by an ID that determines the corresponding type or member, as previously explained in Section~\ref{sec:type-registry}.
 Hence, the \texttt{DocCommentExtractor} class first parses the ID and checks whether the documentation belongs to a type or a member.
 If it belongs to a type, the corresponding \texttt{TypeDeclaration} instance is obtained from the \texttt{TypeRegistry} based on the ID.
 Then, the instance together with the raw XML documentation is passed to the \texttt{TypeDocHandler} class, which parses the XML and assigns the individual documentation comments (summary, remarks, etc.) to the given type.
@@ -221,7 +223,7 @@ Furthermore, the shared functionality related to method-like members is extracte
 
 After all documentation comments are assigned, the \texttt{<inheritdoc>} tags are resolved.
 First, it is important to remember that \texttt{<inheritdoc>} comments can be classified into three categories: those with the \texttt{cref} attribute, and those without it, which are further divided based on whether they are applied to a type or a member.
-As explained in section~\ref{sec:inheritdoc-resolve}, the resolution process begins by resolving all \texttt{<inheritdoc>} elements without the \texttt{cref} attribute and then proceeds with the ones that include it.
+As explained in Section~\ref{sec:inheritdoc-resolve}, the resolution process begins by resolving all \texttt{<inheritdoc>} elements without the \texttt{cref} attribute and then proceeds with the ones that include it.
 
 The following three classes handle the resolution, each responsible for resolving the corresponding kind of \texttt{<inheritdoc>} elements: \texttt{TypeInheritDoc\-Resolver}, \texttt{MemberInheritDocResolver}, and \texttt{CrefInheritDocResolver}.
 In each of the three cases, the resolved documentation may again contain \texttt{<inheritdoc>} tags of the same kind, so the resolution must be done recursively.
@@ -236,7 +238,7 @@ The DFS results are cached, i.e., the \texttt{<inheritdoc>} elements contained i
 Additionally, cycle detection is included as well.
 
 Then, the \texttt{TypeInheritDocResolver}, \texttt{MemberInheritDocResolver}, and \texttt{Cref\-InheritDocResolver} 
-inherit from the \texttt{InheritDocResolver} class,  as shown in Figure~\ref{fig:inheritdoc-handlers},
+inherit from the \texttt{InheritDocResolver} class, as shown in Figure~\ref{fig:inheritdoc-handlers},
 and implement only the method responsible for obtaining the parent nodes of a node, along with other minor functionality. 
 In \texttt{TypeInheritDocResolver}, the nodes represent the declared types, while the edges point to the base type and all implemented interfaces of a type.
 Similarly, in \texttt{MemberInheritDocResolver}, the nodes correspond to the individual members, and the edges go to the equivalent definition of a member in the base type and all implemented interfaces.
@@ -245,14 +247,14 @@ Finally, the case of \texttt{CrefInheritDocResolver} is slightly different, as t
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.8\linewidth]{img/inheritdoc-handlers.png}
-\caption{<inheritdoc> resolvers -- inheritance graph}
+\caption{\texttt{<inheritdoc>} resolvers -- inheritance graph}
 \label{fig:inheritdoc-handlers}
 \end{figure}
 
 \section{Template processing}
 
 In the next step, the \texttt{ITypeRegistry} is passed to a template processor and the resulting HTML is generated.
-There is the \texttt{ITemplateProcessor} interface, which represents a contract for any template processor, and declares a single method, called \texttt{ProcessTemplates}, that accepts the \texttt{ITypeRegistry} and path to the output directory.
+There is the \texttt{ITemplateProcessor} interface, which represents a contract for any template processor, and declares a single method, called \texttt{ProcessTemplates}, that accepts the \texttt{ITypeRegistry}, path to the output directory, and additional parameters.
 
 The default implementation, called \texttt{RazorTemplateProcessor}, uses \textit{Razor} templates.
 However, before the templates are processed, a handful of other tasks are performed, as illustrated in Figure~\ref{fig:razor-template-processor}.
@@ -324,7 +326,7 @@ This URL can be easily constructed, as all page addresses in the .NET documentat
 \begin{figure}[H]
 \centering
 \includegraphics[scale=0.45]{img/tm-creators-workflow.png}
-\caption{Creation of \texttt{ObjectTypeTM} template models}
+\caption{Creation of template models}
 \label{fig:object-tm-creator-workflow}
 \end{figure}
 
@@ -341,7 +343,7 @@ The configuration that describes the mapping of inner XML tags to HTML is determ
 This interface defines properties corresponding to the inner XML tags, while the values are the corresponding HTML elements, represented as \texttt{XElement} instances.
 Each value could be a single element or a collection of nested elements.
 
-The default configuration is provided by the \texttt{DocCommentHtmlConfiguration} class, whose visualization is shown in Program~\ref{lst:html-config-visualization}.
+The default configuration is provided by the \texttt{DocCommentHtmlConfiguration} class, whose visualization is shown in Listing~\ref{lst:html-config-visualization}.
 As we can see, each HTML element is assigned a separate CSS class, starting with \textit{"refdocgen"}, which allows for easy styling using CSS.
 Thus, the default configuration itself remains fully independent of any visual style and therefore could be used even in other than the default templates.
 
@@ -358,12 +360,12 @@ Thus, the default configuration itself remains fully independent of any visual s
 
 After the corresponding HTML element is obtained, the inner XML tag is replaced by it.
 There is one special case, a \texttt{see} element with the \texttt{cref} attribute, as the type URL needs to be resolved in this case.
-For this purpose, the \texttt{TypeUrlResolver} is used again, and then a link is created.
+For this purpose, the \texttt{TypeUrlResolver} is used again, and a link is created.
 If the referenced type or member is not found, instead of a link, a highlighted text is used.
 
 After all inner XML tags are replaced, the resulting HTML is returned as a string.
 Also, we can notice that the tags outside the set of inner XML tags are copied to the HTML as they are.
-Thus, if the documentation contains \texttt{<b>} or \texttt{<br>} elements, these tags are preserved and appear in the HTML as well.
+Thus, if the documentation contains, e.g., \texttt{<b>} or \texttt{<br>} elements, these tags are preserved and appear in the HTML as well.
 It is also important to note that the \texttt{DocCommentTransformer} class is also used for converting the \texttt{<seealso>} elements to HTML, even though these belong to the top-level tags.
 This is because they are processed almost identically as the \texttt{<see>} elements.
 
@@ -433,12 +435,12 @@ For this reason, it has an additional optional constructor parameter identifying
 When a specific version is created, it is not stored directly in the output directory, but in its subfolder named after the version identifier.
 Hence, the \texttt{v1.0} version gets stored in the \texttt{output/v1.0} directory.
 Additionally, each resulting HTML page stores a list of its available versions.
-As explained in section~\ref{sec:documentation-versioning-three}, the data are stored as a JSON list inside a visually hidden element, whose id is \texttt{version-list}.
+As explained in Section~\ref{sec:documentation-versioning-three}, the data are stored as a JSON list inside a visually hidden element, whose id is \texttt{version-list}.
 Then, when the page is loaded, the data is handled using JavaScript.
 
 Before the documentation is generated, the \texttt{RazorTemplateProcessor} calls the \texttt{DocVersionManager} class to obtain a list of available versions for the individual pages.
 The data describing individual versions is stored in the \texttt{versions.json} file in the output directory.
-As illustrated in Program~\ref{lst:versions-json}, this file stores the version identifier together with the array of generated pages.
+As illustrated in Listing~\ref{lst:versions-json}, this file stores the version identifier together with the array of generated pages.
 The \texttt{DocVersion\-Manager} first loads the JSON file and, using its data, the list of available versions for each page is returned.
 
 After the documentation is created, the \texttt{DocVersionManager} is called again. 
@@ -467,11 +469,11 @@ Thus, the individual HTML pages of older versions are one by one loaded and then
 \label{sec:architecture-eight-templates}
 
 The \texttt{RazorTemplateProcessor} class has eight generic parameters, representing the types of the individual Razor templates, as shown in Figure~\ref{fig:eight-templates}.
-The \textit{Object type template} is intended to display all relevant information about an object type, including its documentation as well as a list of its members with documentation comments.
+The \textit{Object type} template is intended to display all relevant information about an object type, including its documentation as well as a list of its members with documentation comments.
 Similarly, the \textit{Enum} and \textit{Delegate} templates should display all relevant data of an enum or a delegate, respectively.
 The \textit{Namespace} and \textit{Assembly} templates are expected to display a list of all types contained within a namespace or an assembly, respectively.
-Next, the \textit{API homepage template} should serve as a homepage of the API, showing all types across the provided assemblies.
-Finally, the \textit{Static page template} provides a template for all user-defined static pages, while the \textit{Search page template} is intended to perform searching and display search results.
+Next, the \textit{API homepage} template should serve as a homepage of the API, showing all types across the provided assemblies.
+Finally, the \textit{Static page} template provides a template for all user-defined static pages, while the \textit{Search page} template is intended to perform searching and display search results.
 
 It is crucial to remember that the \texttt{RazorTemplateProcessor} defines the overall page structure of the documentation; however, the individual templates are not hard-coded, and thus, custom templates may be provided.
 
@@ -495,6 +497,7 @@ Additionally, the following variables are passed to all templates (including the
     \item \texttt{TopMenuData} -- specifies the links and folders contained within the top menu.
     \item \texttt{Languages} -- an array of the available languages.
     \item \texttt{Versions} -- an array containing the available versions of the page.
+    \item \texttt{ProjectName} -- name of the assembly/project/solution being documented.
 \end{itemize}
 
 On top of that, three other variables are passed exclusively to the \textit{static page} template:
@@ -511,7 +514,7 @@ The \texttt{RazorTemplateProcessor} stores all \textit{type}, \textit{namespace}
 For a namespace template model, its ID corresponds to the namespace name; similarly, for assemblies, it matches the assembly name, with the only difference being that it has the suffix \textit{-DLL}.
 The ID of any type template model is almost equivalent to its ID string used in the \texttt{TypeRegistry}; as the only difference is that some characters need to be escaped, which is handled by the \texttt{TemplateId} class.
 Next, the API homepage is stored as \texttt{api/index.html}, while the search page is stored directly in the output directory as \texttt{search.html}.
-Finally, each user-defined static page is stored in a file whose location matches the static page location within the static pages directory, as explained in section~\ref{sec:architecture-static-pages}.
+Finally, each user-defined static page is stored in a file whose location matches the static page location within the static pages directory, as explained in Section~\ref{sec:architecture-static-pages}.
 Additionally, if the folder with Razor templates also contains a directory named \texttt{Static}, this directory gets copied as it is to the output folder.
 
 The example output directory structure is shown in Listing~\ref{lst:directory-structure-example}.
@@ -547,9 +550,9 @@ out/
 \section{Default templates}
 \label{sec:default-templates-overview}
 
-The default Razor templates are stored in the \texttt{src/RefDocGen/Template\-Processors/Default/Templates} directory.
-There are eight top-level templates: \texttt{ObjectTypePage}, \texttt{EnumTypePage}, \texttt{DelegateTypePage}, \texttt{NamespacePage}, \texttt{Assem\-blyPage}, \texttt{ApiHomePage}, \texttt{StaticPage}, and \texttt{SearchPage}, which correspond to the generic parameters of the \texttt{RazorTemplateProcessor} class, described in section~\ref{sec:architecture-eight-templates}.
-Each of the templates accepts the parameters outlined in section~\ref{sec:architecture-template-vars}; however, only the \texttt{Model} parameter is typically used directly in the template itself.
+The default \textit{Razor} templates are stored in the \texttt{refdocgen/src/RefDocGen/Template\-Processors/Default/Templates} directory.
+There are eight top-level templates: \texttt{ObjectTypePage}, \texttt{EnumTypePage}, \texttt{DelegateTypePage}, \texttt{NamespacePage}, \texttt{Assem\-blyPage}, \texttt{ApiHomePage}, \texttt{StaticPage}, and \texttt{SearchPage}, which correspond to the generic parameters of the \texttt{RazorTemplateProcessor} class, described in Section~\ref{sec:architecture-eight-templates}.
+Each of the templates accepts the parameters outlined in Section~\ref{sec:architecture-template-vars}; however, only the \texttt{Model} parameter is typically used directly in the template itself.
 Other parameters, such as \texttt{TopMenuData}, are usually passed to descendant components as cascading values, which are explained in further detail in the official documentation~\cite{razor_cascading_values}.
 The entire UI is composed of many reusable components; for example, the documentation of parameters is stored within a separate component, which is then reused by methods, operators, and constructors.
 
@@ -562,7 +565,7 @@ The cascading values, for instance, \texttt{TopMenuData}, are typically consumed
 \subsection{UI styling}
 \label{sec:ui-styling}
 
-As discussed in section~\ref{sec:tech-analysis-ui-framework}, the components and styles provided by the \textit{Bootstrap} framework~\cite{boostrap} are used for styling the user interface.
+As discussed in Section~\ref{sec:tech-analysis-ui-framework}, the components and styles provided by the \textit{Bootstrap} framework~\cite{boostrap} are used for styling the user interface.
 For example, the top menu, as well as the links, make use of the \textit{Bootstrap} classes; furthermore, \textit{Bootstrap} also ensures the responsiveness of the UI.
 In addition to the styles provided by \textit{Bootstrap}, several custom CSS rules are defined in the \texttt{Scss/styles.scss} file.
 As the file name suggests, the styles are written in the \textit{Sass}~\cite{sass} format, rather than plain CSS, which enables us to use additional functionality on top of CSS.
@@ -635,7 +638,7 @@ When the button is clicked, a custom JavaScript handler is executed, which sets 
 \label{sec:ui-language-fragments}
 
 The templates need to display language-specific fragments, for instance, the declarations of the individual types and members, as the syntax differs between various languages.
-Furthermore, unlike the language-specific data described in section~\ref{sec:architecture-lang-specifc-data-retrieval}, these data require various styling, as, for instance, the member modifiers should be displayed in a different color than the member name and type.
+Furthermore, unlike the language-specific data described in Section~\ref{sec:architecture-lang-specifc-data-retrieval}, these data require various styling, as, for instance, the member modifiers should be displayed in a different color than the member name and type.
 Therefore, each language must define a separate set of \textit{Razor} components that represent these language-specific fragments.
 
 The components for a given language are stored within a subfolder of the \texttt{Components/LanguageSpecific} folder, whose name is specified in the corresponding language template model.
@@ -647,7 +650,7 @@ All of these components have a single parameter, typically the template model, t
 Additionally, each template must be named after the matching \texttt{LanguageSpecificComponent} value, with the only difference being that it is prefixed with the folder name.
 For instance, the component representing the \texttt{LanguageSpecificComponent.FieldDeclaration} fragment in C\# is named \texttt{CSharpFieldDeclaration}.
 The individual components then display the given data in the selected language; thus, e.g., the \texttt{CSharpFieldDeclaration} displays a field declaration using C\# syntax.
-As previously described in section~\ref{sec:ui-text-colors}, various colors are often used for different data.
+As previously described in Section~\ref{sec:ui-text-colors}, various colors are often used for different data.
 
 Displaying of all language-specific fragments is handled by the \texttt{Language\-Fragments} component, which has the following two parameters:
 
@@ -657,7 +660,7 @@ Displaying of all language-specific fragments is handled by the \texttt{Language
 \end{itemize}
 
 Hence, for example, to render a field declaration, we need to pass the \texttt{Language\-SpecificComponent.FieldDeclaration} value, together with the template model of the field, as displayed in Figure~\ref{fig:lang-fragments}.
-Additionally, the \texttt{LanguageFragments} component also uses the \texttt{Languages} cascading value, introduced in section~\ref{sec:architecture-template-vars}, to obtain all languages.
+Additionally, the \texttt{LanguageFragments} component also uses the \texttt{Languages} cascading value, introduced in Section~\ref{sec:architecture-template-vars}, to obtain all languages.
 Then, it simply renders the given fragment in all available languages.
 The corresponding component for each language is found automatically by its name and rendered as a 
 \textit{DynamicComponent}, which is explained in more detail in the official documentation~\cite{aspnet_dynamic_component}.
@@ -682,13 +685,13 @@ This way, only the fragments in the currently selected language are displayed.
 \subsubsection{Switching the language}
 \label{sec:ui-langauge-switching}
 
-The language in which the language-specific fragments are displayed is selected using a dropdown, which gets populated with the \texttt{Languages} data, mentioned in section~\ref{sec:architecture-template-vars}. 
+The language in which the language-specific fragments are displayed is selected using a dropdown, which gets populated with the \texttt{Languages} data, mentioned in Section~\ref{sec:architecture-template-vars}. 
 When a language is selected, a custom JavaScript handler is executed, similarly to when switching themes.
 The selected language identifier is then assigned to the \texttt{data-language} attribute of the \texttt{<html>} element, which makes the language-specific fragments in the given language visible.
 
 \subsection{Persisting the selected theme and language}
 
-In section~\ref{sec:ui-themes}, we described that when the theme is switched, the value of the \texttt{data-bs-theme} attribute is updated accordingly by a JavaScript function.
+In Section~\ref{sec:ui-themes}, we described that when the theme is switched, the value of the \texttt{data-bs-theme} attribute is updated accordingly by a JavaScript function.
 Since we want to persist this value, the selected theme is also saved to the local storage of the browser under the \texttt{refdocgen-theme} key; however, this applies only if the documentation is deployed on a server.
 On the other hand, if the documentation is created locally and thus accessed using the \textit{file} protocol, this does not work, because the local storage has undefined behavior in such cases, as explained in the MDN Web documentation~\cite{mdn_localstorage}.
 For that reason, if the documentation is created locally, the selected theme gets stored in the \texttt{theme} URL parameter.
@@ -706,7 +709,7 @@ This way, it is ensured that the selected theme and language remain the same whe
 \subsection{Documentation versioning}
 \label{sec:default-ui-version-dropdown}
 
-As already described in section~\ref{sec:architecture-doc-versions}, each page contains the \texttt{version-list} HTML element, which is hidden and stores the array of available page versions as JSON.
+As already described in Section~\ref{sec:architecture-doc-versions}, each page contains the \texttt{version-list} HTML element, which is hidden and stores the array of available page versions as JSON.
 Once the page is loaded, custom JavaScript reads this data and populates the version selector dropdown accordingly.
 Each item in the dropdown represents a link to the corresponding version of the page.
 It is also worth noting that redirecting to a different version of the page is straightforward, as it only requires updating the part of the URL that contains the version identifier.
@@ -716,7 +719,7 @@ It is also worth noting that redirecting to a different version of the page is s
 
 The search functionality is provided on the search page.
 An array of all possible search results -- i.e., all types, members, namespaces, and assemblies is stored as JSON in a hidden element, similarly to the array of page versions.
-Each item contains the name, \textit{summary} documentation (if provided), and additional data.
+Each item contains the name, summary documentation (if provided), and additional data.
 It is important to note that in the case of members, only the name is included; specifically, no parameters are contained.
 As a consequence, if a method has multiple overloads, only one of them is included in the search results.
 
@@ -728,11 +731,11 @@ The search runs on the names of the individual items (i.e., types, members, name
 
 The program can be configured via command-line arguments or using a YAML file, as requested by Requirement~\ref{subreq:config-yaml}.
 The configurations are represented by \texttt{CommandLineConfiguration} and \texttt{YamlFileConfiguration} classes, both implementing the \texttt{IProgramConfiguration} interface, as illustrated in Figure~\ref{fig:program-conf-types}.
-Command-line arguments are parsed using the \texttt{CommandLineParser} library~\cite{commandlineparser}, while for YAML, the \texttt{YamlDotNet} library~\cite{yamldotnet} is used.
+Command-line arguments are parsed using the \textit{CommandLineParser} library~\cite{commandlineparser}, while for YAML, the \textit{YamlDotNet} library~\cite{yamldotnet} is used.
 
 The only mandatory argument is the \texttt{input}, which can refer to an assembly, a project file, or a solution file.
 In the latter two cases, the \texttt{AssemblyLocator} class is used to locate the assemblies.
-Internally, this class uses \texttt{Microsoft.Build}~\cite{msbuild_package} and \texttt{Microsoft.Build.Locator}~\cite{msbuild_locator} packages to obtain the resulting assembly, which is then passed to the \texttt{DocGenerator} class, mentioned in Section~\ref{sec:workflow}.
+Internally, this class uses \textit{Microsoft.Build}~\cite{msbuild_package} and \textit{Microsoft.Build.Locator}~\cite{msbuild_locator} packages to obtain the resulting assembly, which is then passed to the \texttt{DocGenerator} class, mentioned in Section~\ref{sec:workflow}.
 
 \begin{figure}[H]
 \centering
@@ -764,10 +767,10 @@ Both of them use the \textit{xUnit}~\cite{xunit} testing framework and \textit{S
 \subsection{Integration tests}
 The integration tests check whether the generated documentation looks as expected.
 As shown in Figure~\ref{fig:integration-tests-architecture}, they use the DLL and XML documentation file of the \texttt{RefDocGen.ExampleLibrary}, which is intended purely for integration testing.
-This library is also included in the solution, and its build directory is set to the \texttt{/data} subdirectory of the integration tests project.
+Similarly, the DLLs and documentation of \texttt{RefDocGen.ExampleFSharpLibrary} and \texttt{RefDocGen.ExampleVbLibrary} libraries are used as well.
 
 Most of the integration tests are part of the \texttt{DocumentationTestCollection}, which is an \textit{xUnit} collection fixture responsible for creating the reference documentation.
-The \texttt{DocumentationTestCollection} uses the DLL and XML documentation file of the \texttt{ExampleLibrary} and simply calls the \texttt{DocGenerator} class, mentioned in section~\ref{sec:workflow}.
+The \texttt{DocumentationTestCollection} uses the DLL and XML documentation file of the \texttt{ExampleLibrary} and simply calls the \texttt{DocGenerator} class, mentioned in Section~\ref{sec:workflow}.
 Thus, before all tests are run, the documentation is generated, and after the tests terminate, the folder with the documentation is deleted.
 There is also the \texttt{VersionedDocumentationTestCollection} collection fixture, which creates documentation with multiple versions and is used by a handful of other tests.
 
@@ -800,7 +803,7 @@ Furthermore, selected pieces of code are tested using unit tests.
 The unit test classes are mapped one-to-one with the project classes, and additionally, each test class is named the same as the corresponding project class, with the only exception being that it ends with the suffix \textit{Tests}.
 Thus, the tests of the \texttt{TypeUrlResolver} class are contained within a class named \texttt{TypeUrlResolverTests}.
 Additionally, the folder structure of the unit tests project aligns with the structure of the main project.
-It is also worth noting that the unit tests frequently use mocking, with the help of \textit{NSubstitute} library~\cite{nsub}, as previously discussed in section~\ref{sec:tests-mocking-explanation}.
+It is also worth noting that the unit tests frequently use mocking, with the help of \textit{NSubstitute} library~\cite{nsub}, as previously discussed in Section~\ref{sec:tests-mocking-explanation}.
 
 The individual test methods are named using the following convention: \textit{MethodName\_ExpectedOutcome\_Conditions}, where \textit{MethodName} is the name of the method being tested, \textit{ExpectedOutcome} describes the expected outcome, and \textit{Condition} describes any additional conditions.
 Hence, for example, assume that the test method, shown in Listing~\ref{lst:tests-example-test-name}, is defined within the \texttt{TypeUrlResolverTests} class.
@@ -830,7 +833,7 @@ For example, we have configured the system to use type inference when possible, 
 \subsection*{Workflow}
 The project is hosted in a public GitHub repository at the following URL: \url{https://github.com/VL-CZ/refdocgen}.
 When developing, we use the following conventions.
-For each task, we first create a separate branch, named \textit{feature/XX-description}, where \textit{XX} refers to the task ID, and \textit{description} is a brief description of the task, with words separated by hyphens.
+For each task, we first create a separate branch, named \textit{feature/XX-description}, where \textit{XX} refers to the task ID, and \textit{description} is a brief description of the task, with words separated by dashes.
 Once the work is completed, we create a pull request, named \textit{[T-XX] description}.
 Similarly to branches, \textit{XX} is the task ID; however, the description is now written in the English language.
 Thus, regarding the task with ID 25, which is about adding support for enums, the branch name could be \textit{feature/25-add-enum-support}, while the PR name would be \textit{[T-25] Add support for enums}.
@@ -851,9 +854,9 @@ Specifically, users may provide custom \textit{Razor} templates, template proces
 \subsection{Custom Razor templates}
 \label{sec:extensibility-custom-razor}
 
-It is possible to use custom \textit{Razor} templates, instead of the default ones, with the \texttt{RazorTemplateProcessor} class, as previously mentioned in section~\ref{sec:architecture-eight-templates}.
+It is possible to use custom \textit{Razor} templates, instead of the default ones, with the \texttt{RazorTemplateProcessor} class, as previously mentioned in Section~\ref{sec:architecture-eight-templates}.
 This allows us to declare a custom UI; however, the overall structure of the documentation remains the same as when the default templates are used.
-Likewise, the output folder structure remains as described in section~\ref{sec:output-dir-structure}.
+Likewise, the output folder structure remains as described in Section~\ref{sec:output-dir-structure}.
 
 To add custom \textit{Razor} templates, we first navigate to the \texttt{TemplateProcessors} folder in the \texttt{RefDocGen} project, copy the \texttt{Todo} subfolder, and rename it to reflect the design of the templates (for example, \texttt{RazorMinimal}).
 Next, we provide the implementation of the eight \textit{Razor} templates, located in the \texttt{Templates} subfolder.
@@ -868,17 +871,17 @@ several points should be taken into account:
     Thus, if we want to provide custom CSS and JavaScript, we should place them here.
     Ideally, we should use the provided \texttt{styles.css} and \texttt{script.js} files.
     \item To support versioning, each page must contain an HTML element with the \texttt{id="version-list"}.
-    The JSON array of available version identifiers will be automatically inserted there, as described in section~\ref{sec:architecture-doc-versions}.
+    The JSON array of available version identifiers will be automatically inserted there, as described in Section~\ref{sec:architecture-doc-versions}.
     Then, when the page is loaded, we can process these values using JavaScript, and, for example, insert them into a dropdown, similarly to the default UI. 
     \item Some of the data, such as field modifiers, are represented as objects of \texttt{LanguageSpecificData<T>} type, 
 which works as a dictionary, indexed by language IDs.
 Currently, only the C\# language is supported; thus, to obtain C\# data, we can use the \texttt{LanguageSpecificData<T>.CSharpData} property.
-Optionally, the templates may be designed to be extensible for adding new languages, similarly to the default UI, as described in section~\ref{sec:ui-language-fragments}.
+Optionally, the templates may be designed to be extensible for adding new languages, similarly to the default UI, as described in Section~\ref{sec:ui-language-fragments}.
 \end{itemize}
 
-It is recommended, although not mandatory, to get inspiration from the default templates, described in section~\ref{sec:default-templates-overview}, and compose the UI of many reusable components as well.
+It is recommended, although not mandatory, to get inspiration from the default templates, described in Section~\ref{sec:default-templates-overview}, and compose the UI of many reusable components as well.
 However, it is typically not possible to reuse the components from the default UI, because they already use the \textit{Bootstrap} framework.
-In addition to the templates, it is necessary to configure the style of the inner XML tags transformed to HTML, as explained in section~\ref{sec:architecture-inner-xml-to-html} in greater detail.
+In addition to the templates, it is necessary to configure the style of the inner XML tags transformed to HTML, as explained in Section~\ref{sec:architecture-inner-xml-to-html} in greater detail.
 There are two options: to reuse the default configuration or create a custom one.
 
 \subsubsection{Using the default configuration}
@@ -968,7 +971,7 @@ If the link is resolved, the HTML elements shown in Table~\ref{table:default-xml
 
 All of these classes may then be styled using CSS.
 For instance, the style of the transformed \texttt{<para>} XML tags can be defined in CSS using the \texttt{refdocgen-paragraph} class, as shown in Listing~\ref{lst:extensibility-custom-css}.
-It is also possible to inherit existing CSS classes with the help of a CSS preprocessor, similarly to how the default UI does it, as described in section~\ref{sec:ui-styling}.
+It is also possible to inherit existing CSS classes with the help of a CSS preprocessor, similarly to how the default UI does it, as described in Section~\ref{sec:ui-styling}.
 
 \begin{listing}[H]
 \begin{lstlisting}
@@ -1068,35 +1071,35 @@ Then, we need to add the implementation, which may be arbitrary; however, it is 
 
 \begin{itemize}
     \item It is preferred to keep all the related code in the same folder (i.e., \texttt{Custom} in our case) or in its subfolders.
-    \item If the template processor requires additional data, we should pass these in the constructor.
+    \item If the template processor requires additional parameters, we should pass them in the constructor.
     \item If the documentation generation fails, it is recommended to throw an exception with a descriptive message.
     \item Optionally, the processor may be designed in a way that allows users to provide custom templates, similarly to the \texttt{RazorTemplateProcessor}.
 \end{itemize}
 
 \subsubsection{Reusing existing classes}
 
-If the documentation output is HTML, we can reuse the \texttt{StaticPageProcessor} class, described in section~\ref{sec:architecture-static-pages}, to collect the static pages provided by the user.
+If the documentation output is HTML, we can reuse the \texttt{StaticPageProcessor} class, described in Section~\ref{sec:architecture-static-pages}, to collect the static pages provided by the user.
 Similarly, the \texttt{DocVersionManager} class, introduced in Section~\ref{sec:architecture-doc-versions}, might also be used in the custom template processor.
 The only requirement is that each HTML page in the documentation must contain an element with the
 \texttt{id="version-list"}, where the JSON array of available page versions will
 be automatically placed.
-Moreover, the \texttt{DocCommentTransformer} class, described in section~\ref{sec:architecture-inner-xml-to-html} as well as its default configuration, explained in section~\ref{sec:extensibility-custom-razor}, might be reused too.
+Moreover, the \texttt{DocCommentTransformer} class, described in Section~\ref{sec:architecture-inner-xml-to-html} as well as its default configuration, explained in Section~\ref{sec:extensibility-custom-razor}, might be reused too.
 
-Additionally, if the following two conditions hold, it is possible to reuse even the template model creators, described in the section~\ref{sec:architecture-tm-creators}.
+Additionally, if the following two conditions hold, it is possible to reuse even the template model creators, described in Section~\ref{sec:architecture-tm-creators}.
 
 \begin{enumerate}
-    \item The default template models, mentioned in section~\ref{sec:architecture-template-models}, suit us well and we would like to use them in the templates.
-    \item The resulting documentation is designed to have the same output structure as the default templates. Thus, each type, namespace, and assembly is represented by a separate page, stored in the \texttt{api} folder. The page URL should be equal to the corresponding template model ID, as previously explained in section~\ref{sec:output-dir-structure}.
+    \item The default template models, mentioned in Section~\ref{sec:architecture-template-models}, suit us well and we would like to use them in the templates.
+    \item The resulting documentation is designed to have the same output structure as the default templates. Thus, each type, namespace, and assembly is represented by a separate page, stored in the \texttt{api} folder. The page URL should be equal to the corresponding template model ID, as previously explained in Section~\ref{sec:output-dir-structure}.
     Additionally, on type pages, each member element should have the \texttt{id} attribute set to the corresponding member ID.
 \end{enumerate}
 
 In this case, the entire process of generating HTML is similar to that of the \texttt{RazorTemplateProcessor}, with the only difference being that another templating language is used.
 For this reason, it is recommended to use the \texttt{RazorTemplate\-Processor} class as a reference.
-Additionally, it is important to remember that the default template models store selected data as language-specific, as noted in the fifth bullet point in section~\ref{sec:extensibility-custom-razor}.
+Additionally, it is important to remember that the default template models store selected data as language-specific, as noted in the fifth bullet point in Section~\ref{sec:extensibility-custom-razor}.
 
 \subsubsection{Registering the template processor}
 
-Next, we need to register the template processor class, which is very similar to registering custom \textit{Razor} templates, described in section~\ref{sec:extensibility-register-custom-razor}.
+Next, we need to register the template processor class, which is very similar to registering custom \textit{Razor} templates, described in Section~\ref{sec:extensibility-register-custom-razor}.
 In the \texttt{Program.cs}, we locate the comments marked with \texttt{\#ADD\_TEMPLATE\_PROCESSOR}.
 First, we need to add a new \texttt{DocumentationTemplate} enum value, corresponding to the custom template processor.
 Then, we must add the template processor to the set of available documentation templates.
@@ -1113,7 +1116,7 @@ When adding support for a new language to the default UI, we first need to creat
 To create a language configuration, we first need to open the \texttt{RefDocGen} project and navigate to the \texttt{TemplateProcessors/Shared/Languages} directory.
 Next, we create a copy of the \texttt{TodoLanguageConfiguration.cs} file and rename it (including the contained class) to, e.g., \texttt{MyLanguageConfiguration.cs}.
 This class defines methods for obtaining selected language-specific data, such as modifiers, type names, 
-and other relevant information, for the given language, as previously mentioned in section~\ref{sec:architecture-lang-specifc-data-retrieval}.
+and other relevant information, for the given language, as previously mentioned in Section~\ref{sec:architecture-lang-specifc-data-retrieval}.
 
 In the next step, we add the implementation, following the documentation comments provided for each method and property.
 Specifically, when returning the modifiers, we should keep in mind that this is the preferred place to define their order and return them accordingly.
@@ -1146,7 +1149,7 @@ it is advised to use the same color scheme as the default C\# fragments.
 Hence, the \texttt{refdocgen-text-primary} CSS class should be used for type and member names, while
 for member, parameter, and return types, as well as for the type parameters, we should use the \texttt{refdocgen-text-secondary} and \texttt{refdocgen-link-secondary} classes (depending on whether the link is found or not).
 Additionally, it is preferred to use the \texttt{refdocgen-text-tertiary} class for displaying modifiers.
-    \item Finally, as explained in section~\ref{sec:architecture-template-models}, some of the data, such as field modifiers, are represented as objects of \texttt{LanguageSpecificData<T>} type, 
+    \item Finally, as explained in Section~\ref{sec:architecture-template-models}, some of the data, such as field modifiers, are represented as objects of \texttt{LanguageSpecificData<T>} type, 
 which works as a dictionary, indexed by language IDs.
 To access the data in the given language, we need to know the \texttt{LanguageId}, defined in the language configuration.
 If we use, for example, the \texttt{"my-lang"} as the ID, we can access the field modifiers for this language by calling \texttt{field.Modifiers["my-lang"]}.
@@ -1154,7 +1157,7 @@ If we use, for example, the \texttt{"my-lang"} as the ID, we can access the fiel
 
 This way, the language is added to the default UI.
 
-\chapter{User Documentation}
+\chapter{User documentation}
 
 This chapter provides the user documentation of our program, covering its installation, usage, and UI.
 The tutorials describing how to generate reference documentation for selected projects are contained in Section~\ref{ch:six}.
