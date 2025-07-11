@@ -1464,7 +1464,7 @@ In both cases, the API homepage remains accessible via the \textit{API} link in 
 The API homepage shows the project name (A), a list of assemblies (B), namespaces (C), and the types contained within them (D), along with their \textit{summary} documentation (E), as illustrated in Figure~\ref{fig:refdocgen-api-homepage}.
 Assembly, type, and namespace names are clickable and redirect the user to the corresponding page.
 Then, there is a dedicated page for each assembly, which looks almost identical to the API homepage, as displayed in Figure~\ref{fig:refdocgen-assembly-page}, with the only difference being that it shows only the types contained in the given assembly.
-Additionally, there is a separate page for each namespace, as shown in Figure~\ref{fig:refdocgen-ns-page}, which displays the contained types (C) with their documentation (D) once again.
+Additionally, there is a separate page for each namespace, as shown in Figure~\ref{fig:refdocgen-ns-page}, which displays the contained types (D) with their documentation (E) once again.
 
 \begin{figure}[H]
 \centering
@@ -1490,8 +1490,8 @@ Additionally, there is a separate page for each namespace, as shown in Figure~\r
 \subsubsection{Type page}
 
 Similarly to assemblies and namespaces, each type is represented by a dedicated page, as illustrated in Figure~\ref{fig:refdocgen-type-page}.
-This page first shows the type signature using C\# syntax (E).
-Below it, there is a section showing the containing assembly, namespace, base type, and a list of implemented interfaces (F); and then, the \textit{summary} documentation is displayed (G).
+This page first shows the type signature using C\# syntax (F).
+Below it, there is a section showing the containing assembly, namespace, base type, and a list of implemented interfaces (G); and then, the \textit{summary} documentation is displayed (E).
 Additionally, there are the following sections (H), while each section is displayed only if it is non-empty: 
 
 \begin{itemize}
@@ -1504,8 +1504,8 @@ Additionally, there are the following sections (H), while each section is displa
 \end{itemize}
 
 Below these sections, a list of members is displayed along with their documentation, as shown in Figures~\ref{fig:refdocgen-type-members1} and~\ref{fig:refdocgen-type-members2}.
-For each member, its signature (I) as well as its \textit{summary} documentation (K) is shown.
-Furthermore, if the member provides an interface member implementation, this is indicated just below the signature (J).
+For each member, its signature (I) as well as its \textit{summary} documentation (J) is shown.
+Furthermore, if the member provides an interface member implementation, this is indicated just below the signature (K).
 Similarly, if the member overrides another member or is inherited from a base type, this information is displayed in the same way.
 
 Then, below the \textit{summary} documentation, there are multiple sections (L) further describing the member.
@@ -1544,9 +1544,9 @@ In addition, these sections may also be present:
 The member, parameter, return types, etc., are clickable in most cases.
 Specifically, if the referenced type is found within the generated documentation or in the official .NET documentation, a link is created; otherwise, the fully qualified type name is displayed.
 In case of a generic type, each type parameter is represented by a separate link, as displayed in Figure~\ref{fig:refdocgen-cross-refs} (M).
-Furthermore, links inside the documentation comments (i.e., the \texttt{<see cref="...">} tags) result in clickable links (N).
+Furthermore, links inside the documentation comments (i.e., the \texttt{<see cref="...">} tags) result in clickable links (N1).
 Additionally, all standard inner XML tags inside the documentation comments are supported.
-In Figure~\ref{fig:refdocgen-inner-xml-rendered}, we can see the rendered inline code (O), code block (P), bullet (Q), and numbered (R) lists, as well as a table (S).
+In Figure~\ref{fig:refdocgen-inner-xml-rendered}, we can see the rendered inline code (N2), code block (N3), bullet (N4), and numbered (N5) lists, as well as a table (N6).
 
 \begin{figure}[H]
 \centering
@@ -1564,14 +1564,16 @@ In Figure~\ref{fig:refdocgen-inner-xml-rendered}, we can see the rendered inline
 
 \subsubsection{Menu}
 
-The top menu contains links and dropdowns, as shown in Figure~\ref{fig:refdocgen-menu-ui} (T).
+The top menu contains links and dropdowns, as shown in Figure~\ref{fig:refdocgen-menu-ui} (O).
 The \textit{API} link is always present and navigates us to the API homepage.
 Then, the following links represent static pages placed directly in the static pages directory, while the folders represent subfolders of the static pages folder, each sorted alphabetically.
 
-Next, it is possible to select the language in which the type and member signatures are displayed, using the language selector (U).
+Next, it is possible to select the language in which the type and member signatures are displayed, using the language selector (P).
 Currently, only C\# is supported; however, in the future, other languages may also be added.
-Next, we can navigate to the search page by clicking the input field (V).
-Finally, using the button (W), it is possible to toggle the documentation theme (light or dark), as shown in Figures~\ref{fig:refdocgen-dark-mode} and~\ref{fig:refdocgen-light-mode}.
+Next, we can navigate to the search page by clicking the input field (Q).
+Using the button (R), it is possible to toggle the documentation theme (light or dark), as shown in Figures~\ref{fig:refdocgen-dark-mode} and~\ref{fig:refdocgen-light-mode}.
+Finally, if the documentation is versioned, a dropdown with all available page versions is displayed (S).
+Using it, it is possible to switch to another version.
 
 \begin{figure}[H]
 \centering
@@ -1597,9 +1599,9 @@ Finally, using the button (W), it is possible to toggle the documentation theme 
 \subsubsection{Search page}
 
 The search page is shown in Figure~\ref{fig:refdocgen-search-page}.
-As we type in the search box (X), the search is run and the results are displayed below.
+As we type in the search box (T), the search is run and the results are displayed below.
 The search is performed within assembly, namespace, type, and member names.
-Each search result contains a link to its page (Y) and a \textit{summary} documentation (Z), if provided.
+Each search result contains a link to its page (U) and a \textit{summary} documentation (E), if provided.
 
 \subsubsection{Responsiveness}
 The UI is fully responsive, as displayed in Figures~\ref{fig:refdocgen-ui-desktop} and~\ref{fig:refdocgen-ui-mobile}.
@@ -1631,7 +1633,7 @@ The UI is fully responsive, as displayed in Figures~\ref{fig:refdocgen-ui-deskto
 Generally, most of the type, member, and parameter modifiers in C\# are recognized by \textit{RefDocGen}.
 However, selected modifiers are not supported and thus do not appear in the generated documentation, but these are typically implementation details that do not affect the API.
 Specifically, the following modifiers are not supported:
-\texttt{extern}, \texttt{file}, \texttt{managed}, \texttt{partial}, \texttt{record}, \texttt{scoped}, \texttt{unmanaged}, \texttt{unsafe}, and \texttt{volatile}.
+\texttt{extern}, \texttt{file}, \texttt{managed}, \texttt{new}, \texttt{partial}, \texttt{record}, \texttt{scoped}, \texttt{unmanaged}, \texttt{unsafe}, and \texttt{volatile}.
 Likewise, the following type parameter constraints are not currently supported:
 \texttt{notnull}, \texttt{unmanaged}, \texttt{default}, and \texttt{allows ref struct}.
 
@@ -1738,49 +1740,49 @@ When browsing the documentation, it is possible to switch between the versions, 
 \begin{figure}[H]
 \centering
 \includegraphics[width=1\linewidth]{img/newtonsoft-api.png}
-\caption{Newtonsoft.Json documentation -- API homepage}
+\caption{\textit{Newtonsoft.JSON} documentation -- API homepage}
 \label{fig:eval-newtonsoft-home}
 \end{figure}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=1\linewidth]{img/newtonsoft-class.png}
-\caption{Newtonsoft.Json documentation -- type page}
+\caption{\textit{Newtonsoft.JSON} documentation -- type page}
 \label{fig:eval-newtonsoft-type}
 \end{figure}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=1\linewidth]{img/refdocgen-demo-yaml1.png}
-\caption{YamlDotNet documentation -- API homepage}
+\caption{\textit{YamlDotNet} documentation -- API homepage}
 \label{fig:eval-yaml-home}
 \end{figure}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=1\linewidth]{img/refdocgen-demo-yaml2.png}
-\caption{YamlDotNet documentation -- type page}
+\caption{\textit{YamlDotNet} documentation -- type page}
 \label{fig:eval-yaml-type}
 \end{figure}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=1\linewidth]{img/refdocgen-demo-serilog1.png}
-\caption{Serilog documentation -- API homepage}
+\caption{\textit{Serilog} documentation -- API homepage}
 \label{fig:eval-serilog-home}
 \end{figure}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=1\linewidth]{img/refdocgen-demo-serilog2.png}
-\caption{Serilog documentation -- type page}
+\caption{\textit{Serilog} documentation -- type page}
 \label{fig:eval-serilog-type}
 \end{figure}
 
 \section*{Evaluation summary}
-No errors were encountered while creating the reference documentations, following the guides described in Sections~\ref{sec:evaluation-example-library}, \ref{sec:evaluation-refdocgen}, and \ref{sec:evaluation-third-party}.
-The program was tested on both \textit{Windows} and \textit{Linux} operating systems.
-Additionally, the UI was tested in \textit{Chrome}, \textit{Mozilla Firefox}, and \textit{Microsoft Edge} browsers.
+No errors were encountered while creating the reference documentations, following the guides in Sections~\ref{sec:evaluation-example-library}, \ref{sec:evaluation-refdocgen}, and \ref{sec:evaluation-third-party}.
+The program was tested on both Windows 11 and Linux (Ubuntu 22.04) operating systems.
+Additionally, the UI was tested in the following browsers: Chrome (version 138.0), Mozilla Firefox (version 140.0), and Microsoft Edge (version 138.0).
 All three created documentations are also contained in the following attachment folders:
 
 \begin{itemize}
