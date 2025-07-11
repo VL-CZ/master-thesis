@@ -1160,7 +1160,7 @@ This way, the language is added to the default UI.
 \chapter{User documentation}
 
 This chapter provides the user documentation of our program, covering its installation, usage, and UI.
-The tutorials describing how to generate reference documentation for selected projects are contained in Section~\ref{ch:six}.
+The tutorials describing how to generate reference documentation for selected projects are contained in Chapter~\ref{ch:six}.
 
 \section{Installation}
 
@@ -1186,6 +1186,7 @@ Additionally, it is also important to set the \texttt{CopyLocalLockFileAssemblie
 
 These properties can be specified on the command line when running \texttt{dotnet build}, as shown in Figure~\ref{lst:ui-building-project}.
 Alternatively, it is possible to set them in the project file or \texttt{Directory.Build.props} file, as further explained in the documentation~\cite{net_customize_build}.
+Additionally, although it is not the typical use case, \textit{RefDocGen} can also generate reference documentation of desktop and web applications. However, in such cases, the project must be built as self-contained.
 
 \begin{listing}[H]
 \begin{lstlisting}[language=HTML]
@@ -1264,7 +1265,7 @@ INPUT (pos. 0)                      Required. The assembly, project,
 \newpage
 
 The only required value is the \texttt{INPUT} argument, which could be an assembly, a project, or a solution to document, as illustrated in Listing~\ref{lst:cmd-line-simple-example}.
-Alternatively, a YAML configuration file may be used, as explained later in section~\ref{sec:user-docs-yaml}.
+Alternatively, a YAML configuration file may be used, as explained later in Section~\ref{sec:user-docs-yaml}.
 
 \begin{listing}[H]
 \begin{lstlisting}[language=HTML]
@@ -1281,18 +1282,19 @@ refdocgen refdocgen.yaml
 
 We can select the output directory, using the \texttt{-o} flag.
 Next, the \texttt{-t} option allows us to select a documentation template. 
-Currently, only the default template is available; however, it is possible to add custom documentation templates, as further described in sections~\ref{sec:extensibility-custom-razor} and~\ref{sec:extensibility-custom-template-processor}.
+Currently, only the default template is available; however, it is possible to add custom documentation templates, as further described in Sections~\ref{sec:extensibility-custom-razor} and~\ref{sec:extensibility-custom-template-processor}.
 
 When the \texttt{-v} flag is specified, the log level is set to verbose; thus, all log events are displayed.
 Before describing the \texttt{-f} flag, it is important to note that the program intentionally fails
 if the output directory exists and is not empty (and the documentation is not versioned) to prevent users from accidentally overwriting data.
 To override this behavior, and thus delete the output directory before the documentation is generated, the \texttt{-f} flag can be used.
-Next, using the \texttt{-s} flag, the current configuration can be saved to a YAML file, as explained in section~\ref{sec:user-docs-yaml} in more detail.
+Next, using the \texttt{-s} flag, the current configuration can be saved to a YAML file, as explained in Section~\ref{sec:user-docs-yaml} in more detail.
 Additionally, it is possible to provide custom static pages as well as create a specific version of the documentation 
-by specifying the \texttt{--static-pages-dir} and \texttt{--doc-version} options, respectively, as further described in sections~\ref{sec:user-docs-static-pages} and~\ref{sec:user-docs-versions}.
+by specifying the \texttt{--static-pages-dir} and \texttt{--doc-version} options, respectively, as further described in Sections~\ref{sec:user-docs-static-pages} and~\ref{sec:user-docs-versions}.
 
 Next, it is possible to configure which types and members are included in the documentation.
 Using the \texttt{--min-visibility} flag, we can select only the members with the given visibility or higher.
+The individual option values correspond to the \texttt{private}, \texttt{private protected}, \texttt{internal}, \texttt{protected}, \texttt{protected internal}, and \texttt{public} modifiers in C\#.
 Additionally, we can select which inherited members should be included by specifying the \texttt{--inherit-members} option.
 When set to \texttt{None}, no inherited members are contained in the documentation, while when using \texttt{All}, the documentation displays all inherited members.
 However, in most cases, we would likely want to include all inherited members, except those inherited from the \texttt{object} type, 
@@ -1456,11 +1458,10 @@ When using the \texttt{--verbose} flag, additional details about the error (such
 \section{UI}
 
 After the documentation is generated, it can be viewed by opening the \texttt{index.html} file located in the output directory. 
-If a custom \texttt{index} page has been provided, as described in section~\ref{sec:user-docs-static-pages}, it is displayed; otherwise, the user is redirected to the API homepage. 
+If a custom \texttt{index} page has been provided, as described in Section~\ref{sec:user-docs-static-pages}, it is displayed; otherwise, the user is redirected to the API homepage. 
 In both cases, the API homepage remains accessible via the \textit{API} link in the top menu.
 
-The API homepage shows a list of assemblies (A), namespaces (B), and the types contained within them (C), as illustrated in Figure~\ref{fig:refdocgen-api-homepage}.
-For each type, its \textit{summary} documentation is displayed (D), if provided.
+The API homepage shows the project name (A), a list of assemblies (B), namespaces (C), and the types contained within them (D), along with their \textit{summary} documentation (E), as illustrated in Figure~\ref{fig:refdocgen-api-homepage}.
 Assembly, type, and namespace names are clickable and redirect the user to the corresponding page.
 Then, there is a dedicated page for each assembly, which looks almost identical to the API homepage, as displayed in Figure~\ref{fig:refdocgen-assembly-page}, with the only difference being that it shows only the types contained in the given assembly.
 Additionally, there is a separate page for each namespace, as shown in Figure~\ref{fig:refdocgen-ns-page}, which displays the contained types (C) with their documentation (D) once again.
@@ -1729,7 +1730,7 @@ refdocgen Serilog.dll --doc-version v-serilog
 \label{lst:demo-other-two}
 \end{listing}
 
-The reference documentation is stored in the \texttt{\~/refdocgen-demo} directory, while again, we did not encounter any errors.
+The reference documentation is stored in the \texttt{\textasciitilde/refdocgen-demo} directory, while again, we did not encounter any errors.
 Additionally, the screenshots displaying the documentation of these libraries are shown in Figures~\ref{fig:eval-newtonsoft-home},
 \ref{fig:eval-newtonsoft-type}, \ref{fig:eval-yaml-home}, \ref{fig:eval-yaml-type}, \ref{fig:eval-serilog-home}, and \ref{fig:eval-serilog-type}.
 When browsing the documentation, it is possible to switch between the versions, which represent the individual libraries, on the API homepage, as this is likely the only page present in all three versions.
