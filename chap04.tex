@@ -154,7 +154,7 @@ The same goes for handling members storing a value, represented by \texttt{IValu
 \section{Extracting the data from an assembly}
 \label{sec:architecture-assembly-analysis}
 
-In the previous section, we described the internal structure of the \texttt{TypeRegistry}, and
+In the previous section, we described the internal structure of the \linebreak \texttt{TypeRegistry}, and
 now, we need to explain how the data from the assembly is loaded and the registry is created.
 As mentioned earlier, this task is managed by the \texttt{AssemblyTypeExtractor} class, which uses reflection to load the assembly and obtain the declared types.
 Individual assemblies are loaded using the \texttt{Assembly\-DependencyLoadContext} class.
@@ -550,8 +550,8 @@ out/
 \section{Default templates}
 \label{sec:default-templates-overview}
 
-The default \textit{Razor} templates are stored in the \texttt{refdocgen/src/RefDocGen/Template\-Processors/Default/Templates} directory.
-There are eight top-level templates: \texttt{ObjectTypePage}, \texttt{EnumTypePage}, \texttt{DelegateTypePage}, \texttt{NamespacePage}, \texttt{Assem\-blyPage}, \texttt{ApiHomePage}, \texttt{StaticPage}, and \texttt{SearchPage}, which correspond to the generic parameters of the \texttt{RazorTemplateProcessor} class, described in Section~\ref{sec:architecture-eight-templates}.
+The default \textit{Razor} templates are stored in the \texttt{refdocgen/src/RefDocGen/ TemplateProcessors/Default/Templates} directory.
+There are eight top-level templates: \texttt{ObjectTypePage}, \texttt{EnumTypePage}, \texttt{DelegateTypePage}, \texttt{Namespace\-Page}, \texttt{AssemblyPage}, \texttt{ApiHomePage}, \texttt{StaticPage}, and \texttt{SearchPage}, which correspond to the generic parameters of the \texttt{RazorTemplateProcessor} class, described in Section~\ref{sec:architecture-eight-templates}.
 Each of the templates accepts the parameters outlined in Section~\ref{sec:architecture-template-vars}; however, only the \texttt{Model} parameter is typically used directly in the template itself.
 Other parameters, such as \texttt{TopMenuData}, are usually passed to descendant components as cascading values, which are explained in further detail in the official documentation~\cite{razor_cascading_values}.
 The entire UI is composed of many reusable components; for example, the documentation of parameters is stored within a separate component, which is then reused by methods, operators, and constructors.
@@ -659,8 +659,8 @@ Displaying of all language-specific fragments is handled by the \linebreak \text
     \item \texttt{Parameter} -- an object that is passed to the fragment component as a parameter.
 \end{itemize}
 
-Hence, for example, to render a field declaration, we need to pass the \texttt{Language\-SpecificComponent.FieldDeclaration} value, together with the template model of the field, as displayed in Figure~\ref{fig:lang-fragments}.
-Additionally, the \texttt{LanguageFragments} component also uses the \texttt{Languages} cascading value, introduced in Section~\ref{sec:architecture-template-vars}, to obtain all languages.
+Hence, for example, to render a field declaration, we need to pass the \linebreak \texttt{LanguageSpecificComponent.FieldDeclaration} value, together with the template model of the field, as displayed in Figure~\ref{fig:lang-fragments}.
+Additionally, the \linebreak \texttt{LanguageFragments} component also uses the \texttt{Languages} cascading value, introduced in Section~\ref{sec:architecture-template-vars}, to obtain all languages.
 Then, it simply renders the given fragment in all available languages.
 The corresponding component for each language is found automatically by its name and rendered as a 
 \textit{DynamicComponent}, which is explained in more detail in the official documentation~\cite{aspnet_dynamic_component}.
@@ -699,7 +699,7 @@ Similarly, for languages, the selected language identifier is stored either in t
 
 Additionally, if the documentation is created locally, all links within the documentation must be updated to include the correct URL parameters.
 Thus, a custom JavaScript function, named \texttt{updateRelativeLinks}, is called when a page is loaded.
-This function finds all relative links in the document (i.e., the \texttt{<a href="..">} elements) and appends the \texttt{theme} and \texttt{lang} parameters to the target URLs.
+This function finds all relative links in the document (i.e., the \linebreak \texttt{<a href="...">} elements) and appends the \texttt{theme} and \texttt{lang} parameters to the target URLs.
 
 Next, there is another JavaScript function that is executed before each page is loaded.
 This function checks whether the selected theme and language values are stored in local storage (if the documentation is deployed on a server) or in the URL parameters (if the documentation is created locally).
@@ -1094,7 +1094,7 @@ Additionally, if the following two conditions hold, it is possible to reuse even
 \end{enumerate}
 
 In this case, the entire process of generating HTML is similar to that of the \texttt{RazorTemplateProcessor}, with the only difference being that another templating language is used.
-For this reason, it is recommended to use the \texttt{RazorTemplate\-Processor} class as a reference.
+For this reason, it is recommended to use the \linebreak \texttt{RazorTemplateProcessor} class as a reference.
 Additionally, it is important to remember that the default template models store selected data as language-specific, as noted in the fifth bullet point in Section~\ref{sec:extensibility-custom-razor}.
 
 \subsubsection{Registering the template processor}
@@ -1181,7 +1181,7 @@ which in the vast majority of cases target .NET or .NET Standard.
 \subsection*{Building the project}
 
 Before generating the documentation, the project/solution must be built, preferably in the \textit{Debug} configuration, to get the assemblies.
-The \texttt{GenerateDocumentationFile} MSBuild property needs to be set to true, so the XML documentation file is generated.
+The MSBuild property \texttt{GenerateDocumentationFile} needs to be set to true, so the XML documentation file is generated.
 Additionally, it is also important to set the \texttt{CopyLocalLockFileAssemblies} property to true, which ensures that all dependencies are copied to the output directory. 
 
 These properties can be specified on the command line when running \texttt{dotnet build}, as shown in Figure~\ref{lst:ui-building-project}.
@@ -1366,7 +1366,7 @@ Therefore, we should use custom styles only for minor improvements, rather than 
 
 We can optionally make the documentation versioned.
 This means the documentation consists of multiple versions, which can be switched between.
-For instance, we can create version \texttt{v1.0} of the documentation, using the \texttt{--doc-version} option, that corresponds to version \texttt{1.0} of a library.
+For instance, we can create version \texttt{v1.0} of the documentation, using the \linebreak \texttt{--doc-version} option, that corresponds to version \texttt{1.0} of a library.
 Then, when version \texttt{1.1} of the library is published, we can add a new documentation version, as
 displayed in Listing~\ref{lst:user-docs-versions1}.
 Naturally, it is mandatory to specify the same output directory.
@@ -1706,7 +1706,7 @@ To generate its documentation, we first navigated to the corresponding NuGet pag
 Then, we manually downloaded the NuGet package (version 13.0.3) and changed its extension to \textit{.zip}, since NuGet packages are generally \textit{.zip} files, as explained in the documentation~\cite{nuget_zip_docs}.
 Next, we unzipped the package and navigated to the \texttt{lib/net6.0} directory, containing both the DLL and XML documentation file.
 Finally, we generated the reference documentation, while providing the DLL as the parameter, using the command shown in Listing~\ref{lst:demo-newtonsoft}.
-As we can notice, we used the \texttt{--doc-version} option, so a specific version (\textit{v-newtonsoft}) was generated.
+As we can notice, we used \linebreak the \texttt{--doc-version} option, so a specific version (\textit{v-newtonsoft}) was generated.
 
 Following that, using equivalent steps, we also generated the reference documentation of two other libraries: \textit{YamlDotNet}~\cite{yamldotnet} (version 16.3.0) and \textit{Serilog}~\cite{serilog} (version 4.3.0), as we used both of these libraries when developing, and on top of that, both are well-documented.
 The commands we used are displayed in Listing~\ref{lst:demo-other-two}.

@@ -102,7 +102,7 @@ For example, if we want to check whether a method is static, we can simply use t
 The interface also offers many other properties and methods; notably, there is a method for retrieving the corresponding documentation comment.
 
 The disadvantage of \textit{Roslyn} is that it is limited only to 2 languages: C\# and VB.NET.
-There is an analogous library for parsing \texttt{F\#} code: \textit{FSharp.Compi\-ler.Service}~\cite{fsharp_compiler_service}; 
+There is an analogous library for parsing F\# code: \textit{FSharp.Compi\-ler.Service}~\cite{fsharp_compiler_service}; 
 however, it has a fundamentally different API, designed for F\# usage.
 The main difference is that since F\# is primarily a functional programming language, the API heavily uses functional constructs, which makes its usage from C\# quite inconvenient.
 Moreover, the objects representing F\# types and members are completely unrelated to the ones used by \textit{Roslyn}, i.e., they do not share any common superclasses (except \texttt{object}) or interfaces.
@@ -198,7 +198,6 @@ documentation generator for .NET that uses assembly as its input.
 As mentioned earlier, the set of XML documentation tags is not explicitly defined. 
 Instead, the recommended tags are typically described in the documentation of each .NET language.
 It is also important to keep in mind that aside from the recommended tags, any XML tag is valid; in this case, it is simply copied to the XML documentation file.
-
 The recommended tags slightly differ for each language; however, they can be classified into two categories, based on their usage.
 
 \subsection{Top-level tags}
@@ -241,7 +240,7 @@ However, there are numerous other commonly used top-level tags, as shown in Tabl
 The documentation is then stored inside those elements.
 The only exception is the \texttt{<seealso cref="..." /> } tag, which is unpaired and thus does not have any content.
 Additionally, several tags, notably \texttt{<param>}, \texttt{<typeparam>}, \texttt{<exception>}, and \texttt{<seealso>} may be present multiple times in the definition.
-For instance, if a method has 3 parameters, there could be up to 3 \texttt{<param>} tags (one for each parameter).
+For instance, if a method has three parameters, there could be up to three \texttt{<param>} tags (one for each parameter).
 
 \subsubsection*{Cref attribute}
 As shown in Table~\ref{table:top-level-tags}, several tags have the \texttt{cref} attribute, which specifies that the tag references a code element, i.e., a type or a member.
@@ -302,7 +301,7 @@ Additionally, we can notice that the \texttt{<example>} tag can appear both as a
 \hline
 \texttt{<code>} & block of code \\
 \hline
-\texttt{<example>} & example of how to use the type or member \\
+\texttt{<example>} & example of how to use a type or member \\
 \hline
 \texttt{<list type="bullet">} & bullet list \\
 \hline
@@ -337,11 +336,11 @@ Moreover, it is also possible to define a heading row of a table, using the \tex
 \subsection{Reusing the documentation}
 \label{sec:reusing-docs}
 
-There are two other commonly used tags -- \texttt{<include>} and \texttt{<inheritdoc>}, both top-level and unpaired.
+There are two other commonly used tags -- \texttt{<include>} and \texttt{<inheritdoc>}, both unpaired.
 The \texttt{<include>} tag allows us to import the documentation from an external XML file by specifying the file path and the path to the element to include.
-Note that this tag is unsupported in some languages, such as F\#.
 When creating the XML documentation file, the compiler replaces the \texttt{<include>} tags with the actual documentation.
 Thus, the \texttt{<include>} elements are not present in the resulting documentation file, meaning that we do not need to process them in any way.
+It is also worth noting that this tag is unsupported in some languages, such as F\#.
 
 The \texttt{<inheritdoc>} tag can be applied to any type and member and allows users to inherit the documentation.
 When applied to a type, the documentation is inherited from the base type or an implemented interface.
@@ -451,13 +450,12 @@ This allows us to define the following two sub-requirements:
 
 Requirement~\ref{req:static-pages} mentions support for user-specified static pages.
 As discussed before, the goal is not to create a full-fledged SSG; instead, a convention-based approach with no configuration is preferred.
-
 A simple yet effective approach would be to give the user an option to include a folder containing static pages.
 The generator should then recursively copy the files from the folder into the output directory, thus including the pages in the documentation.
 Also, note that the relative paths between files stay the same because the directory structure is preserved.
 As a result, the links between files can stay intact, which is a huge advantage of this approach.
 
-When it comes to pages, we must consider several formats that users may want to use.
+Regarding pages, we must consider several formats that users may want to use.
 The natural option is to use HTML, as the resulting page will be in HTML format.
 Moreover, we also want to support Markdown, since it is extremely popular these days and easy to write.
 In addition to pages, the folder may contain other non-page files, such as CSS, JavaScript, or images, so we need to handle those as well.
@@ -485,9 +483,9 @@ The resulting documentation should then be stored not in the output folder, but 
 This way, the output folder may contain multiple versions of the documentation.
 
 Additionally, the default UI should allow users to switch between different versions.
-To achieve this, the UI should include a drop-down menu showing the available versions.
+To achieve this, the UI should include a dropdown showing the available versions.
 Whenever a new version of the documentation is generated, all the older versions should be updated to include the most recent version in the dropdown.
-Thus, we can define two sub-requirements:
+Thus, we can define the following two sub-requirements:
 
 \setcounter{subrequirementcounter}{4}
 \setcounter{subrequirement}{0}
@@ -681,24 +679,24 @@ For each type, there should be a link to its definition and its documentation, w
 \setcounter{subrequirement}{0}
 
 \begin{subrequirement}
-    Show a list of types contained in the namespace.
+    Show a list of types declared in the namespace.
 \end{subrequirement}
 
-Finally, there should be a page for each type displaying its signature in C\# format and documentation.
+Finally, there should be a separate page for each type displaying its signature in C\# format and documentation.
 The documentation should be divided into sections, corresponding to top-level XML tags.
 In addition to that, there should be a section displaying the attributes applied to a type.
-So, the documentation can contain those sections (the section should be displayed only if the corresponding tag is present):
+So, the documentation may contain those sections (each section should be displayed only if the corresponding tag is present):
 
 \begin{itemize}
-    \item Summary (corresponding to the \texttt{<summary>} tag)
-    \item Remarks (corresponding to the \texttt{<remarks>} tag)
-    \item Example (corresponding to the \texttt{<example>} tag)
-    \item Type parameters (corresponding to the \texttt{<typeparam>} tags)
-    \item See also (corresponding to the \texttt{<seealso>} tags)
-    \item Attributes
+    \item \textit{Summary} (corresponding to the \texttt{<summary>} tag)
+    \item \textit{Remarks} (corresponding to the \texttt{<remarks>} tag)
+    \item \textit{Example} (corresponding to the \texttt{<example>} tag)
+    \item \textit{Type parameters} (corresponding to the \texttt{<typeparam>} tags)
+    \item \textit{See also} (corresponding to the \texttt{<seealso>} tags)
+    \item \textit{Attributes} (displaying the attributes)
 \end{itemize}
 
-Then, we have two options: show the list of members on the type page, as \textit{DocFX} and \textit{Doxygen} do, or have a separate page for each member, similar to the official .NET documentation and SHFB.
+Then, we have two options: show the list of members on the type page, as \textit{DocFX} and \textit{Doxygen} do, or have a separate page for each member, similar to the official .NET documentation and \textit{SHFB}.
 Since we aim to generate reference documentation for third-party libraries, which are usually not as extensively documented as the .NET API, 
 having a separate page per member would likely be unnecessarily complex.
 Thus, the list of declared members should be displayed below the type definition. The members should be grouped into categories based on their kind (field, property, method, etc.), similar to \textit{SHFB}.
@@ -706,15 +704,15 @@ Each member should again display the signature and the documentation, correspond
 So, potentially, the member documentation can contain the following sections:
 
 \begin{itemize}
-    \item Summary (corresponding to the \texttt{<summary>} tag)
-    \item Remarks (corresponding to the \texttt{<remarks>} tag)
-    \item Example (corresponding to the \texttt{<example>} tag)
-    \item See Also (corresponding to the \texttt{<seealso>} tags)
-    \item Type parameters (corresponding to the \texttt{<typeparam>} tags)
-    \item Returns (corresponding to the \texttt{<returns>} tag)
-    \item Param (corresponding to the \texttt{<param>} tag)
-    \item Value (corresponding to the \texttt{<value>} tag)
-    \item Attributes
+    \item \textit{Summary} (corresponding to the \texttt{<summary>} tag)
+    \item \textit{Remarks} (corresponding to the \texttt{<remarks>} tag)
+    \item \textit{Example} (corresponding to the \texttt{<example>} tag)
+    \item \textit{See also} (corresponding to the \texttt{<seealso>} tags)
+    \item \textit{Type parameters} (corresponding to the \texttt{<typeparam>} tags)
+    \item \textit{Returns} (corresponding to the \texttt{<returns>} tag)
+    \item \textit{Param} (corresponding to the \texttt{<param>} tag)
+    \item \textit{Value} (corresponding to the \texttt{<value>} tag)
+    \item \textit{Attributes} (displaying the attributes)
 \end{itemize}
 
 This gives us another requirement:
@@ -885,7 +883,7 @@ Considering these points, we can introduce the following two requirements:
 \end{requirement}
 
 Additionally, the project itself may contain certain types we would like to exclude from the documentation.
-For instance, consider an app that includes Razor templates, which get compiled into .NET classes.
+For instance, consider an app that includes \textit{Razor} templates, which get compiled into .NET classes.
 As a result, they would normally appear in the documentation, which is usually undesirable.
 
 One option would be to use an extra XML tag (for instance \texttt{<ignore>}), allowing the developers to mark types that should be excluded from the documentation. 

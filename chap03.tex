@@ -16,7 +16,7 @@ For instance, it is possible to obtain the name of a member; in addition to that
 these types contain properties such as \texttt{IsStatic}, \texttt{IsPublic}, etc.
 However, as explained earlier, the documentation comments are not part of the assembly. 
 Therefore, these types do not contain any data regarding the documentation comments.
-Since we need to somehow extract the comments, we can conclude that using the types provided by reflection alone is not sufficient.
+Since we need to extract the comments, we can conclude that using the types provided by reflection alone is not sufficient.
 
 The first option is to simply pass the XML documentation file along with the members.
 For obtaining the documentation comment, we would call a custom method, named e.g., \texttt{xmlDocFile.GetDocComment(memberName)}.
@@ -44,7 +44,7 @@ However, this class provides only a handful of information about a member, speci
 Instead of the reflection types, we can use custom types for the member representation.
 Ideally, those types could be simply wrappers around the built-in reflection types, providing extra information, such as the documentation comments.
 Moreover, the fields and methods not relevant to documentation generation should not be included in the API, as we want to keep the interface as clean as possible.
-This way, we can achieve a user-friendly object model, where all member types have the following structure:
+This way, we can achieve an object model where all member classes have the following structure:
 
 \begin{itemize}
     \item name
@@ -123,6 +123,7 @@ Listing~\ref{lst:ex-doc-classes} shows an example class hierarchy with inherited
 As we can see, \texttt{ChildChild} class inherits its documentation from \texttt{Child} class, 
 which inherits it from \texttt{Parent} class.
 Thus, after resolution, all three classes should have the same documentation comment -- \textit{"Parent class."}.
+
 Hence, the resolution may be done using depth-first search.
 Moreover, Listing~\ref{lst:ex-doc-classes} shows that \texttt{ChildChild.Handle} method inherits the documentation from \texttt{Child.Handle} method, 
 while \texttt{Child.Handle} uses the documentation provided to \texttt{Console.WriteLine} method.
@@ -392,7 +393,7 @@ Although the \textit{Liquid} language itself does not specify support for custom
 In .NET, \textit{Liquid} templates can be processed using the \textit{DotLiquid}~\cite{dotliquid} library; however, this library directly states that it is looking for maintainers; therefore, its future is unclear.
 Additionally, there are two other popular .NET libraries: \textit{Scriban}~\cite{scriban} and \textit{Fluid}~\cite{fluid}, which use a custom language that is almost identical to \textit{Liquid}, with a range of extra filters added.
 
-\begin{listing}
+\begin{listing}[H]
 \begin{lstlisting}[language=HTML]
 <p>
     <div>
@@ -484,7 +485,7 @@ These links should have the same style and functionality, so it is a good idea t
 The template can then be used to display the type of field, the return type of a method, the parent type of a type, and so on.
 Next, assume that inside the template, we refer to the variable denoting type as \texttt{type}.
 This means that in the context of a field object, its type must be stored in a \texttt{type} variable, which seems natural.
-However, the same goes for a method and its return type, as it also needs to be stored in a \texttt{type} variable in the context of a method object.
+However, the same goes for a method and its return type, as it also needs to be stored in the \texttt{type} variable in the context of a method object.
 More specifically, the natural name \texttt{returnType} for denoting the return type of a method cannot be used, as in the cross-reference link template, the variable is called \texttt{type}.
 This is a considerable disadvantage, as the variables passed to the template need to have a certain structure because of \textit{Mustache}.
 On the other hand, in the remaining languages, which allow us to pass parameters, we could still refer to the return type of a method as \texttt{returnType}.
@@ -612,8 +613,8 @@ As previously mentioned in Requirement~\ref{req:versioning}, the generator shoul
 The Section~\ref{sec:doc-versions} states that this should be achieved by creating a separate folder with documentation for each version.
 Additionally, as described in Requirement~\ref{req:doc-version-dropdown}, there should be a dropdown menu in the UI.
 This brings us to two problems.
-First, we need to ensure that the newly generated documentation version dropdowns include all of the older versions.
-Secondly, the dropdowns in older versions of the documentation must be updated to include the newest one.
+First, we need to ensure that the dropdowns in the newly generated documentation version include all of the older versions.
+Secondly, the dropdowns in older versions of the documentation must be updated to include the newest version.
 
 In order to obtain all versions of the page, we can simply check whether the corresponding file exists in each of the version directories, but there is a more lightweight approach -- to store this information in a configuration file.
 For instance, there could be an entry for each version containing its identifier and a list of pages generated.
@@ -622,7 +623,7 @@ This makes it easy to recognize all the older versions of a file.
 The remaining problem is how to update the older version files to allow switching to the newest version.
 The first option is to store the data in an external file (e.g., JSON) and fetch it on the client side using JavaScript. 
 Then, when the page is loaded, the data is fetched, and the dropdown gets populated with the available versions.
-Theoretically, this works well; however, there is a fundamental problem -- same-origin policy, as most browsers do not allow requests to URLs of different origins.
+Theoretically, this works well; however, there is a fundamental problem -- the same-origin policy, as most browsers do not allow requests to URLs of different origins.
 When the documentation is hosted on a website, this may not be a problem; however, when created locally, the browser blocks requests to other local files because it is treated as a cross-origin request.
 This is a major disadvantage, as the documentation versioning does not work properly in the local environment.
 
