@@ -118,7 +118,7 @@ Before we dive into further details, we need to explain the compilation process 
 \section{Compilation process in .NET}
 
 As stated in the .NET documentation~\cite{dotnet_execution_model} and illustrated in Figure~\ref{fig:net_compilation}, the compilation translates the source code of the program 
-into the common intermediate language (CIL), which is a CPU-independent set of instructions that can be efficiently converted to native code. 
+into the common intermediate language (CIL), which is a CPU-independent set of instructions. 
 During program execution, CIL is converted to CPU-specific code, typically by a just-in-time (JIT) compiler.
 
 In addition to CIL, the compiler also produces metadata, which describes the types in the code, including the definition of each type, the signatures of its members, and other data that the runtime uses at execution time, according to~\cite{dotnet_execution_model}.
@@ -127,7 +127,7 @@ The CIL and metadata are contained in a .NET assembly, which is typically stored
 \begin{figure}
 \centering
 \includegraphics[width=1\linewidth]{img/compilation.png}
-\caption{Execution of a .NET program}
+\caption{Compilation of a .NET program}
 \label{fig:net_compilation}
 \end{figure}
 

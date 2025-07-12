@@ -19,10 +19,10 @@ Additionally, the project also contains a \texttt{Tools} folder, containing addi
 
 The simplified process of generating documentation is displayed in Figure~\ref{fig:workflow}.
 First, it is necessary to extract the information from an assembly and create the objects representing types and members, which is performed by the \texttt{AssemblyTypeExtractor} class.
-These objects are then stored within the \texttt{TypeRegistry} class, which is further passed to the \texttt{DocCommentExtractor}.
+These objects are then stored within the \texttt{Type\-Registry} class, which is further passed to the \texttt{DocCommentExtractor}.
 This class extracts the documentation comments from the XML documentation file and assigns them to the corresponding types and members.
 Hence, the \texttt{TypeRegistry} now contains documentation as well.
-Next, the registry is passed to the \texttt{ITemplateProcessor} interface, which represents the base interface for processing various types of templates, as described in Section~\ref{sec:template-extensibility}.
+Next, the registry is passed to the \texttt{ITemplate\-Processor} interface, which represents the base interface for processing various types of templates, as described in Section~\ref{sec:template-extensibility}.
 The default implementation, called \texttt{RazorTemplateProcessor}, uses \textit{Razor} templates, processes them with the provided data, and thus creates the reference documentation.
 
 The entire process is coordinated by the \texttt{DocGenerator.GenerateDoc} method, which gets called directly from the \texttt{Program} class.

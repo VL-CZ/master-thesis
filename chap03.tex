@@ -48,12 +48,12 @@ This way, we can achieve a user-friendly object model, where all member types ha
 
 \begin{itemize}
     \item name
-    \item whether it is static
+    \item \texttt{IsStatic} property
     \item accessibility (private, public, etc.)
-    \item + other member-related information
+    \item other member-related information
     \item summary documentation
     \item remarks documentation
-    \item + other documentation-related information
+    \item other documentation-related information
 \end{itemize}
 
 Furthermore, we can create custom interfaces or superclasses for a certain set of members that share common functionality. As an example, there could be a common interface for properties and methods, which allows us
@@ -72,11 +72,11 @@ Thus, it would be preferred to create custom types representing the types, with 
 
 \begin{itemize}
     \item name
-    \item + other type-related information
+    \item other type-related information
     \item fields
     \item properties
     \item methods
-    \item + other member-related information
+    \item other member-related information
     \item summary documentation
     \item remarks documentation
     \item + other documentation-related information
@@ -252,7 +252,7 @@ For example, \texttt{\{\{\#person\}\}} begins a \textit{person} section while \t
 There can be arbitrary content inside the section.
 Additionally, inside the section, the current item can be referenced by using \texttt{\{\{.\}\}} tag.
 
-Listing~\ref{lst:mustache} shows an example of a \textit{Mustache} template, which displays the provided name and age.
+Listing~\ref{lst:mustache} shows an example of a \textit{Mustache} template, displaying the provided \texttt{name} and \texttt{age}.
 Then, if the \texttt{isAdult} property is not false, the template should also include the information that the person is an adult.
 Finally, all owned items (i.e., all items contained in \texttt{itemsOwned} list) are shown as an unordered list.
 
@@ -341,7 +341,7 @@ For instance, we can write a custom helper that compares two numbers or converts
 An example of a \textit{Handlebars} template is displayed in Listing~\ref{lst:handlebars}.
 We can also notice that a custom helper -- \texttt{geq} is used to check whether a person is an adult.
 Additionally, before the template is processed, we need to register the helper by providing its code.
-As a result, unlike mustache, declaring the \texttt{isAdult} variable is unnecessary.
+As a result, unlike \textit{Mustache}, declaring the \texttt{isAdult} variable is unnecessary.
 Though \textit{Handlebars} templates are primarily intended for JavaScript, .NET is also supported using the \textit{Handlebars.NET} library~\cite{handlebars_net}.
 
 \begin{listing}[H]
@@ -429,9 +429,9 @@ As mentioned before, there could be arbitrary C\# code inside the code block.
 
 An example of a \textit{Razor} file is shown in Listing~\ref{lst:razor}.
 As we can see, the object of type \texttt{Person} is passed to the template.
-The processing of Razor files can be done using the \textit{RazorLight} library~\cite{razorlight}; however, certain constructs, such as methods, are not supported.
-Additionally, even though Razor was originally intended for use in web applications, it is also possible
-to use Razor components and render them in console applications, as mentioned in the official documentation~\cite{razor_console}.
+The processing of \textit{Razor} files can be done using the \textit{RazorLight} library~\cite{razorlight}; however, certain constructs, such as methods, are not supported.
+Additionally, even though \textit{Razor} was originally intended for use in web applications, it is also possible
+to use \textit{Razor} components and render them in console applications, as mentioned in the official documentation~\cite{razor_console}.
 
 \begin{listing}[H]
 \begin{lstlisting}[language=HTML]
@@ -507,8 +507,8 @@ In other words, it should be easily possible to add support for other templating
 Ideally, the generator should contain a common interface, called \texttt{ITemplateProcessor}, 
 which represents a contract for accepting the type and member data, and creating the final documentation, as illustrated in Figure~\ref{fig:template-processors}.
 Then, there should be a separate template processor class for each supported templating language, implementing that interface.
-Hence, if a user decides to provide templates in, e.g., \textit{Liquid} language, he/she must provide the code processing the \textit{Liquid} templates (\texttt{LiquidTemplateProcessor} class) in addition to the templates.
-Notice that the processing itself can be easily achieved by using a proper library.
+Hence, if a user decides to provide templates in, e.g., \textit{Liquid} language, he/she must provide the code processing the \textit{Liquid} templates (i.e., \texttt{LiquidTemplateProcessor} class) in addition to the templates.
+It is worth noting that the processing itself can be easily achieved by using a proper library.
 Once the template processor for \textit{Liquid} is added, other users can reuse it and possibly create custom Liquid templates.
 This is also depicted in Figure~\ref{fig:template-processors}, as the objects included in the generator by default are highlighted in green, while the objects that could be added in the future, possibly by other users, have an orange background. 
 
@@ -601,6 +601,7 @@ Additionally, \textit{Bootstrap} natively supports a dark theme, as most of its 
 The switching to dark theme can be done by adding the \texttt{data-bs-theme="dark"} attribute to the \texttt{<html>} element, as described in the official documentation.
 In \textit{Tailwind}, adding a dark theme is slightly more verbose, as we need to define a set of utility classes for the dark style of each component.
 Finally, responsiveness is well-supported in both frameworks.
+
 Based on the observations above, \textit{Bootstrap} seems as an ideal choice, since it beats \textit{Tailwind} in most of the highlighted aspects.
 It is also crucial to mention that this choice applies only to the default UI, since user-created templates may naturally use a different framework.
 
@@ -650,7 +651,7 @@ For example, the default configuration could map the \texttt{<list type="bullet"
 This gives users the option to style the bullet list tags simply by adding properties to the corresponding CSS class.
 
 Furthermore, it is possible to inherit existing CSS classes by using a CSS preprocessor, such as \textit{Sass}~\cite{sass}.
-This also allows us to inherit, e.g., the styles from the Bootstrap framework, which will be used in the default UI.
+This also allows us to inherit, e.g., the styles from the \textit{Bootstrap} framework, which will be used in the default UI.
 Additionally, the process of replacing the tags with HTML is relatively straightforward, as it is sufficient to process the inner tags one by one and replace them with corresponding HTML elements.
 
 \section{Testing libraries}
@@ -711,7 +712,7 @@ For example, if an interface contains many methods, its dummy implementation mus
 In general, this problem is often solved by using a mocking library that creates these dummy types automatically, which, in conclusion, is also our preferred approach.
 
 The most popular mocking library in .NET is \textit{Moq}~\cite{moq}; however, there have been privacy concerns associated with it.
-More specifically, version 4.20 of \textit{Moq} scanned the local data 
+More specifically, the version 4.20 of \textit{Moq} scanned the local data 
 and sent the hashed email to a cloud service, as documented in the Github issue~\cite{moq_issue}
 and the related Reddit post~\cite{moq_reddit_post}.
 Although the problematic piece of code has already been removed from the project, similarly to \textit{Fluent Assertions}, the trust in \textit{Moq} within the developer community has been significantly undermined.
