@@ -240,8 +240,8 @@ Additionally, cycle detection is included as well.
 Then, the \texttt{TypeInheritDocResolver}, \texttt{MemberInheritDocResolver}, and \linebreak \texttt{Cref\-InheritDocResolver} 
 inherit from the \texttt{InheritDocResolver} class, as shown in Figure~\ref{fig:inheritdoc-handlers},
 and implement only the method responsible for obtaining the parent nodes of a node, along with other minor functionality. 
-In \texttt{TypeInheritDocResolver}, the nodes represent the declared types, while the edges point to the base type and all implemented interfaces of a type.
-Similarly, in \texttt{MemberInheritDocResolver}, the nodes correspond to the individual members, and the edges go to the equivalent definition of a member in the base type and all implemented interfaces.
+The nodes in \texttt{TypeInheritDocResolver} represent the declared types, while the edges point to the base type and all implemented interfaces.
+Similarly, in \texttt{MemberInheritDoc\-Resolver}, the nodes correspond to the individual members, and the edges go to the equivalent definition of a member in the base type and all implemented interfaces.
 Finally, the case of \texttt{CrefInheritDocResolver} is slightly different, as the nodes represent the individual XML comments. Then, the edge points to the documentation comment of the referenced type or member.
 
 \begin{figure}[H]
@@ -1452,7 +1452,7 @@ exclude-namespaces:
 \subsection*{Error reporting}
 
 If the configuration is invalid or the documentation generation fails, a descriptive error message is displayed.
-For instance, if the provided DLL cannot be found, the following error message is printed: \texttt{The assembly at path 'PATH' was not found}.
+For instance, if the provided DLL cannot be found, the following error message is printed: \textit{The assembly at path 'PATH' was not found}.
 When using the \texttt{--verbose} flag, additional details about the error (such as the stack trace) are displayed.
 
 \section{UI}
