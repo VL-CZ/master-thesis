@@ -565,7 +565,7 @@ There will be a separate template model for each of the templates described in R
 Moreover, there will likely be template models representing each member (a field, method, property, etc.).
 For instance, the template model for a method is expected to contain its name, list of parameters, documentation comments, etc.
 The modifiers could be stored in an array, as opposed to the member object containing properties like \texttt{IsStatic}, \texttt{IsAbstract}, etc.
-This greatly simplifies the templates, as instead of checking many conditions, as previously displayed in Program~\ref{lst:modifiers-ifs}, it is sufficient to loop over the modifiers and print them. 
+This greatly simplifies the templates, as instead of checking many conditions, as previously displayed in Listing~\ref{lst:modifiers-ifs}, it is sufficient to loop over the modifiers and print them. 
 As a consequence, creating custom templates gets easier as well, which is good news for future contributors.
 Considering the namespace page mentioned earlier, its template model should contain only the necessary data, i.e., a list of template models containing the type name and its documentation. 
 
@@ -694,8 +694,8 @@ Given these considerations, we decided to use \textit{Shouldly}.
 \label{sec:tests-mocking-explanation}
 
 Additionally, we want to test various data regarding the type and member objects, described in 
-sections~\ref{sec:member-repr} and \ref{sec:type-repr}.
-We might test, e.g., whether the ID string, described in section~\ref{sec:id-string}, or its C\# signature is as expected.
+Sections~\ref{sec:member-repr} and \ref{sec:type-repr}.
+We might test, e.g., whether the ID string, described in Section~\ref{sec:id-string}, or its C\# signature is as expected.
 The logic may be non-trivial and, more importantly, shared between multiple classes, so it is reasonable to extract it into a separate class that accepts the type or member objects as parameters.
 The same applies, for instance, for printing the type signature in C\# format.
 

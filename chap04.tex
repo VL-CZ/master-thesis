@@ -5,7 +5,7 @@ The main project is stored in \texttt{refdocgen/src/RefDocGen} folder and furthe
 
 \begin{itemize}
     \item \texttt{AssemblyAnalysis} -- contains types responsible for extracting the relevant data from an assembly.
-    \item \texttt{CodeElements} -- contains objects representing the types and members, introduced in sections~\ref{sec:member-repr} and \ref{sec:type-repr}.
+    \item \texttt{CodeElements} -- contains objects representing the types and members, introduced in Sections~\ref{sec:member-repr} and \ref{sec:type-repr}.
     \item \texttt{Config} -- contains all types related to program configuration.
     \item \texttt{DocExtraction} -- contains types responsible for extracting the documentation from the XML file and assigning it to the corresponding types or members.
     \item \texttt{TemplateProcessors} -- contains types responsible for generating the reference documentation from the type and member objects.
@@ -22,7 +22,7 @@ First, it is necessary to extract the information from an assembly and create th
 These objects are then stored within the \texttt{TypeRegistry} class, which is further passed to the \texttt{DocCommentExtractor}.
 This class extracts the documentation comments from the XML documentation file and assigns them to the corresponding types and members.
 Hence, the \texttt{TypeRegistry} now contains documentation as well.
-Next, the registry is passed to the \texttt{ITemplateProcessor} interface, which represents the base interface for processing various types of templates, as described in section~\ref{sec:template-extensibility}.
+Next, the registry is passed to the \texttt{ITemplateProcessor} interface, which represents the base interface for processing various types of templates, as described in Section~\ref{sec:template-extensibility}.
 The default implementation, called \texttt{RazorTemplateProcessor}, uses \textit{Razor} templates, processes them with the provided data, and thus creates the reference documentation.
 
 The entire process is coordinated by the \texttt{DocGenerator.GenerateDoc} method, which gets called directly from the \texttt{Program} class.
@@ -52,7 +52,7 @@ The format of the string is further described in Section~\ref{sec:id-string} and
 \subsection{Types}
 
 As mentioned in the previous section, the type registry stores all the declared types organized into three categories.
-Next, it is crucial to note that we use custom objects to represent types, which was explained in the section~\ref{sec:type-repr}, 
+Next, it is crucial to note that we use custom objects to represent types, which was explained in the Section~\ref{sec:type-repr}, 
 Unlike \texttt{System.Type}, there are multiple classes representing different kinds of types, which fundamentally differ in structure:
 
 \begin{itemize}
@@ -572,7 +572,7 @@ As the file name suggests, the styles are written in the \textit{Sass}~\cite{sas
 
 The \texttt{styles.scss} file first loads all \textit{Bootstrap} styles, using the \texttt{@use} rule.
 Then, several custom CSS rules, often extending the \textit{Bootstrap} classes using the \texttt{@extend} rule, are declared.
-This way, several of the transformed inner XML tags, described in section~\ref{sec:architecture-inner-xml-to-html}, are styled.
+This way, several of the transformed inner XML tags, described in Section~\ref{sec:architecture-inner-xml-to-html}, are styled.
 For example, the \texttt{.refdocgen-see-cref} class, which is assigned to the transformed \texttt{<see cref="...">} XML tags, is configured to extend the \texttt{link-offset-2} CSS class, provided by \textit{Bootstrap}.
 
 After every change, the SCSS must be recompiled manually to create the final CSS using the \texttt{sass Scss/styles.scss Static/styles.css --style=com\-pressed} command executed from the default templates folder.
