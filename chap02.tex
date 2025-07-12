@@ -425,25 +425,25 @@ Based on the insights above, we can introduce two sub-requirements of Requiremen
 Next, the generator should be designed to be extensible, as described in Requirement~\ref{req:templates}.
 The documentation pages will naturally be generated from templates, written in an unspecified templating language, which get populated with data while the documentation is generated.
 
-First, it should be easy to use the same templating language as the default UI does.
-If the user wanted to generate the documentation using the same templating language and data, it should be sufficient to provide the equivalent templates.
-In other words, if the generator had 2 templates representing type and namespace pages, providing a custom version of those two should be sufficient.
+First, if users wanted to define a custom UI using the same templating language and data, providing the equivalent templates should suffice.
+In other words, if the generator had two templates representing the \textit{type} and \textit{namespace} pages, supplying a custom version of these two should be enough.
 
-Furthermore, the users should be able to write their own templates using a template engine of their choice,
+Furthermore, users should be able to write their own templates in a templating language of their choice,
 using the provided data representing the types and members.
 In addition to templates themselves, the users should also provide a code that generates them.
 In practice, this should be done by implementing a corresponding interface.
+This allows us to define the following two sub-requirements:
 
 \setcounter{subrequirementcounter}{2}
 \setcounter{subrequirement}{0}
 
 \begin{subrequirement}
-    Support for custom templates written in the same template language as the default UI.
+    The generator should allow users to define templates written in the same templating language as the default UI.
     \label{subreq:custom-razor-templates}
 \end{subrequirement}
 
 \begin{subrequirement}
-    The generator should allow users to use templates written in a templating language of their choice, accompanied by the code that generates them.
+    The generator should allow users to define templates written in a templating language of their choice, accompanied by the code that generates them.
     \label{subreq:custom-template-lang}
 \end{subrequirement}
 
@@ -467,7 +467,7 @@ As a result, we can further clarify Requirement~\ref{req:static-pages}:
 \setcounter{subrequirement}{0}
 
 \begin{subrequirement}
-    Provide an option to add a folder containing static files to be included in the documentation. 
+    Option to select a folder containing static files to be included in the documentation. 
     \label{subreq:static-pages-folder}
 \end{subrequirement}
 
@@ -480,7 +480,7 @@ As a result, we can further clarify Requirement~\ref{req:static-pages}:
 \label{sec:doc-versions}
 
 Requirement~\ref{req:versioning} focuses on documentation versioning.
-The generator should support an option (both on the command line and in the configuration file) for creating a specific version of the documentation, e.g. \textit{v1.2}. 
+The generator should support an option (both on the command line and in the configuration file) for creating a specific version of the documentation, e.g., \textit{v1.2}. 
 The resulting documentation should then be stored not in the output folder, but in its subfolder identified by the version number (\textit{v1.2} in our case).
 This way, the output folder may contain multiple versions of the documentation.
 
@@ -498,7 +498,7 @@ Thus, we can define two sub-requirements:
 \end{subrequirement}
 
 \begin{subrequirement}
-    A dropdown menu for version selection in the UI.
+    Provide a dropdown menu in the UI allowing users to select the documentation version.
     \label{req:doc-version-dropdown}
 \end{subrequirement}
 
@@ -681,7 +681,7 @@ For each type, there should be a link to its definition and its documentation, w
 \setcounter{subrequirement}{0}
 
 \begin{subrequirement}
-    Display a list of types contained in the namespace.
+    Show a list of types contained in the namespace.
 \end{subrequirement}
 
 Finally, there should be a page for each type displaying its signature in C\# format and documentation.
