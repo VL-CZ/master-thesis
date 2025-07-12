@@ -19,10 +19,10 @@ Additionally, the project also contains a \texttt{Tools} folder, containing addi
 
 The simplified process of generating documentation is displayed in Figure~\ref{fig:workflow}.
 First, it is necessary to extract the information from an assembly and create the objects representing types and members, which is performed by the \texttt{AssemblyTypeExtractor} class.
-These objects are then stored within the \texttt{Type\-Registry} class, which is further passed to the \texttt{DocCommentExtractor}.
+These objects are then stored within the \linebreak \texttt{TypeRegistry} class, which is further passed to the \texttt{DocCommentExtractor}.
 This class extracts the documentation comments from the XML documentation file and assigns them to the corresponding types and members.
 Hence, the \texttt{TypeRegistry} now contains documentation as well.
-Next, the registry is passed to the \texttt{ITemplate\-Processor} interface, which represents the base interface for processing various types of templates, as described in Section~\ref{sec:template-extensibility}.
+Next, the registry is passed to the \linebreak \texttt{ITemplateProcessor} interface, which represents the base interface for processing various types of templates, as described in Section~\ref{sec:template-extensibility}.
 The default implementation, called \texttt{RazorTemplateProcessor}, uses \textit{Razor} templates, processes them with the provided data, and thus creates the reference documentation.
 
 The entire process is coordinated by the \texttt{DocGenerator.GenerateDoc} method, which gets called directly from the \texttt{Program} class.
@@ -164,7 +164,7 @@ Thus, if the user chooses to exclude types contained in a given assembly or name
 The same applies to excluding members with given accessibility, or the inherited ones, as requested in Requirements~\ref{req:exclude-accessibility} and~\ref{req:exclude-inherited}.
 The configuration containing this information is provided to the \texttt{AssemblyTypeExtractor} as an \texttt{AssemblyDataConfiguration} instance.
 
-Next, the \texttt{AssemblyTypeExtractor} class converts the loaded types, represented as \texttt{System.Type} instances, to the corresponding \texttt{ObjectTypeData}, \texttt{Enum\-TypeData}, and \texttt{DelegateTypeData} objects.
+Next, the \texttt{AssemblyTypeExtractor} class converts the loaded types, represented as \texttt{System.Type} instances, to the corresponding \texttt{ObjectTypeData}, \linebreak \texttt{Enum\-TypeData}, and \texttt{DelegateTypeData} objects.
 Since the initialization of the \texttt{Object\-TypeData} instance is quite complex, as it contains a large number of properties, we applied the builder pattern using the \texttt{ObjectTypeDataBuilder} class.
 
 Moreover, each member object is created from its corresponding reflection type.
@@ -237,7 +237,7 @@ Therefore, the code performing the DFS is stored in the common base class, calle
 The DFS results are cached, i.e., the \texttt{<inheritdoc>} elements contained in visited nodes are resolved as well.
 Additionally, cycle detection is included as well.
 
-Then, the \texttt{TypeInheritDocResolver}, \texttt{MemberInheritDocResolver}, and \texttt{Cref\-InheritDocResolver} 
+Then, the \texttt{TypeInheritDocResolver}, \texttt{MemberInheritDocResolver}, and \linebreak \texttt{Cref\-InheritDocResolver} 
 inherit from the \texttt{InheritDocResolver} class, as shown in Figure~\ref{fig:inheritdoc-handlers},
 and implement only the method responsible for obtaining the parent nodes of a node, along with other minor functionality. 
 In \texttt{TypeInheritDocResolver}, the nodes represent the declared types, while the edges point to the base type and all implemented interfaces of a type.
@@ -652,7 +652,7 @@ For instance, the component representing the \texttt{LanguageSpecificComponent.F
 The individual components then display the given data in the selected language; thus, e.g., the \texttt{CSharpFieldDeclaration} displays a field declaration using C\# syntax.
 As previously described in Section~\ref{sec:ui-text-colors}, various colors are often used for different data.
 
-Displaying of all language-specific fragments is handled by the \texttt{Language\-Fragments} component, which has the following two parameters:
+Displaying of all language-specific fragments is handled by the \linebreak \texttt{Language\-Fragments} component, which has the following two parameters:
 
 \begin{itemize}
     \item \texttt{Type} -- a value of the \texttt{LanguageSpecificComponent} enum describing which language-specific fragment should be rendered.
@@ -1601,7 +1601,7 @@ Using it, it is possible to switch to another version.
 The search page is shown in Figure~\ref{fig:refdocgen-search-page}.
 As we type in the search box (T), the search is run and the results are displayed below.
 The search is performed within assembly, namespace, type, and member names.
-Each search result contains a link to its page (U) and a \textit{summary} documentation (E), if provided.
+Each search result contains a link to its page (U) and \textit{summary} documentation (E), if provided.
 
 \begin{figure}[H]
 \centering
@@ -1649,7 +1649,7 @@ Additionally, it is important to note that these steps can also serve as tutoria
 
 First, we tested the program on the \texttt{RefDocGen.ExampleLibrary}, contained in the solution, which is a library used purely for the integration tests.
 Before generating the documentation, we built the \texttt{RefDocGen.sln} solution in \textit{Debug} mode, as previously described in Section~\ref{sec:user-docs-usage}. 
-Then, we navigated to the \texttt{tests/RefDocGen.ExampleLibrary} directory, and executed \texttt{refdocgen refdoc\-gen.yaml} from the command line.
+Then, we navigated to the \texttt{tests/RefDocGen.ExampleLibrary} directory, and executed \texttt{refdocgen \linebreak refdocgen.yaml} from the command line.
 This way, the reference documentation of \texttt{RefDocGen.ExampleLibrary} as well as \texttt{RefDocGen.ExampleFSharpLibrary} and \texttt{RefDocGen.ExampleVbLibrary} was generated, using the configuration from YAML.
 No issues occurred during the process.
 The documentation can be viewed by opening the \texttt{reference-docs/index.html} page, and additionally, samples of the documentation are shown in Figures~\ref{fig:eval-example-lib-1} and \ref{fig:eval-example-lib-2}.
@@ -1708,7 +1708,7 @@ Next, we unzipped the package and navigated to the \texttt{lib/net6.0} directory
 Finally, we generated the reference documentation, while providing the DLL as the parameter, using the command shown in Listing~\ref{lst:demo-newtonsoft}.
 As we can notice, we used the \texttt{--doc-version} option, so a specific version (\textit{v-newtonsoft}) was generated.
 
-Following that, using equivalent steps, we also generated the reference documentation of two other libraries: \textit{YamlDotNet}~\cite{yamldotnet} (version 16.3.0) and \textit{Serilog}~\cite{serilog} (version 2.9.1), as we used both of these libraries when developing, and on top of that, both are well-documented.
+Following that, using equivalent steps, we also generated the reference documentation of two other libraries: \textit{YamlDotNet}~\cite{yamldotnet} (version 16.3.0) and \textit{Serilog}~\cite{serilog} (version 4.3.0), as we used both of these libraries when developing, and on top of that, both are well-documented.
 The commands we used are displayed in Listing~\ref{lst:demo-other-two}.
 
 \begin{listing}[H]
