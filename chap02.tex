@@ -8,7 +8,7 @@ To fulfill the goals, we must first address the fundamental challenges associate
 
 Firstly, it is worth noting that all major .NET languages use structured XML comments, well known from C\#, to document types and type members.
 Interestingly, the set of XML documentation tags is not explicitly defined.
-Instead, the official documentation~\cite{csharp_xml_docs} provides a set of recommended tags.
+Instead, the official documentation~\cite{csharp_xml_tags_docs} provides a set of recommended tags.
 As a result, any XML tag is valid and can be used in the documentation comments 
 (although in this case, it may not be correctly interpreted).
 
@@ -71,7 +71,7 @@ A straightforward technique applicable to any programming language is to parse t
 
 \subsection*{Using a custom language parser}
 
-One way to achieve the parsing is by creating and using a custom language parser, which is the approach used by e.g. \textit{Doxygen}. 
+One way to achieve the parsing is by creating and using a custom language parser, which is the approach used by, e.g., \textit{Doxygen}. 
 Although creating a language parser is often seen as a complex task, it could be partially simplified for our purposes because we can skip the method bodies and parse solely the signatures.
 However, there are also numerous other challenges related to this approach.
 
@@ -344,7 +344,7 @@ It is also worth noting that this tag is unsupported in some languages, such as 
 
 The \texttt{<inheritdoc>} tag can be applied to any type and member and allows users to inherit the documentation.
 When applied to a type, the documentation is inherited from the base type or an implemented interface.
-The official documentation~\cite{csharp_xml_docs} does not specify what happens if, e.g., both the base type and implemented interface are documented.
+The official documentation~\cite{csharp_xml_tags_docs} does not specify what happens if, e.g., both the base type and implemented interface are documented.
 When the \texttt{<inheritdoc>} is applied to a member, the documentation is taken from the base definition of the member.
 This means the identical member in the base type or an implemented interface.
 Again, the documentation does not specify any precedence.
