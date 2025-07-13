@@ -12,7 +12,7 @@ The main project is stored in \texttt{refdocgen/src/RefDocGen} folder and furthe
     This folder also includes \textit{Razor} templates, representing individual fragments of the UI.
 \end{itemize}
 
-Additionally, the project also contains a \texttt{Tools} folder, containing additional tools shared between multiple parts of the project.
+Additionally, the project also includes the \texttt{Tools} folder, containing additional tools shared between multiple parts of the project.
 
 \section{Workflow}
 \label{sec:workflow}
@@ -61,7 +61,7 @@ Unlike \texttt{System.Type}, there are multiple classes representing different k
     \item \texttt{ObjectTypeData} -- represents an object type (i.e., a class, structure, or an interface).
 \end{itemize}
 
-These objects contain all relevant data about a type, such as its name, namespace, etc., as well as its documentation comments and a collection of declared members.
+These objects contain all relevant data about the type, such as its name, namespace, etc., as well as its documentation comments and a collection of declared members.
 As illustrated in Figure~\ref{fig:types-concrete}, all these classes inherit from the \texttt{TypeDeclaration} class, which contains the common code.
 The documentation comments are stored in separate properties as \texttt{XElement} instances; 
 hence the classes have properties called \texttt{SummaryDocComment}, \texttt{RemarksDocComment}, etc.
@@ -134,8 +134,8 @@ The inheritance structure of these interfaces is displayed in Figure~\ref{fig:ty
 Accordingly, the members within a type are also returned as interfaces, which allow us only to read the data.
 As with types, there is a separate interface for each of the member classes; for example, the \texttt{FieldData} class implements the \texttt{IFieldData} interface.
 In addition, several super-interfaces represent common properties of a selection of members, as shown in Figure~\ref{fig:member-interfaces}.
-Using the \texttt{IParametrizedMemberData} interface, which represents a member that may have parameters (i.e., a constructor, method, or indexer), it is possible to handle those types in the same way.
-The same goes for handling members storing a value, represented by \texttt{IValueMemberData} interface, or for \texttt{ICallableMemberData} providing the shared data of properties, methods, and events.
+Using the \texttt{IParametrizedMemberData} interface, which represents a member that may have parameters (i.e., a constructor, method, or indexer), it is possible to handle these members in the same way.
+The same goes for handling members storing a value, represented by the \texttt{IValueMemberData} interface, or for \texttt{ICallableMemberData}, which provides the shared data of properties, methods, and events.
 
 \begin{figure}[H] 
 \centering
@@ -146,7 +146,7 @@ The same goes for handling members storing a value, represented by \texttt{IValu
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=1\linewidth]{img/members-abstract.png}
+\includegraphics[width=0.95\linewidth]{img/members-abstract.png}
 \caption{Member interfaces -- inheritance graph}
 \label{fig:member-interfaces}
 \end{figure}
@@ -157,7 +157,7 @@ The same goes for handling members storing a value, represented by \texttt{IValu
 In the previous section, we described the internal structure of the \linebreak \texttt{TypeRegistry}, and
 now, we need to explain how the data from the assembly is loaded and the registry is created.
 As mentioned earlier, this task is managed by the \texttt{AssemblyTypeExtractor} class, which uses reflection to load the assembly and obtain the declared types.
-Individual assemblies are loaded using the \texttt{Assembly\-DependencyLoadContext} class.
+The individual assemblies are loaded using the \texttt{Assembly\-DependencyLoadContext} class.
 
 It is also important to mention that besides creating the type registry, the \texttt{AssemblyTypeExtractor} class is also responsible for filtering the types that will be included in the documentation.
 Thus, if the user chooses to exclude types contained in a given assembly or namespace, as described in Requirements~\ref{req:exclude-assemblies} and~\ref{req:exclude-namespaces}, these types are simply ignored.
@@ -171,9 +171,9 @@ Moreover, each member object is created from its corresponding reflection type.
 For instance, a \texttt{FieldData} object is constructed from the corresponding \texttt{FieldInfo} instance provided by reflection, along with additional data (such as the reference to the declaring type), as displayed in Figure~\ref{fig:assembly-creators}.
 This task is performed by dedicated creator classes, with a separate class for each category of members.
 These classes are named \texttt{FieldDataCreator}, \texttt{MethodDataCreator}, etc., and called from within the \texttt{ObjectTypeDataBuilder}. 
-Additionally, many of those creator classes use the \texttt{MemberCreatorHelper} class, which contains shared functionality, such as the creation of \texttt{ParameterData} instances from the corresponding \texttt{ParameterInfo} objects.
+Additionally, many of these creator classes use the \texttt{MemberCreatorHelper} class, which contains shared functionality, such as the creation of \texttt{ParameterData} instances from the corresponding \texttt{ParameterInfo} objects.
 
-For constructing other type classes (namely \texttt{EnumTypeData} and \texttt{DelegateType\-Data}), no builder pattern is used, as these objects are significantly less complex.
+For constructing other type classes (namely \texttt{EnumTypeData} and \texttt{DelegateType\-Data}), no builder pattern is used, as these classes are significantly less complex.
 Instead, this task is performed directly by the corresponding methods of the \texttt{AssemblyTypeExtractor} class.
 After all the custom type objects are created, a \texttt{TypeRegistry} instance is initialized with this data and returned.
 
@@ -359,7 +359,7 @@ Thus, the default configuration itself remains fully independent of any visual s
 \end{listing}
 
 After the corresponding HTML element is obtained, the inner XML tag is replaced by it.
-There is one special case, a \texttt{see} element with the \texttt{cref} attribute, as the type URL needs to be resolved in this case.
+There is one special case, a \texttt{<see>} element with the \texttt{cref} attribute, as the type URL needs to be resolved in this case.
 For this purpose, the \texttt{TypeUrlResolver} is used again, and a link is created.
 If the referenced type or member is not found, instead of a link, a highlighted text is used.
 
@@ -404,7 +404,7 @@ However, it is important to remember that the \texttt{ILanguage\-Configuration} 
 \label{sec:architecture-static-pages}
 
 Another responsibility of the \texttt{RazorTemplateProcessor} is to include user-defined static pages in the documentation.
-Thus, the \texttt{RazorTemplateProcessor} has an optional constructor parameter, representing the path to the directory containing the pages and possibly other files.
+Thus, the \texttt{RazorTemplateProcessor} class has an optional constructor parameter, representing the path to the directory containing the pages and possibly other files.
 There are two supported page formats: HTML and Markdown.
 
 To obtain the page data, the \texttt{StaticPageProcessor} class is used, as shown in Figure~\ref{fig:static-pages-workflow}.
@@ -435,7 +435,7 @@ For this reason, it has an additional optional constructor parameter identifying
 When a specific version is created, it is not stored directly in the output directory, but in its subfolder named after the version identifier.
 Hence, the \texttt{v1.0} version gets stored in the \texttt{output/v1.0} directory.
 Additionally, each resulting HTML page stores a list of its available versions.
-As explained in Section~\ref{sec:documentation-versioning-three}, the data are stored as a JSON list inside a visually hidden element, whose id is \texttt{version-list}.
+As explained in Section~\ref{sec:documentation-versioning-three}, the versions are stored as a JSON list inside a visually hidden element, whose id is \texttt{version-list}.
 Then, when the page is loaded, the data is handled using JavaScript.
 
 Before the documentation is generated, the \texttt{RazorTemplateProcessor} calls the \texttt{DocVersionManager} class to obtain a list of available versions for the individual pages.
@@ -446,7 +446,7 @@ The \texttt{DocVersion\-Manager} first loads the JSON file and, using its data, 
 After the documentation is created, the \texttt{DocVersionManager} is called again. 
 This time, it updates the JSON to include the latest version data.
 Additionally, the corresponding older versions of the documentation must be updated to include the most recent version.
-Thus, the individual HTML pages of older versions are one by one loaded and then, using the \textit{AngleSharp} library~\cite{anglesharp}, the \textit{version-list} HTML element is located and the most recent version identifier is added to the list.
+Thus, the individual HTML pages of older documentation versions are one by one loaded and then, using the \textit{AngleSharp} library~\cite{anglesharp}, the \texttt{version-list} HTML element is located and the most recent version identifier is added to the list.
 
 \begin{listing}[H]
 \begin{lstlisting}
@@ -468,7 +468,7 @@ Thus, the individual HTML pages of older versions are one by one loaded and then
 \subsection{Templates}
 \label{sec:architecture-eight-templates}
 
-The \texttt{RazorTemplateProcessor} class has eight generic parameters, representing the types of the individual Razor templates, as shown in Figure~\ref{fig:eight-templates}.
+The \texttt{RazorTemplateProcessor} class has eight generic parameters, representing the types of the individual \textit{Razor} templates, as shown in Figure~\ref{fig:eight-templates}.
 The \textit{Object type} template is intended to display all relevant information about an object type, including its documentation as well as a list of its members with documentation comments.
 Similarly, the \textit{Enum} and \textit{Delegate} templates should display all relevant data of an enum or a delegate, respectively.
 The \textit{Namespace} and \textit{Assembly} templates are expected to display a list of all types contained within a namespace or an assembly, respectively.
@@ -573,7 +573,7 @@ As the file name suggests, the styles are written in the \textit{Sass}~\cite{sas
 The \texttt{styles.scss} file first loads all \textit{Bootstrap} styles, using the \texttt{@use} rule.
 Then, several custom CSS rules, often extending the \textit{Bootstrap} classes using the \texttt{@extend} rule, are declared.
 This way, several of the transformed inner XML tags, described in Section~\ref{sec:architecture-inner-xml-to-html}, are styled.
-For example, the \texttt{.refdocgen-see-cref} class, which is assigned to the transformed \texttt{<see cref="...">} XML tags, is configured to extend the \texttt{link-offset-2} CSS class, provided by \textit{Bootstrap}.
+For example, the \texttt{refdocgen-see-cref} CSS class, which is assigned to the transformed \texttt{<see cref="...">} XML tags, is configured to extend the \texttt{link-offset-2} CSS class, provided by \textit{Bootstrap}.
 
 After every change, the SCSS must be recompiled manually to create the final CSS using the \texttt{sass Scss/styles.scss Static/styles.css --style=com\-pressed} command executed from the default templates folder.
 This way, both the custom and the \textit{Bootstrap} styles get stored in the \texttt{Static/styles.css} file, which is then referenced from the templates.
@@ -591,7 +591,7 @@ However, it is important to note that this list is not exhaustive, as these colo
 \centering
 \begin{tabular}{|p{4cm}|p{4cm}|p{4cm}|}
 \hline
-\textbf{} & \textbf{primary} & \textbf{secondary} \\
+\textbf{} & \textbf{Primary color} & \textbf{Secondary color} \\
 \hline
 \texttt{ObjectTypePage EnumTypePage DelegateTypePage} & type, member, and parameter names & member, parameter and return types \\
 \hline
@@ -677,8 +677,8 @@ All HTML elements representing the language-specific fragments are, by default, 
 Thus, for example, the C\# fragments are marked with the \texttt{data-language="csharp-lang"} attribute.
 In addition to that, the \texttt{<html>} element also has the \texttt{data-language} attribute, which indicates the currently selected language.
 
-Next, we have defined the following CSS rule, which selects the following elements:
-\texttt{html[data-language=XX] [data-language=XX]}, where \texttt{XX} is the language ID, and makes them visible.
+Next, we have defined the following CSS rule, which selects the matching elements:
+\texttt{html[data-language=ID] [data-language=ID]}, where \texttt{ID} is the language ID, and makes them visible.
 Such a rule is defined programmatically, using \textit{Razor}, for each of the available languages.
 This way, only the fragments in the currently selected language are displayed.
 
@@ -752,7 +752,7 @@ Then, there are several custom exceptions inheriting from it; for instance,
 the \texttt{AssemblyNotFoundException} is thrown if the assembly is not found at the user-provided path.
 Similarly, the \texttt{DuplicateDocVersionNameException} is thrown if the user specifies an already existing documentation version name.
 All of these custom exceptions include descriptive error messages designed to be displayed to the user.
-Finally, all exceptions are caught in the \texttt{Main} method and logged as errors.
+Finally, all exceptions are caught in the \texttt{Program} class and logged as errors.
 
 The logging is handled by a \textit{Serilog}~\cite{serilog} logger instance, configured to print on the command line.
 However, the logger is passed as an \texttt{ILogger} interface, which is a common logger interface provided by Microsoft, as further explained in the documentation~\cite{net_ilogger}.
@@ -762,17 +762,17 @@ As a result, the classes using the logger depend only on its interface, rather t
 
 The project is tested by both integration and unit tests, which are contained in 
 \texttt{RefDocGen.IntegrationTests} and \texttt{RefDocGen.UnitTests} projects.
-Both of them use the \textit{xUnit}~\cite{xunit} testing framework and \textit{Shouldly} library~\cite{shouldly} for assertions.
+Both of them use the \textit{xUnit} testing framework~\cite{xunit} and \textit{Shouldly} library~\cite{shouldly} for assertions.
 
 \subsection{Integration tests}
 The integration tests check whether the generated documentation looks as expected.
 As shown in Figure~\ref{fig:integration-tests-architecture}, they use the DLL and XML documentation file of the \texttt{RefDocGen.ExampleLibrary}, which is intended purely for integration testing.
-Similarly, the DLLs and documentation of \texttt{RefDocGen.ExampleFSharpLibrary} and \texttt{RefDocGen.ExampleVbLibrary} libraries are used as well.
+Similarly, the DLLs and documentation files of \texttt{RefDocGen.ExampleFSharp\-Library} and \texttt{RefDocGen.ExampleVbLibrary} are used as well.
 
 Most of the integration tests are part of the \texttt{DocumentationTestCollection}, which is an \textit{xUnit} collection fixture responsible for creating the reference documentation.
-The \texttt{DocumentationTestCollection} uses the DLL and XML documentation file of the \texttt{ExampleLibrary} and simply calls the \texttt{DocGenerator} class, mentioned in Section~\ref{sec:workflow}.
+The \texttt{DocumentationTestCollection} uses the DLLs and XML documentation files of the three libraries and simply calls the \texttt{DocGenerator} class, mentioned in Section~\ref{sec:workflow}.
 Thus, before all tests are run, the documentation is generated, and after the tests terminate, the folder with the documentation is deleted.
-There is also the \texttt{VersionedDocumentationTestCollection} collection fixture, which creates documentation with multiple versions and is used by a handful of other tests.
+There is also the \texttt{VersionedDocumentationTestCollection} fixture, which creates documentation with multiple versions and is used by a handful of other tests.
 
 \begin{figure}[H]
 \centering
@@ -793,8 +793,8 @@ Then, the test methods are typically named as follows: \textit{Subject\_Expected
 The \textit{Subject} describes what is being tested, while the \textit{ExpectedOutcome} describes what the \textit{Subject} should satisfy.
 Thus, for example, the method responsible for verifying the \textit{remarks} documentation of a member is named \texttt{RemarksDoc\_Matches}.
 
-The test methods, in most cases, first locate the selected page in the output directory, parse it using the \textit{AngleSharp} library, and then select the given element, based on its \texttt{data-id}.
-For instance, the test verifying the remarks documentation of the given member would first locate the page of the containing type, parse the HTML, find the given member (by its \texttt{id}), and then obtain the corresponding \textit{remarks} documentation (i.e., an element with \texttt{data-id="remarks-doc"}).
+The test methods, in most cases, first locate the selected page in the output directory, parse it using the \textit{AngleSharp} library~\cite{anglesharp}, and then select the given element, based on its \texttt{data-id}.
+For instance, the test verifying the \textit{remarks} documentation of the given member would first locate the page of the containing type, parse the HTML, find the given member (by its \texttt{id}), and then obtain the corresponding \textit{remarks} documentation (i.e., an element with \texttt{data-id="remarks-doc"}).
 Then, it is checked whether the content of the element is as expected.
 
 \subsection{Unit tests}
@@ -822,7 +822,7 @@ public void GetUrlOf_ReturnsMicrosoftDocumentationUrl_ForSystemType
 
 This section describes the conventions and practices that ensure the code quality of our program.
 
-\subsection*{.NET Analyzers}
+\subsection*{.NET analyzers}
 
 First, we use the built-in .NET analyzers~\cite{net_analyzers}, via the \textit{Microsoft.CodeAnalysis.NetAnalyzers} NuGet package, while using the recommended level of settings.
 As a result, we receive more warnings related to code quality.
@@ -1024,7 +1024,7 @@ As noted in the first comment, we need to add a new \texttt{DocumentationTemplat
 This value will then appear on the command line in the list of available documentation templates.
 
 Then, we should move on to the second comment.
-Here, we instantiate the template processor
+Here, we must instantiate the template processor
 and add it to the dictionary of available documentation templates under the corresponding \texttt{DocumentationTemplate} key (\texttt{Minimal} in our case).
 This can be achieved by calling the \texttt{RazorTemplateProcessor.With} method with the type parameters corresponding to our templates, and passing the selected configuration as the first argument, as shown in the code and Listing~\ref{lst:extensibility-register-templates}.
 The remaining constructor arguments should match those passed to the \texttt{DefaultTemplateProcessor}, as shown in the code.
@@ -1094,7 +1094,7 @@ Additionally, if the following two conditions hold, it is possible to reuse even
 \end{enumerate}
 
 In this case, the entire process of generating HTML is similar to that of the \texttt{RazorTemplateProcessor}, with the only difference being that another templating language is used.
-For this reason, it is recommended to use the \linebreak \texttt{RazorTemplateProcessor} class as a reference.
+For this reason, it is recommended to use the \texttt{RazorTemplate\-Processor} class as a reference.
 Additionally, it is important to remember that the default template models store selected data as language-specific, as noted in the fifth bullet point in Section~\ref{sec:extensibility-custom-razor}.
 
 \subsubsection{Registering the template processor}
