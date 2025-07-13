@@ -805,7 +805,7 @@ Thus, the tests of the \texttt{TypeUrlResolver} class are contained within a cla
 Additionally, the folder structure of the unit tests project aligns with the structure of the main project.
 It is also worth noting that the unit tests frequently use mocking, with the help of \textit{NSubstitute} library~\cite{nsub}, as previously discussed in Section~\ref{sec:tests-mocking-explanation}.
 
-The individual test methods are named using the following convention: \textit{MethodName\_ExpectedOutcome\_Conditions}, where \textit{MethodName} is the name of the method being tested, \textit{ExpectedOutcome} describes the expected outcome, and \textit{Condition} describes any additional conditions.
+The individual test methods are named using the following convention: \textit{MethodName\_ExpectedOutcome\_Conditions}, where \textit{MethodName} is the name of the method being tested, \textit{ExpectedOutcome} describes the expected outcome, and \textit{Conditions} describes any additional conditions.
 Hence, for example, assume that the test method, shown in Listing~\ref{lst:tests-example-test-name}, is defined within the \texttt{TypeUrlResolverTests} class.
 From its name, it is apparent that it tests the \texttt{GetUrlOf} method; specifically, it verifies that for a system type, a URL pointing to its page in the Microsoft documentation is returned.
 
@@ -1184,7 +1184,7 @@ Before generating the documentation, the project/solution must be built, prefera
 The MSBuild property \texttt{GenerateDocumentationFile} needs to be set to true, so the XML documentation file is generated.
 Additionally, it is also important to set the \texttt{CopyLocalLockFileAssemblies} property to true, which ensures that all dependencies are copied to the output directory. 
 
-These properties can be specified on the command line when running \texttt{dotnet build}, as shown in Figure~\ref{lst:ui-building-project}.
+These properties can be specified on the command line when running \texttt{dotnet build}, as shown in Listing~\ref{lst:ui-building-project}.
 Alternatively, it is possible to set them in the project file or \texttt{Directory.Build.props} file, as further explained in the documentation~\cite{net_customize_build}.
 Additionally, although it is not the typical use case, \textit{RefDocGen} can also generate reference documentation of desktop and web applications. However, in such cases, the project must be built as self-contained.
 
@@ -1647,10 +1647,10 @@ Additionally, it is important to note that these steps can also serve as tutoria
 \section{Generating documentation of RefDocGen.ExampleLibrary}
 \label{sec:evaluation-example-library}
 
-First, we tested the program on the \texttt{RefDocGen.ExampleLibrary}, contained in the solution, which is a library used purely for the integration tests.
+First, we tested the program on the \textit{RefDocGen.ExampleLibrary}, contained in the solution, which is a library used purely for the integration tests.
 Before generating the documentation, we built the \texttt{RefDocGen.sln} solution in \textit{Debug} mode, as previously described in Section~\ref{sec:user-docs-usage}. 
 Then, we navigated to the \texttt{tests/RefDocGen.ExampleLibrary} directory, and executed \texttt{refdocgen \linebreak refdocgen.yaml} from the command line.
-This way, the reference documentation of \texttt{RefDocGen.ExampleLibrary} as well as \texttt{RefDocGen.ExampleFSharpLibrary} and \texttt{RefDocGen.ExampleVbLibrary} was generated, using the configuration from YAML.
+This way, the reference documentation of \textit{RefDocGen.ExampleLibrary} as well as \textit{RefDocGen.ExampleFSharpLibrary} and \textit{RefDocGen.ExampleVbLibrary} was generated, using the configuration from YAML.
 No issues occurred during the process.
 The documentation can be viewed by opening the \texttt{reference-docs/index.html} page, and additionally, samples of the documentation are shown in Figures~\ref{fig:eval-example-lib-1} and \ref{fig:eval-example-lib-2}.
 
