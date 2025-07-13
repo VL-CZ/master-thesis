@@ -326,7 +326,7 @@ When provided with the data below, the template processor produces the HTML show
 \label{lst:mustache-result}
 \end{listing}
 
-In .NET, multiple libraries can be used for mustache template processing, notably \textit{Stubble.NET}~\cite{stubble} and \textit{Nustache}~\cite{nustache}.
+In .NET, multiple libraries can be used for \textit{Mustache} template processing, notably \textit{Stubble.NET}~\cite{stubble} and \textit{Nustache}~\cite{nustache}.
 However, the support for \textit{Nustache} is questionable, since the library has not been updated since 2019.
 
 \subsection{Handlebars}
@@ -482,7 +482,7 @@ Although this is sufficient in many cases, it may become a limiting factor.
 
 For instance, consider the cross-reference links mentioned in Requirement~\ref{req:cross-ref}.
 These links should have the same style and functionality, so it is a good idea to extract the code into a separate template to avoid duplication. 
-The template can then be used to display the type of field, the return type of a method, the parent type of a type, and so on.
+The template can then be used to display the type of a field, the return type of a method, the parent type of a type, and so on.
 Next, assume that inside the template, we refer to the variable denoting type as \texttt{type}.
 This means that in the context of a field object, its type must be stored in a \texttt{type} variable, which seems natural.
 However, the same goes for a method and its return type, as it also needs to be stored in the \texttt{type} variable in the context of a method object.
