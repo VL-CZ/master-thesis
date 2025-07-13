@@ -1221,7 +1221,7 @@ by specifying the \texttt{--static-pages-dir} and \texttt{--doc-version} options
 
 Next, it is possible to configure which types and members are included in the documentation.
 Using the \texttt{--min-visibility} flag, we can select only the members with the given visibility or higher.
-The individual option values correspond to the \texttt{private}, \texttt{private protected}, \texttt{internal}, \texttt{protected}, \texttt{protected internal}, and \texttt{public} modifiers in C\#.
+The individual option values correspond to the \texttt{private}, \texttt{private protected}, \texttt{internal}, \texttt{protected}, \texttt{protected \linebreak internal}, and \texttt{public} modifiers in C\#.
 Additionally, we can select which inherited members should be included by specifying the \texttt{--inherit-members} option.
 When set to \texttt{None}, no inherited members are contained in the documentation, while when using \texttt{All}, the documentation displays all inherited members.
 However, in most cases, we would likely want to include all inherited members, except those inherited from the \texttt{object} type, 
@@ -1366,7 +1366,7 @@ Therefore, we should use custom styles only for minor improvements, rather than 
 
 We can optionally make the documentation versioned.
 This means the documentation consists of multiple versions, which can be switched between.
-For instance, we can create version \texttt{v1.0} of the documentation, using the \linebreak \texttt{--doc-version} option, that corresponds to version \texttt{1.0} of a library.
+For instance, we can create version \texttt{v1.0} of the documentation, using the \texttt{--doc-version} option, that corresponds to version \texttt{1.0} of a library.
 Then, when version \texttt{1.1} of the library is published, we can add a new documentation version, as
 displayed in Listing~\ref{lst:user-docs-versions1}.
 Naturally, it is mandatory to specify the same output directory.
@@ -1568,19 +1568,19 @@ The top menu contains links and dropdowns, as shown in Figure~\ref{fig:refdocgen
 The \textit{API} link is always present and navigates us to the API homepage.
 Then, the following links represent static pages placed directly in the static pages directory, while the folders represent subfolders of the static pages folder, each sorted alphabetically.
 
-\begin{figure}[H]
-\centering
-\fbox{\includegraphics[width=1\linewidth]{img/refdocgen-menu.png}}
-\caption{UI -- top menu}
-\label{fig:refdocgen-menu-ui}
-\end{figure}
-
 Next, it is possible to select the language in which the type and member signatures are displayed, using the language selector (P).
 Currently, only C\# is supported; however, in the future, other languages may also be added.
 Next, we can navigate to the search page by clicking the input field (Q).
 Using the button (R), it is possible to toggle the documentation theme (light or dark), as shown in Figures~\ref{fig:refdocgen-dark-mode} and~\ref{fig:refdocgen-light-mode}.
 Finally, if the documentation is versioned, a dropdown with all available page versions is displayed (S).
 Using it, it is possible to switch to another version.
+
+\begin{figure}[H]
+\centering
+\fbox{\includegraphics[width=0.98\linewidth]{img/refdocgen-menu.png}}
+\caption{UI -- top menu}
+\label{fig:refdocgen-menu-ui}
+\end{figure}
 
 \begin{figure}[H]
 \centering
